@@ -39,7 +39,7 @@ Client structure: `PetStoreAdminClient` (frame, refresh on start), `DataSource` 
 - **R2 Reports ignore status.** `getChartInfo` (`OPCAdminFacadeEJB.java:159-256`) counts every order in the window, including DENIED ones, so "revenue" includes revenue that was never taken. Stated as-is; likely unintended.
 - **R3 "Order count" counts quantities.** The ORDERS report sums line quantities, not orders, although the chart describes it as "total # of sales per category". The spec states the arithmetic; the label is legacy copy.
 - **R4 Revenue precision.** Revenue is summed in single-precision `float`. The rebuild should use integer minor units or decimal arithmetic; totals may differ from the legacy by rounding.
-- **R5 Legacy default date range** (1/1/2001 to 12/31/2002, `DataSource.java:522-531`) is a demo artefact; stated as SHOULD. A rolling default is likely more useful.
+- **R5 Legacy default date range** (1/1/2001 to 12/31/2002, `DataSource.java:522-531`) is a demo artefact; stated as a requirement (low confidence). A rolling default is likely more useful.
 - **R6 Success before application.** The administrator sees success before orders change; a refresh immediately after commit may still show orders as pending.
 
 ## Legacy screen notes

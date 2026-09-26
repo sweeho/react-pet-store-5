@@ -278,7 +278,7 @@ The system SHALL accept report start and end dates only in month/day/year form (
 
 ### Requirement: Default report date range
 
-The system SHOULD default the sales report date range to 01/01/2001 through 12/31/2002.
+The system SHALL default the sales report date range to 01/01/2001 through 12/31/2002.
 
 #### Scenario: First display of the sales charts
 
