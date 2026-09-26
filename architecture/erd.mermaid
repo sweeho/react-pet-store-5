@@ -1,0 +1,217 @@
+%% EXTRACTED FROM LEGACY SOURCE — evidence of what exists, not a build target. Where this disagrees with a capability delta spec, the delta spec wins.
+%%
+%% Legacy data model of Java Pet Store 1.3.2, drawn from architecture/schema.sql
+%% (which cites PopulateSQL.xml, the sun-j2ee-ri.xml CMP tables and the ejb-jar.xml
+%% <relationships>). It is NOT the rebuild's data model; that is designed per
+%% capability in openspec/changes/sx-<capability>/design.md and lives in db/.
+%%
+%% Entity names are prefixed by datasource because the legacy system keeps three
+%% separate databases and repeats ContactInfo/Address/CreditCard/LineItem in each:
+%%   PS_  = jdbc/petstore/PetStoreDB
+%%   OPC_ = jdbc/opc/OPCDB
+%%   SUP_ = jdbc/supplier/SupplierDB
+%% Solid lines ("--") are declared FKs (catalog DDL) or container-managed relations
+%% (ejb-jar.xml, all cascade-delete). Dotted lines ("..") are value-only links with no
+%% constraint anywhere, often across datasources.
+%% The shopping cart is in-memory session state and has no entity.
+erDiagram
+    PS_CATEGORY ||--o{ PS_CATEGORY_DETAILS : "per locale"
+    PS_CATEGORY ||--o{ PS_PRODUCT : contains
+    PS_PRODUCT ||--o{ PS_PRODUCT_DETAILS : "per locale"
+    PS_PRODUCT ||--o{ PS_ITEM : contains
+    PS_ITEM ||--o{ PS_ITEM_DETAILS : "per locale, prices"
+
+    PS_USER ||..o| PS_CUSTOMER : "same user id (no FK)"
+    PS_CUSTOMER ||--|| PS_ACCOUNT : account
+    PS_CUSTOMER ||--|| PS_PROFILE : profile
+    PS_ACCOUNT ||--|| PS_CONTACT_INFO : contactInfo
+    PS_ACCOUNT ||--|| PS_CREDIT_CARD : creditCard
+    PS_CONTACT_INFO ||--|| PS_ADDRESS : address
+    PS_PROFILE }o..o| PS_CATEGORY : "favoriteCategory (no FK)"
+
+    OPC_PURCHASE_ORDER ||--|| OPC_CONTACT_INFO : "contactInfo (billing reused as shipping)"
+    OPC_PURCHASE_ORDER ||--|| OPC_CREDIT_CARD : creditCard
+    OPC_PURCHASE_ORDER ||--o{ OPC_LINE_ITEM : lineItems
+    OPC_CONTACT_INFO ||--|| OPC_ADDRESS : address
+    OPC_PURCHASE_ORDER ||..|| OPC_MANAGER : "poId = orderId (no FK), workflow status"
+    PS_CUSTOMER ||..o{ OPC_PURCHASE_ORDER : "poUserId (cross-datasource)"
+    OPC_LINE_ITEM }o..|| PS_ITEM : "itemId (cross-datasource)"
+
+    SUP_SUPPLIER_ORDER ||--|| SUP_CONTACT_INFO : contactInfo
+    SUP_SUPPLIER_ORDER ||--o{ SUP_LINE_ITEM : lineItems
+    SUP_CONTACT_INFO ||--|| SUP_ADDRESS : address
+    OPC_PURCHASE_ORDER ||..o| SUP_SUPPLIER_ORDER : "same poId, sent as XML over JMS"
+    SUP_LINE_ITEM }o..|| SUP_INVENTORY : "itemId"
+    SUP_INVENTORY |o..|| PS_ITEM : "itemId (cross-datasource)"
+
+    PS_CATEGORY {
+        char10 catid PK
+    }
+    PS_CATEGORY_DETAILS {
+        char10 catid PK,FK
+        char10 locale PK
+        varchar80 name "NOT NULL"
+        varchar255 image
+        varchar255 descn
+    }
+    PS_PRODUCT {
+        char10 productid PK
+        char10 catid FK "NOT NULL"
+    }
+    PS_PRODUCT_DETAILS {
+        char10 productid PK,FK
+        char10 locale PK
+        varchar80 name "NOT NULL"
+        varchar255 image
+        varchar255 descn
+    }
+    PS_ITEM {
+        char10 itemid PK
+        char10 productid FK "NOT NULL"
+    }
+    PS_ITEM_DETAILS {
+        char10 itemid PK,FK
+        char10 locale PK
+        decimal listprice "NOT NULL, List Price"
+        decimal unitcost "NOT NULL, Your Price (charged)"
+        char255 image "NOT NULL"
+        varchar255 descn "NOT NULL"
+        varchar80 attr1
+        varchar80 attr2
+        varchar80 attr3
+        varchar80 attr4
+        varchar80 attr5
+    }
+    PS_USER {
+        varchar userName PK
+        varchar password "plain text"
+    }
+    PS_CUSTOMER {
+        varchar userId PK
+        longint account FK
+        longint profile FK
+    }
+    PS_ACCOUNT {
+        longint pk PK
+        varchar status
+        longint contactInfo FK
+        longint creditCard FK
+    }
+    PS_PROFILE {
+        longint pk PK
+        varchar preferredLanguage
+        varchar favoriteCategory
+        boolean myListPreference "NOT NULL"
+        boolean bannerPreference "NOT NULL"
+    }
+    PS_CONTACT_INFO {
+        longint pk PK
+        varchar givenName
+        varchar familyName
+        varchar telephone
+        varchar email
+        longint address FK
+    }
+    PS_ADDRESS {
+        longint pk PK
+        varchar streetName1
+        varchar streetName2
+        varchar city
+        varchar state
+        varchar zipCode
+        varchar country
+    }
+    PS_CREDIT_CARD {
+        longint pk PK
+        varchar cardNumber "plain text"
+        varchar cardType
+        varchar expiryDate
+    }
+    PS_COUNTER {
+        varchar name PK
+        integer counter "NOT NULL"
+    }
+    OPC_PURCHASE_ORDER {
+        varchar poId PK
+        varchar poUserId
+        varchar poEmailId
+        varchar poLocale
+        longint poDate "NOT NULL, epoch ms"
+        real poValue "NOT NULL, float total"
+        longint contactInfo FK
+        longint creditCard FK
+    }
+    OPC_LINE_ITEM {
+        longint pk PK
+        varchar lineNumber
+        varchar categoryId
+        varchar productId
+        varchar itemId
+        integer quantity "NOT NULL"
+        integer quantityShipped "NOT NULL"
+        real unitPrice "NOT NULL"
+    }
+    OPC_CONTACT_INFO {
+        longint pk PK
+        varchar givenName
+        varchar familyName
+        varchar telephone
+        varchar email
+        longint address FK
+    }
+    OPC_ADDRESS {
+        longint pk PK
+        varchar streetName1
+        varchar streetName2
+        varchar city
+        varchar state
+        varchar zipCode
+        varchar country
+    }
+    OPC_CREDIT_CARD {
+        longint pk PK
+        varchar cardNumber "plain text"
+        varchar cardType
+        varchar expiryDate
+    }
+    OPC_MANAGER {
+        varchar orderId PK
+        varchar status "PENDING APPROVED DENIED SHIPPED_PART COMPLETED"
+    }
+    SUP_SUPPLIER_ORDER {
+        varchar poId PK
+        longint poDate "NOT NULL"
+        varchar poStatus
+        longint contactInfo FK
+    }
+    SUP_LINE_ITEM {
+        longint pk PK
+        varchar lineNumber
+        varchar categoryId
+        varchar productId
+        varchar itemId
+        integer quantity "NOT NULL"
+        integer quantityShipped "NOT NULL"
+        real unitPrice "NOT NULL"
+    }
+    SUP_CONTACT_INFO {
+        longint pk PK
+        varchar givenName
+        varchar familyName
+        varchar telephone
+        varchar email
+        longint address FK
+    }
+    SUP_ADDRESS {
+        longint pk PK
+        varchar streetName1
+        varchar streetName2
+        varchar city
+        varchar state
+        varchar zipCode
+        varchar country
+    }
+    SUP_INVENTORY {
+        varchar itemId PK
+        integer quantity "NOT NULL"
+    }

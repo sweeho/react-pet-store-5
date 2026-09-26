@@ -1,0 +1,567 @@
+# EXTRACTED FROM LEGACY SOURCE — evidence of what exists, not a build target. Where this disagrees with a capability delta spec, the delta spec wins.
+#
+# This document describes the HTTP surface of the legacy Java Pet Store 1.3.2
+# (legacy-source/petstore1.3.2/) as it was deployed. It is NOT the API of the rebuild.
+# The rebuild's routes are Nitro/H3 file-based routes under routes/api/ and are
+# designed per capability in openspec/changes/sx-<capability>/design.md.
+#
+# Shape of the legacy surface:
+#   - Four web applications, each under its own context root (/petstore, /admin,
+#     /supplier, /opc), taken from each app's sun-j2ee-ri.xml / application.xml.
+#   - The storefront is a server-rendered front controller: *.screen renders a page
+#     (TemplateServlet), *.do runs an action then forwards to a screen (MainServlet,
+#     mappings.xml). Responses are HTML, not JSON.
+#   - Most order processing is NOT HTTP: it runs over JMS queues/topics
+#     (jms/opc/OrderQueue, jms/opc/OrderApprovalQueue, jms/supplier/PurchaseOrderQueue,
+#     jms/opc/InvoiceTopic, jms/opc/MailQueue). Those channels are listed under
+#     x-legacy-async-channels at the end and have no path here.
+#   - Security: storefront pages are gated by a servlet filter (SignOnFilter) reading
+#     WEB-INF/signon-config.xml, not by container roles. Admin and supplier use
+#     container form login with role "administrator" (web.xml security-constraint).
+#
+# Every operation carries x-legacy-trace (repo-relative path under
+# legacy-source/petstore1.3.2/) and x-capability (the capability_key that owns it).
+openapi: 3.0.3
+info:
+  title: Java Pet Store 1.3.2 — legacy HTTP surface (extracted)
+  version: 1.3.2-legacy
+  description: >-
+    Evidence of the legacy system's HTTP entry points, extracted in spec extraction
+    SX-0001. EXTRACTED FROM LEGACY SOURCE — evidence of what exists, not a build
+    target. Where this disagrees with a capability delta spec, the delta spec wins.
+servers:
+  - url: /petstore
+    description: Customer storefront (context root from src/apps/petstore/src/sun-j2ee-ri.xml:48)
+  - url: /admin
+    description: Administrator web tier (src/apps/admin/src/sun-j2ee-ri.xml:59)
+  - url: /supplier
+    description: Supplier web tier (src/apps/supplier/src/sun-j2ee-ri.xml:59)
+  - url: /opc
+    description: Order Processing Center web tier (src/apps/opc/src/sun-j2ee-ri.xml:49)
+tags:
+  - name: storefront-screens
+    description: "GET *.screen, rendered by TemplateServlet from screendefinitions_<locale>.xml (web.xml:143-145)"
+  - name: storefront-actions
+    description: "*.do, dispatched by MainServlet through mappings.xml (web.xml:150-152)"
+  - name: storefront-signon
+    description: SignOnFilter-intercepted URLs (components/signon)
+  - name: admin
+  - name: supplier
+  - name: opc
+  - name: seeding
+    description: Sample-data loaders (discovery finding F7) — operational, not customer behaviour
+components:
+  securitySchemes:
+    storefrontSignOn:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: >-
+        Servlet session. SignOnFilter treats a request as signed on when session
+        attribute j_signon is true (components/signon/src/com/sun/j2ee/blueprints/signon/web/SignOnFilter.java:76).
+        Protected URLs are listed in apps/petstore/src/docroot/WEB-INF/signon-config.xml;
+        an unauthenticated request to one is sent to signon.screen and the original URL
+        is kept in session attribute j_signon_original_url (SignOnFilter.java:147).
+        Storefront session-timeout is 15 minutes (petstore web.xml:162).
+    containerAdministrator:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: >-
+        Container form login, role "administrator". Admin: apps/admin/src/docroot/WEB-INF/web.xml:74-100.
+        Supplier: apps/supplier/src/docroot/WEB-INF/web.xml:90-116. Session-timeout 54
+        minutes in both (admin web.xml:68, supplier web.xml:73).
+  parameters:
+    locale:
+      name: locale
+      in: query
+      required: false
+      description: >-
+        Locale override for screen rendering, read by TemplateServlet
+        (waf TemplateServlet getParameter("locale")). Supported storefront locales
+        are en_US, ja_JP and zh_CN; default en_US (petstore web.xml MainServlet
+        init-param default_locale).
+      schema:
+        type: string
+        example: en_US
+  schemas:
+    ContactInfoForm:
+      type: object
+      description: >-
+        Contact + address fields posted by the order and customer forms. Field names
+        carry a suffix: "_a" for billing, "_b" for shipping on order.do; the customer
+        form uses its own suffix. Read by OrderHTMLAction / CustomerHTMLAction
+        (apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/).
+      properties:
+        given_name_a: { type: string, maxLength: 30 }
+        family_name_a: { type: string }
+        address_1_a: { type: string }
+        address_2_a: { type: string }
+        city_a: { type: string }
+        state_or_province_a: { type: string }
+        postal_code_a: { type: string }
+        country_a: { type: string }
+        telephone_number_a: { type: string }
+        email_a: { type: string }
+        given_name_b: { type: string, maxLength: 30 }
+        family_name_b: { type: string }
+        address_1_b: { type: string }
+        address_2_b: { type: string }
+        city_b: { type: string }
+        state_or_province_b: { type: string }
+        postal_code_b: { type: string }
+        country_b: { type: string }
+        telephone_number_b: { type: string }
+        email_b: { type: string }
+    AdminXmlRequest:
+      type: string
+      format: xml
+      description: >-
+        Body of a POST to /ApplRequestProcessor. Root element with a <Type> child:
+        GETORDERS (with <Status>), UPDATESTATUS (with repeated <Order><OrderId/><OrderStatus/></Order>),
+        REVENUE or ORDERS (with <Start>, <End>, optional <ReqCategory>).
+        Source: apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java:124-151.
+    AdminXmlResponse:
+      type: string
+      format: xml
+      description: >-
+        <?xml version="1.0" standalone="yes"?><Response>…</Response>.
+        GETORDERS → <Type>, <Status>, <TotalCount>, repeated <Order> with <OrderId>, <UserId>,
+        <OrderDate>, <OrderAmount>, <OrderStatus> (ApplRequestProcessor.java:177-196).
+        UPDATESTATUS → <Type>UPDATEORDERS</Type><Status>SUCCESS</Status> (lines 224-227).
+        REVENUE/ORDERS → <Type>, <Start>, <End>, <ReqCategory>, repeated <Category name="…"> or
+        <Item name="…"> (Item when ReqCategory is given), and <TotalSales> (lines 259-298).
+        Errors → <Error>message</Error> inside <Response>.
+paths:
+  # ---------------------------------------------------------------- storefront screens
+  /main.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyMainScreen
+      summary: Home page with the category picture map
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/main.jsp
+      parameters: [{ $ref: '#/components/parameters/locale' }]
+      responses: { '200': { description: HTML page } }
+  /category.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyCategoryScreen
+      summary: Paged product list for one category
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/category.jsp
+      parameters:
+        - { name: category_id, in: query, required: true, schema: { type: string, maxLength: 10 } }
+        - { name: start, in: query, required: false, schema: { type: integer } }
+        - { name: count, in: query, required: false, schema: { type: integer } }
+        - { $ref: '#/components/parameters/locale' }
+      responses: { '200': { description: HTML page } }
+  /product.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyProductScreen
+      summary: Paged item list for one product
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/product.jsp
+      parameters:
+        - { name: product_id, in: query, required: true, schema: { type: string, maxLength: 10 } }
+        - { name: start, in: query, required: false, schema: { type: integer } }
+        - { name: count, in: query, required: false, schema: { type: integer } }
+        - { $ref: '#/components/parameters/locale' }
+      responses: { '200': { description: HTML page } }
+  /item.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyItemScreen
+      summary: Item detail with List Price, Your Price and Add to Cart
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/item.jsp
+      parameters:
+        - { name: item_id, in: query, required: true, schema: { type: string, maxLength: 10 } }
+        - { $ref: '#/components/parameters/locale' }
+      responses: { '200': { description: HTML page } }
+  /search.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacySearchScreen
+      summary: Keyword search results, paged
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/search.jsp:139-151
+      parameters:
+        - { name: keywords, in: query, required: true, schema: { type: string } }
+        - { name: start, in: query, required: false, schema: { type: integer } }
+        - name: count
+          in: query
+          required: false
+          description: The previous-page link hard-codes count=2 (search.jsp:141); the next-page link passes the page size.
+          schema: { type: integer }
+        - { $ref: '#/components/parameters/locale' }
+      responses: { '200': { description: HTML page } }
+  /cart.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyCartScreen
+      summary: Shopping cart
+      x-capability: shopping-cart
+      x-legacy-trace: src/apps/petstore/src/docroot/cart.jsp
+      responses: { '200': { description: HTML page } }
+  /signon.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacySignonScreen
+      summary: Returning-customer sign-in form and new-account form
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/signon.jsp
+      responses: { '200': { description: HTML page } }
+  /signon_error.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacySignonErrorScreen
+      summary: Sign-on failure page
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/signon_failed.jsp
+      responses: { '200': { description: HTML page } }
+  /signon_welcome.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacySignonWelcomeScreen
+      summary: Post-sign-on landing (protected)
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/signon-config.xml
+      security: [{ storefrontSignOn: [] }]
+      responses: { '200': { description: HTML page } }
+  /signoff.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacySignoffScreen
+      summary: Signed-out confirmation
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/signoff.jsp
+      responses: { '200': { description: HTML page } }
+  /customer.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyCustomerScreen
+      summary: Account information page (protected)
+      x-capability: customer-account
+      x-legacy-trace: src/apps/petstore/src/docroot/customer.jsp
+      security: [{ storefrontSignOn: [] }]
+      responses: { '200': { description: HTML page } }
+  /update_customer.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyUpdateCustomerScreen
+      summary: Edit account form
+      x-capability: customer-account
+      x-legacy-trace: src/apps/petstore/src/docroot/edit_customer.jsp
+      description: Not listed in signon-config.xml, so the filter does not gate it; the form posts to customer.do, which is gated.
+      responses: { '200': { description: HTML page } }
+  /create_customer.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyCreateCustomerScreen
+      summary: New-customer profile form (second step of registration)
+      x-capability: customer-account
+      x-legacy-trace: src/apps/petstore/src/docroot/create_customer.jsp
+      responses: { '200': { description: HTML page } }
+  /enter_order_information.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyEnterOrderInformationScreen
+      summary: Billing and shipping form, pre-filled from the account contact (protected)
+      x-capability: checkout
+      x-legacy-trace: src/apps/petstore/src/docroot/enter_order_information.jsp
+      security: [{ storefrontSignOn: [] }]
+      responses: { '200': { description: HTML page } }
+  /order_complete.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyOrderCompleteScreen
+      summary: Order placed confirmation with order id
+      x-capability: checkout
+      x-legacy-trace: src/apps/petstore/src/docroot/order_completed.jsp
+      responses: { '200': { description: HTML page } }
+  /cart_empty_order_error.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyCartEmptyOrderErrorScreen
+      summary: Shown when an order is placed with an empty cart
+      x-capability: checkout
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:110
+      responses: { '200': { description: HTML page } }
+  /duplicate_account.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyDuplicateAccountScreen
+      summary: Shown when account creation hits an existing user id
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:111
+      responses: { '200': { description: HTML page } }
+  /error.screen:
+    get:
+      tags: [storefront-screens]
+      operationId: legacyGeneralErrorScreen
+      summary: General failure page
+      x-capability: checkout
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:112
+      responses: { '200': { description: HTML page } }
+  # ---------------------------------------------------------------- storefront actions
+  /cart.do:
+    get:
+      tags: [storefront-actions]
+      operationId: legacyCartAction
+      summary: Add, remove or batch-update cart lines, then render cart.screen
+      x-capability: shopping-cart
+      x-legacy-trace: src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CartHTMLAction.java:85-118
+      description: >-
+        Anonymous (not in signon-config.xml). action=purchase adds itemId with quantity 1;
+        action=remove deletes itemId; action=update reads one itemQuantity_<itemId>
+        parameter per line, a non-integer value becoming 0. The same handler serves POST.
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema: { type: string, enum: [purchase, remove, update] }
+        - { name: itemId, in: query, required: false, schema: { type: string } }
+        - name: itemQuantity_{itemId}
+          in: query
+          required: false
+          description: One per cart line for action=update (pattern parameter; not literal).
+          schema: { type: string, maxLength: 10 }
+      responses: { '200': { description: cart.screen HTML } }
+  /order.do:
+    post:
+      tags: [storefront-actions]
+      operationId: legacyPlaceOrder
+      summary: Place the order from the cart, then render order_complete.screen
+      x-capability: checkout
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:78-80
+      description: >-
+        OrderHTMLAction builds billing (_a) and shipping (_b) contacts; OrderEJBAction
+        assigns an order id, totals the lines, sends the purchase order as XML on
+        jms/opc/OrderQueue and empties the cart. ShoppingCartEmptyOrderException →
+        cart_empty_order_error.screen. order.do is not itself listed in
+        signon-config.xml; the form that posts to it is.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/ContactInfoForm' }
+      responses: { '200': { description: order_complete.screen HTML } }
+  /createuser.do:
+    post:
+      tags: [storefront-actions]
+      operationId: legacyCreateUser
+      summary: Create a sign-on credential, then render create_customer.screen
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:86-88
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                j_username: { type: string, maxLength: 25 }
+                j_password: { type: string, description: Maximum length is redacted in the legacy tree (sign-on design.md OQ-1) }
+                j_password_2: { type: string, description: Collected; no comparison survives in source }
+      responses: { '200': { description: create_customer.screen HTML } }
+  /createcustomer.do:
+    post:
+      tags: [storefront-actions]
+      operationId: legacyCreateCustomer
+      summary: Create the customer account and profile (second registration step)
+      x-capability: customer-account
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:90-95
+      description: Flow handler CreateUserFlowHandler chooses the next screen. DuplicateAccountException → duplicate_account.screen.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ContactInfoForm' }
+                - type: object
+                  properties:
+                    action: { type: string, enum: [create] }
+                    language: { type: string }
+                    favorite_category: { type: string }
+                    mylist_on: { type: string }
+                    banners_on: { type: string }
+                    credit_card_number: { type: string }
+                    credit_card_type: { type: string }
+                    credit_card_expiry_month: { type: string }
+                    credit_card_expiry_year: { type: string }
+      responses: { '200': { description: HTML page chosen by flow handler } }
+  /customer.do:
+    post:
+      tags: [storefront-actions]
+      operationId: legacyUpdateCustomer
+      summary: Update account and profile, then render customer.screen (protected)
+      x-capability: customer-account
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:97-99
+      security: [{ storefrontSignOn: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/ContactInfoForm' }
+                - type: object
+                  properties:
+                    action: { type: string, enum: [update] }
+                    language: { type: string }
+                    favorite_category: { type: string }
+                    mylist_on: { type: string }
+                    banners_on: { type: string }
+                    credit_card_number: { type: string }
+                    credit_card_type: { type: string }
+                    credit_card_expiry_month: { type: string }
+                    credit_card_expiry_year: { type: string }
+      responses: { '200': { description: customer.screen HTML } }
+  /changelocale.do:
+    get:
+      tags: [storefront-actions]
+      operationId: legacyChangeLocale
+      summary: Switch the session locale and return to the referring screen
+      x-capability: localization
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:101-104
+      description: >-
+        ChangeLocaleHTMLAction reads "locale"; ClientStateFlowHandler returns to the
+        referring screen using referring_screen / cacheId.
+      parameters:
+        - { name: locale, in: query, required: true, schema: { type: string, enum: [en_US, ja_JP, zh_CN] } }
+        - { name: referring_screen, in: query, required: false, schema: { type: string } }
+        - { name: cacheId, in: query, required: false, schema: { type: string } }
+      responses: { '200': { description: Referring screen HTML } }
+  /signoff.do:
+    get:
+      tags: [storefront-actions]
+      operationId: legacySignOff
+      summary: Invalidate the session (keeping the locale), render signoff.screen
+      x-capability: sign-on
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/mappings.xml:82-84
+      responses: { '200': { description: signoff.screen HTML } }
+  # ---------------------------------------------------------------- storefront sign-on filter
+  /j_signon_check:
+    post:
+      tags: [storefront-signon]
+      operationId: legacySignOnCheck
+      summary: Authenticate against the credential store; redirect to the original URL
+      x-capability: sign-on
+      x-legacy-trace: src/components/signon/src/com/sun/j2ee/blueprints/signon/web/SignOnFilter.java:118-210
+      description: >-
+        On success sets session j_signon=true, optionally writes cookie bp_signon with
+        the user name, and redirects to j_signon_original_url. On failure forwards to
+        signon_error.screen (signon-config.xml).
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [j_username, j_password]
+              properties:
+                j_username: { type: string }
+                j_password: { type: string }
+                j_remember_username: { type: string, description: Checkbox; when set, cookie bp_signon stores the user name }
+      responses:
+        '302': { description: Redirect to the originally requested page }
+        '200': { description: signon_error.screen HTML on failure }
+  # ---------------------------------------------------------------- admin
+  /AdminRequestProcessor:
+    post:
+      tags: [admin]
+      operationId: legacyAdminWeb
+      summary: Admin web tier — launch the rich client (JNLP) or log out
+      x-capability: order-approval
+      x-legacy-trace: src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestProcessor.java:60-120
+      security: [{ containerAdministrator: [] }]
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                currentScreen: { type: string, enum: [manageorders, logout] }
+      responses:
+        '200': { description: JNLP descriptor (manageorders) or logout page }
+  /ApplRequestProcessor:
+    post:
+      tags: [admin]
+      operationId: legacyAdminRichClientApi
+      summary: XML request/response API used by the Swing admin client
+      x-capability: order-approval
+      x-legacy-trace: src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java:70-300
+      description: >-
+        NOT under the administrator security-constraint (admin web.xml:64 vs 74-87,
+        discovery finding F4). The only check is that an HTTP session exists; without
+        one it returns an <Error> telling the user to log in again. GET is handled as
+        POST. UPDATESTATUS decisions are sent on jms/opc/OrderApprovalQueue.
+      requestBody:
+        required: true
+        content:
+          text/xml:
+            schema: { $ref: '#/components/schemas/AdminXmlRequest' }
+      responses:
+        '200':
+          description: XML response
+          content:
+            text/xml:
+              schema: { $ref: '#/components/schemas/AdminXmlResponse' }
+  # ---------------------------------------------------------------- supplier
+  /RcvrRequestProcessor:
+    post:
+      tags: [supplier]
+      operationId: legacySupplierInventory
+      summary: Display inventory, submit a stock update, or log out
+      x-capability: supplier-inventory
+      x-legacy-trace: src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java:110-215
+      security: [{ containerAdministrator: [] }]
+      description: >-
+        GET forwards to index.jsp. POST with currentScreen=updateinventory applies
+        qty_<itemId> for every row whose item_<itemId> checkbox is present, then
+        re-processes pending supplier orders and publishes invoices on
+        jms/opc/InvoiceTopic, all in one user transaction; on success forwards to
+        back.jsp. Exceptions are printed and swallowed.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                currentScreen: { type: string, enum: [displayinventory, updateinventory, logout] }
+                qty_{itemId}: { type: string, description: Pattern parameter, one per row }
+                item_{itemId}: { type: string, description: Pattern parameter; presence marks the row for update }
+      responses: { '200': { description: HTML page } }
+  # ---------------------------------------------------------------- opc
+  /EntityCatalog.jsp:
+    get:
+      tags: [opc]
+      operationId: legacyOpcEntityCatalog
+      summary: XML entity catalog used to resolve DTD/XSD system ids for document validation
+      x-capability: b2b-document-exchange
+      x-legacy-trace: src/apps/opc/src/docroot/EntityCatalog.jsp
+      responses: { '200': { description: XML entity catalog } }
+  # ---------------------------------------------------------------- seeding
+  /Populate:
+    get:
+      tags: [seeding]
+      operationId: legacyPopulate
+      summary: Create and load sample tables (served by both petstore and supplier)
+      x-capability: catalog-browsing
+      x-legacy-trace: src/apps/petstore/src/docroot/WEB-INF/web.xml:156-158; src/apps/supplier/src/docroot/WEB-INF/web.xml:68-70
+      description: >-
+        Operational seeding, not customer behaviour (discovery F7). In the supplier
+        app this loads inventory and is owned by supplier-inventory. Not under any
+        security constraint.
+      parameters:
+        - { name: forcefully, in: query, required: false, schema: { type: string } }
+      responses: { '200': { description: Redirect/forward to success or error page } }
+x-legacy-async-channels:
+  - { destination: jms/opc/OrderQueue, type: queue, from: petstore, to: opc PurchaseOrderMDB, payload: PurchaseOrder XML, capability: checkout }
+  - { destination: jms/opc/OrderApprovalQueue, type: queue, from: "opc PurchaseOrderMDB, admin", to: opc OrderApprovalMDB, payload: OrderApproval XML, capability: order-approval }
+  - { destination: jms/supplier/PurchaseOrderQueue, type: queue, from: opc, to: supplier SupplierOrderMDB, payload: SupplierOrder XML, capability: b2b-document-exchange }
+  - { destination: jms/opc/InvoiceTopic, type: topic, from: supplier, to: "opc InvoiceMDB, MailInvoiceMDB", payload: Invoice XML, capability: order-fulfillment }
+  - { destination: jms/opc/MailQueue, type: queue, from: "opc Mail*MDB", to: mailer MailerMDB, payload: Mail XML, capability: customer-notifications }
