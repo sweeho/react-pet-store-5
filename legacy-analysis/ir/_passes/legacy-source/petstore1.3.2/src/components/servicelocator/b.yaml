@@ -1,0 +1,98 @@
+records:
+  - record_key: CUSTOMER-NOTIFICATIONS-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL allow sending of customer confirmation emails to be enabled
+      or disabled by a deployment-time boolean configuration setting, read by name
+      at run time, without a code change.
+    confidence: low
+    confidence_basis: >
+      Within this shard the only evidence is a Javadoc comment naming
+      SEND_CONFIRMATION_MAIL as an example of a boolean environment entry read through
+      the lookup helper. The consumers that actually gate email on the flag live
+      outside this shard (apps/opc customerrelations message beans were seen by grep
+      but are not cited or analysed here), and no document sources exist under
+      legacy-analysis/sources to corroborate it. A single comment-level source keeps
+      this at low; the owning shard should confirm and raise it.
+    risk_class: operational
+    basis: >
+      Both the web-tier and the EJB-tier locator expose getBoolean(envName), whose
+      documentation cites SEND_CONFIRMATION_MAIL as the setting it resolves; the value
+      is looked up from the naming environment and returned as a primitive boolean.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ejb/ServiceLocator.java
+        line_start: 213
+        line_end: 227
+        excerpt: |
+              /**
+               * @return the boolean value corresponding
+               * to the env entry such as SEND_CONFIRMATION_MAIL property.
+               */
+              public boolean getBoolean(String envName) throws ServiceLocatorException {
+                Boolean bool = null;
+                try {
+                  bool = (Boolean)ic.lookup(envName);
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+                return bool.booleanValue();
+              }
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+        line_start: 274
+        line_end: 288
+        excerpt: |
+              /**
+               * @return the boolean value corresponding
+               * to the env entry such as SEND_CONFIRMATION_MAIL property.
+               */
+              public boolean getBoolean(String envName) throws ServiceLocatorException {
+                Boolean bool = null;
+                try {
+                  bool = (Boolean)ic.lookup(envName);
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+                return bool.booleanValue();
+              }
+    stack_metadata:
+      framework: J2EE 1.3 JNDI service locator
+      ejb.env_entry: SEND_CONFIRMATION_MAIL
+      classes: com.sun.j2ee.blueprints.servicelocator.ejb.ServiceLocator, com.sun.j2ee.blueprints.servicelocator.web.ServiceLocator
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator
+    description: >
+      This module is technical infrastructure (a JNDI lookup helper for EJB homes, JMS
+      queue/topic factories and destinations, DataSources and env entries, plus a
+      wrapping exception type). Apart from the SEND_CONFIRMATION_MAIL reference it
+      carries no business rule and fits no capability in capabilities.csv, so no
+      further records were emitted. A human should confirm that resource-lookup
+      failure handling and caching are treated as non-functional platform concerns
+      for the rebuild rather than as requirements of any capability.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+    description: >
+      Two variants exist. The web-tier locator (lines 67-96) is a process-wide
+      singleton that caches resolved EJB homes, JMS factories/destinations and
+      DataSources in a synchronized map with no expiry or invalidation (lines 109-113
+      and equivalents); URL, boolean and string env entries are NOT cached (lines
+      261-304). The EJB-tier locator (ejb/ServiceLocator.java lines 60-74) has a
+      public constructor and no cache. If its static initialiser fails (lines 74-81)
+      the error is only printed and getInstance() returns null, so callers would fail
+      later with a null reference. Whether the rebuild must preserve "configuration
+      changes require a restart" semantics for cached resources is undecided.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ejb/ServiceLocator.java
+    description: >
+      getBoolean (ejb lines 217-227, web lines 278-288) dereferences the looked-up
+      value outside the try block, so a lookup that returns null would raise an
+      unchecked null-pointer error instead of the declared ServiceLocatorException,
+      while a missing name raises ServiceLocatorException. Neither path defaults the
+      flag. Whether an unset notification flag should mean "send", "do not send" or
+      "fail" cannot be decided from this module; callers outside this shard must be
+      checked.
