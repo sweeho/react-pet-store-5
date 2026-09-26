@@ -1,0 +1,231 @@
+records:
+  - record_key: CUSTOMER-NOTIFICATIONS-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL let an operator switch each kind of customer email (order
+      approval/denial, shipment invoice, order completion) on or off through a
+      deployment-time boolean setting, read when the sending component starts.
+      GIVEN a notification switch setting is missing or is not a boolean
+      WHEN the component that sends that email starts
+      THEN the system SHALL fail that component's start-up with an error, and SHALL NOT
+      fall back to a default of on or off.
+    confidence: medium
+    confidence_basis: >
+      The boolean lookup and its failure behaviour are directly visible in this module,
+      and its own comment names the confirmation-mail switch as a use. The link to the
+      three email kinds comes from callers in another shard (JNDINames and the mail
+      message beans), which I checked only far enough to confirm they call this lookup
+      and rethrow its error. Not high because this pass is the only one so far, the rule
+      has a single source for the "no default" behaviour, and the deployed switch values
+      are redacted in the descriptor I saw, so I cannot state the shipped default.
+    risk_class: operational
+    basis: >
+      getBoolean(envName) looks up a named environment entry, casts it to Boolean and
+      wraps any lookup or cast failure in ServiceLocatorException. It has no default
+      value. The method comment names the SEND_CONFIRMATION_MAIL property. In the
+      order-processing app, MailInvoiceMDB reads SEND_CONFIRMATION_MAIL through this
+      method during ejbCreate and turns a ServiceLocatorException into an EJBException.
+      It sends mail only when the flag is true. JNDINames declares three such switches:
+      SendConfirmationMail, SendApprovalMail and SendCompletedOrderMail.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ejb/ServiceLocator.java
+        line_start: 213
+        line_end: 227
+        excerpt: |
+              /**
+               * @return the boolean value corresponding
+               * to the env entry such as SEND_CONFIRMATION_MAIL property.
+               */
+              public boolean getBoolean(String envName) throws ServiceLocatorException {
+                Boolean bool = null;
+                try {
+                  bool = (Boolean)ic.lookup(envName);
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+                return bool.booleanValue();
+              }
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+        line_start: 274
+        line_end: 288
+        excerpt: |
+              /**
+               * @return the boolean value corresponding
+               * to the env entry such as SEND_CONFIRMATION_MAIL property.
+               */
+              public boolean getBoolean(String envName) throws ServiceLocatorException {
+                Boolean bool = null;
+                try {
+                  bool = (Boolean)ic.lookup(envName);
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+                return bool.booleanValue();
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/customerrelations/ejb/JNDINames.java
+        line_start: 57
+        line_end: 72
+        excerpt: |
+             public static final String SEND_CONFIRMATION_MAIL =
+                               "java:comp/env/param/SendConfirmationMail";
+
+             /**
+              * JNDI name for the environment variable for sending email
+              * when an order is approved or denied
+              */
+              public static final String SEND_APPROVAL_MAIL =
+                                  "java:comp/env/param/SendApprovalMail";
+
+             /**
+              * JNDI name for the environment variable for sending email
+              * when an order is completed and all items have been shipped
+              */
+              public static final String SEND_COMPLETED_ORDER_MAIL =
+                            "java:comp/env/param/SendCompletedOrderMail";
+    stack_metadata:
+      framework: J2EE 1.3
+      ejb.bean: MailInvoiceMDB, MailOrderApprovalMDB, MailCompletedOrderMDB (callers, other shard)
+      db.object: JNDI env-entry java:comp/env/param/Send*Mail (java.lang.Boolean)
+      component: com.sun.j2ee.blueprints.servicelocator.{ejb,web}.ServiceLocator#getBoolean
+
+  - record_key: ORDER-FULFILLMENT-INTEGRATION-0001
+    kind: integration
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL resolve each named external resource it depends on (business
+      components, message queues and topics, their connection factories, the database,
+      and configured URL, boolean and text settings) by a configured name, and SHALL
+      report a failed resolution to the caller as one error type that keeps the
+      underlying cause.
+      GIVEN a named resource cannot be resolved or is not of the expected type
+      WHEN a component asks for it
+      THEN the system SHALL raise that error at once, without retrying and without
+      substituting a fallback resource.
+    confidence: medium
+    confidence_basis: >
+      The behaviour is explicit and consistent in both locator variants (server-component
+      and web tier). Every lookup method catches NamingException and any other Exception
+      and wraps it the same way. There is no retry loop or fallback anywhere in the
+      module. Not high because only one pass has read it and the rule has only one kind of
+      source (code, no configuration). The capability assignment is the weakest part:
+      the rule applies across capabilities and has no capability of its own in the
+      closed list.
+    risk_class: operational
+    basis: >
+      Each getter in both ServiceLocator classes performs a single ic.lookup (plus
+      PortableRemoteObject.narrow for remote homes). Any NamingException or other
+      Exception becomes a ServiceLocatorException. ServiceLocatorException keeps the
+      wrapped exception, getRootCause() unwraps nested ServiceLocatorExceptions down to
+      the original cause, and toString() reports the root cause's text. Filed under
+      order-fulfillment as the closest capability. The heaviest users are the
+      order-processing message beans, which resolve queues, factories and settings
+      through this module. The rule is cross-cutting infrastructure.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ejb/ServiceLocator.java
+        line_start: 101
+        line_end: 113
+        excerpt: |
+              public EJBHome getRemoteHome(String jndiHomeName, Class className) throws ServiceLocatorException {
+                EJBHome home = null;
+                try {
+                      Object objref = ic.lookup(jndiHomeName);
+                      Object obj = PortableRemoteObject.narrow(objref, className);
+                      home = (EJBHome)obj;
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+                 return home;
+              }
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+        line_start: 175
+        line_end: 191
+        excerpt: |
+              public  Queue getQueue(String queueName) throws ServiceLocatorException {
+                Queue queue = null;
+                try {
+                  if (cache.containsKey(queueName)) {
+                      queue = (Queue) cache.get(queueName);
+                  } else {
+                      queue =(Queue)ic.lookup(queueName);
+                      cache.put(queueName, queue);
+                  }
+                } catch (NamingException ne) {
+                      throw new ServiceLocatorException(ne);
+                } catch (Exception e) {
+                      throw new ServiceLocatorException(e);
+                }
+
+                return queue;
+              }
+      - path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ServiceLocatorException.java
+        line_start: 87
+        line_end: 104
+        excerpt: |
+            /**
+             * Retrieves (recursively) the root cause exception.
+             *
+             * @return the root cause exception.
+             */
+            public Exception getRootCause() {
+              if (exception instanceof ServiceLocatorException) {
+                return ((ServiceLocatorException) exception).getRootCause();
+              }
+              return exception == null ? this : exception;
+            }
+
+            public String toString() {
+              if (exception instanceof ServiceLocatorException) {
+                return ((ServiceLocatorException) exception).toString();
+              }
+              return exception == null ? super.toString() : exception.toString();
+            }
+    stack_metadata:
+      framework: J2EE 1.3
+      pattern: Service Locator (JNDI InitialContext)
+      component: com.sun.j2ee.blueprints.servicelocator.{ejb,web}.ServiceLocator, ServiceLocatorException
+
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+    description: >
+      The web-tier locator is a process-wide singleton. It caches every resolved EJB
+      home, queue, topic, connection factory and DataSource in a synchronized map for
+      the life of the process (lines 69-96, 106-255) and never evicts or invalidates an
+      entry, so a redeployed or relocated resource keeps its stale handle until restart.
+      URL, boolean and string settings are NOT cached (lines 261-304). The server-component
+      variant (ejb/ServiceLocator.java) caches nothing and builds a new naming context per
+      instance. A human needs to decide whether "resolve once per process, never refresh"
+      is behaviour the rebuild must keep or an optimisation it may drop. No requirement
+      was emitted for it.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/web/ServiceLocator.java
+    description: >
+      If creating the naming context fails when the class loads, the static initializer
+      (lines 74-81) prints the error to stderr and leaves the singleton null. After that,
+      getInstance() (lines 94-96) returns null and every web-tier caller fails with a
+      NullPointerException instead of ServiceLocatorException. This start-up failure path
+      has no stated recovery. It is unclear whether this was intended; a human should
+      decide how the rebuild must behave when resource naming is unavailable at start-up.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/servicelocator/src/com/sun/j2ee/blueprints/servicelocator/ejb/ServiceLocator.java
+    description: >
+      In both variants, getBoolean unboxes the looked-up Boolean outside the try block
+      (ejb line 226, web line 287). A lookup that returns null (an entry bound with no
+      value) therefore throws an unwrapped NullPointerException rather than
+      ServiceLocatorException. The ejb variant also declares an unused static field `me`
+      (line 64), which is dead code. In the ejb descriptor, the deployed value of the
+      SendConfirmationMail switch that this method reads is redacted
+      (apps/opc/src/ejb-jar.xml line 417). This pass therefore cannot state whether
+      customer emails ship enabled or disabled, and a human must supply the default.
+  - kind: ambiguity
+    path: legacy-analysis/sources
+    description: >
+      No document sources (legacy-analysis/sources/**/extracted.md) exist in the tree, so
+      this pass has no document trace. Both records rest on code alone.
