@@ -1,0 +1,550 @@
+records:
+  - record_key: CUSTOMER-ACCOUNT-ENTITY-0001
+    kind: entity
+    capability_key: customer-account
+    requirement: >
+      The system SHALL persist a Contact Information record consisting of a family name,
+      a given name, a telephone number, an email address, and exactly one postal Address.
+    confidence: medium
+    confidence_basis: >
+      The field set is declared in two places in this module (deployment descriptor
+      persistent fields and the entity's abstract accessors), but both are the same layer
+      (container-managed persistence); no DDL is in this shard to confirm column
+      nullability or lengths, so medium rather than high. Pass B not yet compared.
+    risk_class: operational
+    basis: >
+      Four persistent string fields (telephone, familyName, email, givenName) and a
+      container-managed relationship field "address" are declared in ejb-jar.xml and
+      mirrored by abstract getters/setters in ContactInfoEJB. No length, format or
+      nullability constraint is declared anywhere in the module.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/ejb-jar.xml
+        line_start: 57
+        line_end: 72
+        excerpt: |
+          <cmp-field>
+            <description>no description</description>
+            <field-name>telephone</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>familyName</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>email</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>givenName</field-name>
+          </cmp-field>
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoEJB.java
+        line_start: 59
+        line_end: 73
+        excerpt: |
+          public abstract String getFamilyName();
+          public abstract void setFamilyName(String familyName);
+
+          public abstract String getGivenName();
+          public abstract void setGivenName(String givenName);
+
+          public abstract String getTelephone();
+          public abstract void setTelephone(String telephone);
+
+          public abstract String getEmail();
+          public abstract void setEmail(String email);
+
+          // CMR fields
+          public abstract AddressLocal getAddress();
+          public abstract void setAddress(AddressLocal address);
+    stack_metadata:
+      framework: J2EE 1.3 EJB 2.0
+      ejb.bean: ContactInfoEJB
+      db.object: ContactInfo (abstract-schema-name)
+      ejb.persistence: Container (CMP 2.x)
+      ejb.prim-key-class: java.lang.Object (container-generated key)
+
+  - record_key: CUSTOMER-ACCOUNT-RULE-0001
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      The system SHALL associate each Contact Information record with exactly one Address,
+      and SHALL delete that Address when the owning Contact Information record is deleted.
+    confidence: medium
+    confidence_basis: >
+      Declared once, in the deployment descriptor relationship (one-to-one with
+      cascade-delete on the Address side); no schema foreign key in this shard to
+      corroborate, so single-source medium.
+    risk_class: operational
+    basis: >
+      The ejb-relation between ContactInfoEJB and AddressEJB is One-to-One with
+      <cascade-delete/> on the AddressEJB role, so removing a contact info removes its
+      address. The relationship is navigable only from ContactInfo (cmr-field "address").
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/ejb-jar.xml
+        line_start: 127
+        line_end: 147
+        excerpt: |
+          <ejb-relation>
+            <ejb-relation-name></ejb-relation-name>
+            <ejb-relationship-role>
+              <ejb-relationship-role-name>ContactInfoEJB</ejb-relationship-role-name>
+              <multiplicity>One</multiplicity>
+              <relationship-role-source>
+                <ejb-name>ContactInfoEJB</ejb-name>
+              </relationship-role-source>
+              <cmr-field>
+                <cmr-field-name>address</cmr-field-name>
+              </cmr-field>
+            </ejb-relationship-role>
+            <ejb-relationship-role>
+              <ejb-relationship-role-name>AddressEJB</ejb-relationship-role-name>
+              <multiplicity>One</multiplicity>
+              <cascade-delete />
+              <relationship-role-source>
+                <ejb-name>AddressEJB</ejb-name>
+              </relationship-role-source>
+            </ejb-relationship-role>
+          </ejb-relation>
+    stack_metadata:
+      ejb.bean: ContactInfoEJB, AddressEJB
+      ejb.cmr: address (unidirectional, cascade-delete on AddressEJB)
+
+  - record_key: CUSTOMER-ACCOUNT-ENTITY-0002
+    kind: entity
+    capability_key: customer-account
+    requirement: >
+      The system SHALL store a postal Address with the fields street line 1, street
+      line 2, city, state, zip code and country.
+    confidence: low
+    confidence_basis: >
+      Only the field names are visible in this shard (declared here as a co-packaged
+      entity); the Address entity's own source belongs to another module, so behaviour,
+      optionality and formats cannot be seen from here.
+    risk_class: operational
+    basis: >
+      This module's deployment descriptor also declares AddressEJB with six persistent
+      string fields. Recorded here because this descriptor packages it; the owning module
+      (components/address) should be authoritative.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/ejb-jar.xml
+        line_start: 96
+        line_end: 119
+        excerpt: |
+          <cmp-field>
+            <description>no description</description>
+            <field-name>zipCode</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>streetName2</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>state</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>streetName1</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>city</field-name>
+          </cmp-field>
+          <cmp-field>
+            <description>no description</description>
+            <field-name>country</field-name>
+          </cmp-field>
+    stack_metadata:
+      ejb.bean: AddressEJB
+      db.object: Address (abstract-schema-name)
+
+  - record_key: CUSTOMER-ACCOUNT-RULE-0002
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      GIVEN a Contact Information record is created with no data supplied
+      WHEN creation completes
+      THEN the system SHALL create and attach a new empty Address to it, so that a
+      Contact Information record never exists without an Address.
+    confidence: medium
+    confidence_basis: >
+      Behaviour is explicit in code and has a visible caller (new customer account
+      creation in the customer component), but it is a single source; the empty-address
+      default is inferred from a no-argument Address create whose body is outside this shard.
+    risk_class: operational
+    basis: >
+      The no-argument create sets no fields and, in post-create, looks up the Address home
+      and creates an Address with no arguments, then attaches it. Creation fails if the
+      Address home cannot be located. AccountEJB (customer component) calls this no-arg
+      create when a customer account is created.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoEJB.java
+        line_start: 77
+        line_end: 91
+        excerpt: |
+          public Object ejbCreate () throws CreateException {
+            return null;
+          }
+
+          public void ejbPostCreate () throws CreateException {
+            try {
+              ServiceLocator serviceLocator = new ServiceLocator();
+              AddressLocalHome adh = (AddressLocalHome)
+                  serviceLocator.getLocalHome(JNDINames.ADDR_EJB);
+              AddressLocal address = adh.create();
+              setAddress(address);
+            } catch (ServiceLocatorException ne) {
+              throw new CreateException("ContactInfoEJB error: ServiceLocator exception looking up address");
+            }
+          }
+      - path: legacy-source/petstore1.3.2/src/components/customer/src/com/sun/j2ee/blueprints/customer/account/ejb/AccountEJB.java
+        line_start: 84
+        line_end: 85
+        excerpt: |
+          ContactInfoLocalHome cih = (ContactInfoLocalHome) ic.lookup("java:comp/env/ejb/ContactInfo");
+          ContactInfoLocal contactInfo = cih.create();
+    stack_metadata:
+      ejb.bean: ContactInfoEJB
+      ejb.method: ejbCreate()/ejbPostCreate()
+      jndi: java:comp/env/ejb/Address
+
+  - record_key: CHECKOUT-RULE-0001
+    kind: business-rule
+    capability_key: checkout
+    requirement: >
+      GIVEN contact details (given name, family name, telephone, email and address) are
+      supplied as a single value, such as the shipping contact of an order
+      WHEN a Contact Information record is created from them
+      THEN the system SHALL copy the four name/phone/email values and SHALL create a new,
+      separate Address record from the supplied address rather than sharing an existing one.
+    confidence: medium
+    confidence_basis: >
+      Code path is explicit and has visible callers (purchase order and supplier order
+      creation, which pass their shipping info), but single-source; filed under checkout
+      because the callers are order records, which is a judgement call between checkout
+      and order-fulfillment.
+    risk_class: operational
+    basis: >
+      ejbCreate(ContactInfo) copies givenName, familyName, phone->telephone and email;
+      ejbPostCreate(ContactInfo) creates a new Address from contactInfo.getAddress().
+      PurchaseOrderEJB and SupplierOrderEJB call create(getShippingInfo()). Each order
+      therefore holds its own snapshot copy of the contact and address, not a reference
+      to the customer's profile contact.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoEJB.java
+        line_start: 109
+        line_end: 127
+        excerpt: |
+          public Object ejbCreate(ContactInfo contactInfo) throws CreateException {
+            setGivenName(contactInfo.getGivenName());
+            setFamilyName(contactInfo.getFamilyName());
+            setTelephone(contactInfo.getPhone());
+            setEmail(contactInfo.getEmail());
+            return null;
+          }
+
+          public void ejbPostCreate(ContactInfo contactInfo) throws CreateException {
+            try {
+              ServiceLocator serviceLocator = new ServiceLocator();
+              AddressLocalHome adh = (AddressLocalHome)
+                  serviceLocator.getLocalHome(JNDINames.ADDR_EJB);
+              AddressLocal address = adh.create(contactInfo.getAddress());
+              setAddress(address);
+            } catch (ServiceLocatorException ne) {
+              throw new CreateException("ContactInfoEJB error: ServiceLocator exception looking up address");
+            }
+          }
+      - path: legacy-source/petstore1.3.2/src/components/purchaseorder/src/com/sun/j2ee/blueprints/purchaseorder/ejb/PurchaseOrderEJB.java
+        line_start: 215
+        line_end: 218
+        excerpt: |
+          ContactInfoLocalHome cinforef = (ContactInfoLocalHome)
+              serviceLocator.getLocalHome(JNDINames.CINFO_EJB);
+          ContactInfoLocal cinfoloc = (ContactInfoLocal)
+              cinforef.create(purchaseOrder.getShippingInfo());
+    stack_metadata:
+      ejb.bean: ContactInfoEJB
+      ejb.method: ejbCreate(ContactInfo)/ejbPostCreate(ContactInfo)
+      ejb.transaction: Required
+
+  - record_key: CUSTOMER-ACCOUNT-RULE-0003
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      GIVEN contact details are supplied as separate values with an existing Address
+      WHEN a Contact Information record is created from them
+      THEN the system SHALL store the given name, family name, telephone and email and
+      SHALL link the supplied Address itself (not a copy).
+    confidence: medium
+    confidence_basis: >
+      Explicit single-source code; the only caller seen is the sample-data populator, so
+      whether any production path uses this variant is not established.
+    risk_class: operational
+    basis: >
+      The five-argument create stores the four strings and, in post-create, links the
+      passed AddressLocal directly. ContactInfoPopulator (petstore populate tool) is the
+      visible caller.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoEJB.java
+        line_start: 93
+        line_end: 107
+        excerpt: |
+          public Object ejbCreate(String givenName, String familyName,
+                                  String telephone, String email, AddressLocal address)
+                                  throws CreateException {
+            setGivenName(givenName);
+            setFamilyName(familyName);
+            setTelephone(telephone);
+            setEmail(email);
+            return null;
+          }
+
+          public void ejbPostCreate(String givenName, String familyName,
+                                    String telephone, String email,
+                                    AddressLocal address) throws CreateException {
+            setAddress(address);
+          }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/tools/populate/ContactInfoPopulator.java
+        line_start: 94
+        line_end: 94
+        excerpt: |
+          return contactInfoHome.create(givenName, familyName, phone, email, address);
+    stack_metadata:
+      ejb.bean: ContactInfoEJB
+      ejb.method: ejbCreate(String,String,String,String,AddressLocal)
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-INTEGRATION-0001
+    kind: integration
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL represent contact information in exchanged XML documents as a
+      ContactInfo element containing, in this exact order, FamilyName, GivenName, Address,
+      Email and Phone, each of which is mandatory as an element.
+    confidence: high
+    confidence_basis: >
+      Enforced in two independent places: the DTD content model and the programmatic
+      serializer/parser, which both use the same element order and names. (Pass B
+      agreement still to be confirmed.)
+    risk_class: operational
+    basis: >
+      ContactInfo.dtd declares (FamilyName, GivenName, Address, Email, Phone) with no
+      optional markers. toDOM writes the elements in that order; fromDOM reads them in
+      that order with optional=false on every element lookup, and getNextSibling only
+      accepts the immediately-following element, so out-of-order input is rejected.
+      The DTD is identified by public ID
+      "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD ContactInfo 1.1//EN".
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/rsrc/schemas/ContactInfo.dtd
+        line_start: 38
+        line_end: 46
+        excerpt: |
+          <!ELEMENT ContactInfo (FamilyName, GivenName, Address, Email, Phone)>
+          <!ELEMENT FamilyName (#PCDATA)>
+          <!ELEMENT GivenName (#PCDATA)>
+          <!ELEMENT Email (#PCDATA)>
+          <!ELEMENT Phone (#PCDATA)>
+
+          <!ENTITY % Address PUBLIC "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD Address 1.1//EN"
+           "/com/sun/j2ee/blueprints/address/rsrc/schemas/Address.dtd">
+          %Address;
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfo.java
+        line_start: 133
+        line_end: 141
+        excerpt: |
+          public Node toDOM(Document document) {
+            Element root = document.createElement(XML_CONTACTINFO);
+            XMLDocumentUtils.appendChild(document, root, XML_FAMILY_NAME, familyName);
+            XMLDocumentUtils.appendChild(document, root, XML_GIVEN_NAME, givenName);
+            root.appendChild(address.toDOM(document));
+            XMLDocumentUtils.appendChild(document, root, XML_EMAIL, email);
+            XMLDocumentUtils.appendChild(document, root, XML_PHONE, phone);
+            return root;
+          }
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfo.java
+        line_start: 143
+        line_end: 161
+        excerpt: |
+          public static ContactInfo fromDOM(Node node) throws XMLDocumentException {
+            Element element;
+            if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_CONTACTINFO)) {
+              Element child;
+              ContactInfo contactInfo = new ContactInfo();
+              child = XMLDocumentUtils.getFirstChild(element, XML_FAMILY_NAME, false);
+              contactInfo.familyName = XMLDocumentUtils.getContentAsString(child, false);
+              child = child = XMLDocumentUtils.getNextSibling(child, XML_GIVEN_NAME, false);
+              contactInfo.givenName = XMLDocumentUtils.getContentAsString(child, false);
+              child =  XMLDocumentUtils.getNextSibling(child, Address.XML_ADDRESS, false);
+              contactInfo.address = Address.fromDOM(child);
+              child = XMLDocumentUtils.getNextSibling(child, XML_EMAIL, false);
+              contactInfo.email = XMLDocumentUtils.getContentAsString(child, true /*false*/);
+              child = XMLDocumentUtils.getNextSibling(child, XML_PHONE, false);
+              contactInfo.phone = XMLDocumentUtils.getContentAsString(child, false);
+              return contactInfo;
+            }
+            throw new XMLDocumentException(XML_CONTACTINFO + " element expected.");
+          }
+    stack_metadata:
+      framework: DOM / DTD validation
+      dtd.public_id: "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD ContactInfo 1.1//EN"
+      dtd.system_id: /com/sun/j2ee/blueprints/contactinfo/rsrc/schemas/ContactInfo.dtd
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-RULE-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      WHEN a ContactInfo element is read from an exchanged XML document
+      THEN the system SHALL reject it if FamilyName, GivenName or Phone has empty content,
+      AND SHALL accept an empty Email (the Email element must be present but its content
+      may be empty).
+    confidence: medium
+    confidence_basis: >
+      Explicit in the parser, single source. The Email relaxation is marked only by an
+      inline comment "true /*false*/" showing it was changed from mandatory to optional,
+      with no stated reason; the DTD (#PCDATA) cannot express non-empty either way.
+    risk_class: operational
+    basis: >
+      getContentAsString(child, false) throws "<tag> element: content expected." on empty
+      content for FamilyName, GivenName and Phone; Email is read with optional=true.
+      A non-ContactInfo root element raises "ContactInfo element expected.".
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfo.java
+        line_start: 148
+        line_end: 160
+        excerpt: |2
+              child = XMLDocumentUtils.getFirstChild(element, XML_FAMILY_NAME, false);
+              contactInfo.familyName = XMLDocumentUtils.getContentAsString(child, false);
+              child = child = XMLDocumentUtils.getNextSibling(child, XML_GIVEN_NAME, false);
+              contactInfo.givenName = XMLDocumentUtils.getContentAsString(child, false);
+              child =  XMLDocumentUtils.getNextSibling(child, Address.XML_ADDRESS, false);
+              contactInfo.address = Address.fromDOM(child);
+              child = XMLDocumentUtils.getNextSibling(child, XML_EMAIL, false);
+              contactInfo.email = XMLDocumentUtils.getContentAsString(child, true /*false*/);
+              child = XMLDocumentUtils.getNextSibling(child, XML_PHONE, false);
+              contactInfo.phone = XMLDocumentUtils.getContentAsString(child, false);
+              return contactInfo;
+            }
+            throw new XMLDocumentException(XML_CONTACTINFO + " element expected.");
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 153
+        line_end: 170
+        excerpt: |
+          public static String getContent(Element element, boolean optional) throws XMLDocumentException {
+                StringBuffer buffer = new StringBuffer();
+                for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+              if (child.getNodeType() == Node.TEXT_NODE || child.getNodeType() == Node.CDATA_SECTION_NODE) {
+                        try {
+                  buffer.append(((Text) child).getData());
+                        } catch (DOMException e) {}
+              }
+                }
+                if (!optional && buffer.length() == 0) {
+              throw new XMLDocumentException(element.getTagName() + " element: content expected.");
+                }
+                return buffer.toString();
+          }
+
+          public static String getContentAsString(Element element, boolean optional) throws XMLDocumentException {
+                return getContent(element, optional);
+          }
+    stack_metadata:
+      framework: DOM
+      error.message: "<tag> element: content expected. / ContactInfo element expected."
+
+  - record_key: CUSTOMER-ACCOUNT-REQ-0001
+    kind: requirement
+    capability_key: customer-account
+    requirement: >
+      The system SHALL allow each contact field (given name, family name, telephone, email)
+      and the linked Address of a stored Contact Information record to be read and updated
+      individually, and SHALL return the whole record, including its Address, as a single
+      value on request.
+    confidence: medium
+    confidence_basis: >
+      Declared in the local interface and backed by getData(); single layer. No
+      authorization restriction exists on any of these operations (all unchecked), which
+      is recorded in stack_metadata but not a stated business rule.
+    risk_class: operational
+    basis: >
+      ContactInfoLocal exposes getters/setters for every field plus getData(), which
+      assembles a ContactInfo value including address.getData(); the persistent field
+      "telephone" is exposed as "phone" on the value object.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoLocal.java
+        line_start: 43
+        line_end: 61
+        excerpt: |
+          public interface ContactInfoLocal extends javax.ejb.EJBLocalObject {
+
+            public String getFamilyName();
+            public void setFamilyName(String familyName);
+
+            public String getGivenName();
+            public void setGivenName(String givenName);
+
+            public AddressLocal getAddress();
+            public void setAddress(AddressLocal address);
+
+            public String getTelephone();
+            public void setTelephone(String telephone);
+
+            public String getEmail();
+            public void setEmail(String email);
+
+            public ContactInfo getData();
+          }
+      - path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfoEJB.java
+        line_start: 129
+        line_end: 137
+        excerpt: |
+          public ContactInfo getData() {
+            ContactInfo contactInfo = new ContactInfo();
+            contactInfo.setGivenName(getGivenName());
+            contactInfo.setFamilyName(getFamilyName());
+            contactInfo.setPhone(getTelephone());
+            contactInfo.setEmail(getEmail());
+            contactInfo.setAddress(getAddress().getData());
+            return contactInfo;
+          }
+    stack_metadata:
+      ejb.bean: ContactInfoEJB
+      ejb.method-permission: unchecked (all listed methods)
+      ejb.transaction: Required (all listed methods)
+      ejb.security-identity: use-caller-identity
+
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/contactinfo/src/ejb-jar.xml
+    description: >
+      The no-argument create() (used by customer account creation) is declared in
+      ContactInfoLocalHome but is absent from this descriptor's method-permission and
+      container-transaction lists, which name only the five-argument and value-object
+      create variants (lines 224-243 and ~433-455). Its effective transaction and
+      permission therefore depend on container defaults or on the customer component's
+      own ejb-jar.xml, which also declares ContactInfoEJB. A human should confirm which
+      descriptor is deployed and whether account creation relies on an outer transaction.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfo.java
+    description: >
+      Line 155 reads Email with optional=true and a comment "/*false*/", i.e. the email
+      was deliberately relaxed from mandatory to optional in exchanged documents, with no
+      reason recorded. The persistent entity and create paths impose no required-field
+      rules at all. Decide whether the rebuild should require a non-empty email (for
+      customer notifications) or keep it optional, and whether name/phone are mandatory
+      outside XML exchange.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/contactinfo/src/com/sun/j2ee/blueprints/contactinfo/ejb/ContactInfo.java
+    description: >
+      The same datum is named "telephone" in the persistent entity and "phone" in the
+      value object and XML ("Phone"); mapping is done in ContactInfoEJB create/getData.
+      Not a behavioural conflict, but the rebuild must pick one name. Also toDOM() and
+      toString() dereference address without a null check, so a contact without an address
+      cannot be serialized; the no-arg create path always attaches one, but the value-object
+      constructor does not guarantee it.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/contactinfo/src/ejb-jar.xml
+    description: >
+      No field lengths, formats (email syntax, phone format) or nullability constraints
+      exist in this module and no DDL is in this shard. Validation, if any, lives in the
+      web tier or database scripts of other modules; the other pass/reconciliation should
+      check there before treating contact fields as unconstrained.
