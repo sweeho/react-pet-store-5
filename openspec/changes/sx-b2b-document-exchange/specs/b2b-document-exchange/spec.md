@@ -404,7 +404,7 @@ The supplier SHALL publish one invoice message to the order centre's invoice cha
 
 ### Requirement: Legacy version 1.0 document formats
 
-The system MAY accept the version 1.0 purchase order format; whether this format is still required is unresolved. Where it is accepted, the system SHALL read from it the order id, user id, email, order date, ship-to and bill-to addresses (first name, last name, street, city, state, country, zip), total price, credit card (number, expiry date, card type), one or more line items (category, product, item, line number, quantity, unit price), and a locale that SHALL default to `en_US` when absent.
+The system SHALL treat the version 1.0 purchase order format as optional to accept, because whether this format is still required is unresolved. Where it is accepted, the system SHALL read from it the order id, user id, email, order date, ship-to and bill-to addresses (first name, last name, street, city, state, country, zip), total price, credit card (number, expiry date, card type), one or more line items (category, product, item, line number, quantity, unit price), and a locale that SHALL default to `en_US` when absent.
 
 #### Scenario: Version 1.0 purchase order received
 
