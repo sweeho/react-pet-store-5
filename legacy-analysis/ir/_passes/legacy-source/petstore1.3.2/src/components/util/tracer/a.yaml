@@ -6,6 +6,8 @@
 # No legacy-analysis/sources/**/extracted.md documents exist in this tree, so there
 # are no document traces to cite. discovery/report.md line 65 already classes
 # util/tracer as low-risk "plumbing".
+# Re-verified on attempt 2 (2026-09-26): source unchanged, still no extracted.md documents,
+# and no capability in discovery/capabilities.csv covers diagnostic logging.
 records: []
 findings:
   - kind: ambiguity
