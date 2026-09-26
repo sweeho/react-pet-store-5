@@ -1,0 +1,28 @@
+# Pass B, module legacy-source/petstore1.3.2/src/components/util/tracer
+# The module holds one diagnostic-logging utility class plus its Ant build file.
+# It encodes no business rule, entity, screen, workflow or integration that maps to any
+# capability_key in legacy-analysis/discovery/capabilities.csv, so no records are emitted.
+# No legacy-analysis/sources/**/extracted.md documents exist in the tree to cite.
+records: []
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/util/tracer/src/com/sun/j2ee/blueprints/util/tracer/Debug.java
+    description: >
+      Debug.java (lines 44-80) is a cross-cutting diagnostic helper used by 14 source files
+      elsewhere in the application. Every output method is guarded by the compile-time
+      constant `public static final boolean debuggingOn = false;` (line 46), so all
+      print/println calls are unreachable in the shipped build and write nothing. No
+      capability in the closed list covers diagnostics or logging, so nothing was emitted.
+      A human should confirm that the rebuild needs no functional equivalent. The
+      assumption here is that it is a non-functional concern (structured logging) for
+      ARCHITECTURE.md, not a spec requirement. If a requirement is wanted anyway, it would
+      have to be filed under an unrelated capability, which this pass declined to do.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/util/tracer/src/build.xml
+    description: >
+      The `clientjar` target (lines 83-91) uses property `${tracer.buildjardir}`, but the
+      `init` target (lines 47-72) never defines it, and it is not found in this module.
+      It may come from `${user.home}/petstore.properties` or `../../../../build.properties`,
+      which this shard did not check. If it is not defined in either file, Ant takes the
+      literal directory name and the jar is still produced. This is build-only, with no
+      effect on the specification, and is recorded for completeness.
