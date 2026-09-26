@@ -1,0 +1,632 @@
+# Spec extraction SX-0001, pass A, shard legacy-source/petstore1.3.2/src/components/supplierpo
+# No legacy-analysis/sources/**/extracted.md exists in the tree, so no document traces are cited.
+records:
+  - record_key: order-fulfillment-entity-0001
+    kind: entity
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL persist a supplier purchase order identified by a unique
+      order id (the primary key), holding an order date, an order status, exactly
+      one shipping contact, and a collection of line items.
+    confidence: medium
+    confidence_basis: >
+      The shape is stated declaratively (persistent fields, primary key, relations) and
+      matched by the bean accessors, but both are in the same component and there is no
+      DDL in this shard, so column types and nullability cannot be seen. The other pass
+      has not been compared yet.
+    risk_class: operational
+    basis: >
+      The deployment descriptor declares poId, poDate and poStatus as persistent fields,
+      with poId as a String primary key. A one-to-one relation to the contact and a
+      one-to-many relation to line items are also declared. The bean stores poDate as
+      epoch milliseconds (long).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 56
+        line_end: 69
+        excerpt: |
+                <prim-key-class>java.lang.String</prim-key-class>
+                <reentrant>False</reentrant>
+                <cmp-version>2.x</cmp-version>  
+                <abstract-schema-name>SupplierOrder</abstract-schema-name>
+                <cmp-field>
+                  <field-name>poId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>poDate</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>poStatus</field-name>
+                </cmp-field>
+                <primkey-field>poId</primkey-field>
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderEJB.java
+        line_start: 89
+        line_end: 100
+        excerpt: |
+            /**
+             * Accessor method for purchase order Date
+             * @return long  the PO Date - time from epoch
+             */
+            public abstract long getPoDate();
+
+
+            /**
+             * Setter method for PO Date
+             * @param long the PO Date - time from epoch
+             */
+            public abstract void setPoDate(long orderDate);
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: SupplierOrderEJB
+      db.object: SupplierOrder (abstract schema)
+
+  - record_key: order-fulfillment-entity-0002
+    kind: entity
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL record, for each supplier purchase order line, the category id,
+      product id, item id, line number, quantity ordered, unit price and quantity shipped.
+    confidence: medium
+    confidence_basis: >
+      The fields are declared in this component's descriptor. The line item bean itself
+      is in another component (lineitem), so types and constraints were not verified here.
+    risk_class: financial
+    basis: >
+      The LineItemEJB entity declared inside the supplier PO descriptor lists these seven
+      persistent fields. It carries unit price and quantity, so it feeds money totals.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 198
+        line_end: 219
+        excerpt: |
+                <abstract-schema-name>LineItem</abstract-schema-name>
+                <cmp-field>
+                  <field-name>categoryId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>productId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>itemId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>lineNumber</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>quantity</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>unitPrice</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>quantityShipped</field-name>
+                </cmp-field>
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      db.object: LineItem (abstract schema)
+
+  - record_key: order-fulfillment-business-rule-0001
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      WHEN a supplier purchase order is created, the system SHALL copy the order id and
+      order date from the incoming order and SHALL set the order status to PENDING,
+      whatever the incoming document says.
+    confidence: medium
+    confidence_basis: >
+      There is one unambiguous programmatic source (the create method). No schema default
+      or second enforcement point exists in this shard.
+    risk_class: operational
+    basis: >
+      ejbCreate sets poId and poDate from the SupplierOrder value object and always sets
+      poStatus to the PENDING constant. The incoming document has no status field.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderEJB.java
+        line_start: 151
+        line_end: 156
+        excerpt: |
+            public String ejbCreate(SupplierOrder supplierOrder) throws CreateException {
+              setPoId(supplierOrder.getOrderId());
+              setPoDate(supplierOrder.getOrderDate().getTime());
+              setPoStatus(OrderStatusNames.PENDING);
+              return null;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/OrderStatusNames.java
+        line_start: 50
+        line_end: 51
+        excerpt: |
+              /** for orders that have been placed but not yet approved */
+              public static final String PENDING = "PENDING";
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB
+      ejb.transaction: Required
+
+  - record_key: order-fulfillment-business-rule-0002
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      WHEN a supplier purchase order is created, the system SHALL store a new shipping
+      contact from the order's shipping info and a new line item for every incoming line,
+      each with quantity shipped initialised to 0. The order, its contact and its line
+      items SHALL be created in one transaction.
+    confidence: medium
+    confidence_basis: >
+      The zero literal is passed in the post-create step and matches the line item bean's
+      create(lineItem, qty) signature, which sets quantityShipped from qty (checked outside
+      the shard, in lineitem). The transaction attribute is declarative. It is one code path
+      and has not been cross-checked with the other pass.
+    risk_class: operational
+    basis: >
+      ejbPostCreate creates a contact from getShippingInfo(), then iterates the line items
+      and calls lineItemref.create(li, 0) for each. The create method on the local home is
+      declared with trans-attribute Required, so a failure (CreateException) rolls back
+      the whole creation.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderEJB.java
+        line_start: 164
+        line_end: 183
+        excerpt: |
+            try {
+                ServiceLocator serviceLocator = new ServiceLocator();
+                ContactInfoLocalHome cinforef = (ContactInfoLocalHome)
+                    serviceLocator.getLocalHome(JNDINames.CINFO_EJB);
+                ContactInfoLocal cinfoloc = (ContactInfoLocal)
+                                cinforef.create(supplierOrder.getShippingInfo());
+                setContactInfo(cinfoloc);
+                LineItemLocalHome lineItemref = (LineItemLocalHome)
+                    serviceLocator.getLocalHome(JNDINames.LI_EJB);
+                Collection litems = supplierOrder.getLineItems();
+                Iterator it = litems.iterator();
+                while((it != null) && (it.hasNext())) {
+                  LineItem li = (LineItem) it.next();
+                  LineItemLocal lineItemloc = (LineItemLocal) lineItemref.create(li, 0);
+                  addLineItem(lineItemloc);
+                }
+              } catch(ServiceLocatorException ne) {
+                throw new CreateException("ServiceLocator Ex while persisting PO CMR :" +
+                                          ne.getMessage());
+              }
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 445
+        line_end: 455
+        excerpt: |
+              <container-transaction>
+                <method>
+                  <ejb-name>SupplierOrderEJB</ejb-name>
+                  <method-intf>LocalHome</method-intf>
+                  <method-name>create</method-name>
+                  <method-params>
+                    <method-param>com.sun.j2ee.blueprints.supplierpo.ejb.SupplierOrder</method-param>
+                  </method-params>
+                </method>
+                <trans-attribute>Required</trans-attribute>
+              </container-transaction>
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB
+      ejb.transaction: Required
+
+  - record_key: order-fulfillment-business-rule-0003
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      The supplier purchase order status SHALL take one of PENDING, APPROVED, DENIED or
+      COMPLETED. The documented lifecycle is PENDING to APPROVED to COMPLETED, or PENDING
+      to DENIED.
+    confidence: low
+    confidence_basis: >
+      The lifecycle is stated only in a class comment. Nothing in this shard enforces the
+      transitions: setPoStatus accepts any string. Outside the shard, the supplier fulfilment
+      code moves a supplier PO straight from PENDING to COMPLETED using a different constants
+      class, so the documented path may not be the real one (see findings).
+    risk_class: operational
+    basis: >
+      OrderStatusNames defines four string constants and a comment describing the allowed
+      transitions. The local interface exposes an unconstrained setPoStatus(String).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/OrderStatusNames.java
+        line_start: 41
+        line_end: 60
+        excerpt: |
+          /**
+           * This class is the central location to store the names of the
+           * status that an order can be in.
+           * The states an order goes through are:
+           * pending->approved->completed   or
+           * pending->denied
+           */
+          public class OrderStatusNames {
+
+              /** for orders that have been placed but not yet approved */
+              public static final String PENDING = "PENDING";
+
+              /** for orders that have been approved */
+              public  static final String APPROVED = "APPROVED";
+
+              /** for orders that have been denied */
+              public  static final String DENIED = "DENIED";
+
+              /** for orders that have been completed*/
+              public  static final String COMPLETED = "COMPLETED";
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderLocal.java
+        line_start: 58
+        line_end: 59
+        excerpt: |
+              public String getPoStatus();
+              public void setPoStatus(String stat);
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB
+
+  - record_key: order-fulfillment-requirement-0001
+    kind: requirement
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL retrieve all supplier purchase orders that have a given status,
+      with no duplicates, and SHALL retrieve a single supplier purchase order by its order id.
+    confidence: medium
+    confidence_basis: >
+      The query is declarative and matches the finder signature. Outside the shard it is
+      used to list PENDING supplier orders. No ordering is specified, so result order is
+      undefined.
+    risk_class: operational
+    basis: >
+      findOrdersByStatus is backed by an EJB-QL SELECT DISTINCT filtered by poStatus.
+      findByPrimaryKey takes the poId.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 95
+        line_end: 104
+        excerpt: |
+                <query>
+                  <description></description>
+                  <query-method>
+                    <method-name>findOrdersByStatus</method-name>
+                    <method-params>
+                      <method-param>java.lang.String</method-param>
+                    </method-params>
+                  </query-method>
+                  <ejb-ql>SELECT DISTINCT OBJECT(a) FROM SupplierOrder a WHERE a.poStatus = ?1</ejb-ql>
+                </query>
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderLocalHome.java
+        line_start: 51
+        line_end: 57
+        excerpt: |
+          public interface SupplierOrderLocalHome extends EJBLocalHome {
+
+              SupplierOrderLocal create(SupplierOrder supplierOrder) throws CreateException;
+
+              public SupplierOrderLocal findByPrimaryKey(String poId) throws FinderException;
+
+              public Collection findOrdersByStatus(String status) throws FinderException;
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB
+      ejb.transaction: Required
+
+  - record_key: order-fulfillment-business-rule-0004
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      WHEN a supplier purchase order is deleted, the system SHALL also delete its shipping
+      contact (and that contact's address) and all of its line items.
+    confidence: medium
+    confidence_basis: >
+      Cascade delete is declared on all three relations. No code path in this shard deletes
+      a supplier PO, so it cannot be confirmed that deletion is ever exercised.
+    risk_class: operational
+    basis: >
+      The SupplierOrder-ContactInfo, ContactInfo-Address and SupplierOrder-LineItem
+      relations each carry cascade-delete on the dependent side. The comment says every PO
+      has one or more line items.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 246
+        line_end: 252
+        excerpt: |
+                <ejb-relationship-role>
+                  <ejb-relationship-role-name>address-for-purchaseorder</ejb-relationship-role-name>
+                  <multiplicity>One</multiplicity>
+                  <cascade-delete />
+                  <relationship-role-source>
+                    <ejb-name>ContactInfoEJB</ejb-name>
+                  </relationship-role-source> 
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 275
+        line_end: 281
+        excerpt: |
+                <ejb-relationship-role>
+                  <ejb-relationship-role-name>AddressEJB</ejb-relationship-role-name>
+                  <multiplicity>One</multiplicity>
+                  <cascade-delete />
+                  <relationship-role-source>
+                    <ejb-name>AddressEJB</ejb-name>
+                  </relationship-role-source>
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 285
+        line_end: 292
+        excerpt: |
+              <!--
+                 ONE-TO-MANY Relationship between SupplierOrder and line items.
+                 Every PO has 1 or more line items relate to it
+              -->
+              <ejb-relation>
+                <ejb-relation-name>SupplierOrder-LineItem</ejb-relation-name>
+                <ejb-relationship-role>
+                  <ejb-relationship-role-name>purchaseorder-has-lineitems</ejb-relationship-role-name>
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 302
+        line_end: 308
+        excerpt: |
+                <ejb-relationship-role>
+                  <ejb-relationship-role-name>lineItem-for-purchaseorder</ejb-relationship-role-name>
+                  <multiplicity>Many</multiplicity>
+                  <cascade-delete />
+                  <relationship-role-source>
+                    <ejb-name>LineItemEJB</ejb-name>
+                  </relationship-role-source> 
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB
+
+  - record_key: b2b-document-exchange-entity-0001
+    kind: entity
+    capability_key: b2b-document-exchange
+    requirement: >
+      The supplier order document SHALL consist, in this order, of an OrderId, an OrderDate,
+      a ShippingInfo element wrapping one ContactInfo, and one or more LineItem elements.
+    confidence: high
+    confidence_basis: >
+      The structure is enforced in two independent places: the DTD content model (which
+      requires at least one LineItem) and the serializer and parser, which emit and read the
+      elements in the same order.
+    risk_class: operational
+    basis: >
+      The DTD declares SupplierOrder (OrderId, OrderDate, ShippingInfo, LineItem+) and pulls
+      ContactInfo and LineItem from their own public DTDs. toDOM writes the elements in the
+      same sequence, and fromDOM reads them positionally with getNextSibling.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/rsrc/schemas/SupplierOrder.dtd
+        line_start: 38
+        line_end: 52
+        excerpt: |
+          <!ELEMENT SupplierOrder (OrderId, OrderDate, ShippingInfo, LineItem+)>
+
+          <!ELEMENT OrderId (#PCDATA)>
+
+          <!ELEMENT OrderDate (#PCDATA)>
+
+          <!ELEMENT ShippingInfo (ContactInfo)>
+
+          <!ENTITY % ContactInfo PUBLIC "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD ContactInfo 1.1//EN"
+           "/com/sun/j2ee/blueprints/contactinfo/rsrc/schemas/ContactInfo.dtd">
+          %ContactInfo;
+
+          <!ENTITY % LineItem PUBLIC "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD LineItem 1.1//EN"
+           "/com/sun/j2ee/blueprints/lineitem/rsrc/schemas/LineItem.dtd">
+          %LineItem;
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 189
+        line_end: 202
+        excerpt: |
+            public Node toDOM(Document document) {
+              Element root = document.createElement(XML_SUPPLIERORDER);
+              XMLDocumentUtils.appendChild(document, root, XML_ORDERID, orderId);
+              XMLDocumentUtils.appendChild(document, root, XML_ORDERDATE,
+                                           dateFormat.format(orderDate));
+              Element element = (Element) document.createElement(XML_SHIPPINGINFO);
+              element.appendChild(shippingInfo.toDOM(document));
+              root.appendChild(element);
+              for (Iterator i = lineItems.iterator(); i.hasNext();) {
+                LineItem lineItem = (LineItem) i.next();
+                root.appendChild(lineItem.toDOM(document));
+              }
+              return root;
+            }
+    stack_metadata:
+      framework: JAXP DOM
+      dtd.public_id: "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD SupplierOrder 1.1//EN"
+
+  - record_key: b2b-document-exchange-business-rule-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL validate an incoming supplier order document against the supplier
+      order document schema by default, and SHALL reject a document whose root element is
+      not SupplierOrder with the error "SupplierOrder element expected."
+    confidence: medium
+    confidence_basis: >
+      Validation is on by a constant default, and the root-element check is explicit in code.
+      A caller can pass validating=false through the three-argument overloads, and whether
+      any caller does so cannot be seen from this shard.
+    risk_class: operational
+    basis: >
+      VALIDATING is true and the one-argument fromXML overloads pass it through, together
+      with the DTD public id. fromDOM throws an XMLDocumentException unless the element tag
+      is SupplierOrder.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 59
+        line_end: 61
+        excerpt: |
+            public static final String DTD_PUBLIC_ID = "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD SupplierOrder 1.1//EN";
+            public static final String DTD_SYSTEM_ID = "/com/sun/j2ee/blueprints/supplierpo/rsrc/schemas/SupplierOrder.dtd";
+            public static final boolean VALIDATING = true;
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 154
+        line_end: 168
+        excerpt: |
+            public static SupplierOrder fromXML(Source source)
+              throws XMLDocumentException {
+                return fromXML(source, null, VALIDATING);
+            }
+
+            public static SupplierOrder fromXML(String buffer)
+              throws XMLDocumentException {
+                return fromXML(buffer, null, VALIDATING);
+            }
+
+            public static SupplierOrder fromXML(Source source, URL entityCatalogURL, boolean validating)
+              throws XMLDocumentException {
+                return fromDOM(XMLDocumentUtils.fromXML(source, DTD_PUBLIC_ID,
+                                                        entityCatalogURL, validating));
+            }
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 209
+        line_end: 212
+        excerpt: |
+            public static SupplierOrder fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE &&
+                  (element = ((Element) node)).getTagName().equals(XML_SUPPLIERORDER)) {
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 236
+        line_end: 236
+        excerpt: |
+              throw new XMLDocumentException(XML_SUPPLIERORDER + " element expected.");
+    stack_metadata:
+      framework: JAXP DOM
+      declarative_validator: SupplierOrder.dtd
+
+  - record_key: b2b-document-exchange-business-rule-0002
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      The supplier order document SHALL carry OrderDate as a calendar date in yyyy-MM-dd
+      format, both when the document is written and when it is read.
+    confidence: medium
+    confidence_basis: >
+      One formatter is used for both directions in the same class. The DTD types OrderDate
+      only as #PCDATA, so the format is not enforced declaratively.
+    risk_class: operational
+    basis: >
+      A SimpleDateFormat("yyyy-MM-dd") formats orderDate in toDOM and parses it in fromDOM.
+      The time of day is therefore dropped on serialization.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 66
+        line_end: 66
+        excerpt: |
+            private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 192
+        line_end: 193
+        excerpt: |
+              XMLDocumentUtils.appendChild(document, root, XML_ORDERDATE,
+                                           dateFormat.format(orderDate));
+    stack_metadata:
+      framework: JAXP DOM
+
+  - record_key: b2b-document-exchange-business-rule-0003
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      GIVEN an incoming supplier order document whose OrderDate is missing or cannot be
+      parsed as yyyy-MM-dd, WHEN the document is read, THEN the system SHALL substitute
+      the current date as the order date and continue processing instead of rejecting
+      the document.
+    confidence: low
+    confidence_basis: >
+      The behaviour is explicit in code, but the developer marked it "FIX ME!", so it is
+      probably not intended. Validation against the DTD makes a missing OrderDate unlikely
+      but does not check the date format. This is disputed: record the behaviour and let a
+      human decide whether to keep it.
+    risk_class: operational
+    basis: >
+      The catch block around the OrderDate parse sets the date to new Date() and logs
+      "reset to current date." The FIX ME comment marks it as a known workaround.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+        line_start: 217
+        line_end: 223
+        excerpt: |
+                try {
+                  child = XMLDocumentUtils.getNextSibling(child, XML_ORDERDATE, false);
+                  supplierOrder.setOrderDate(supplierOrder.dateFormat.parse(XMLDocumentUtils.getContentAsString(child, false)));
+                } catch (Exception exception) {
+                  supplierOrder.setOrderDate(new Date()); // FIX ME!
+                  System.err.println(XML_ORDERDATE + ": " + exception.getMessage() + " reset to current date.");
+                }
+    stack_metadata:
+      framework: JAXP DOM
+      disputed: true
+
+  - record_key: sign-on-business-rule-0001
+    kind: business-rule
+    capability_key: sign-on
+    requirement: >
+      Supplier purchase order records, and their contacts, addresses and line items, SHALL
+      be accessible to internal callers without a role check. They SHALL be reachable only
+      from inside the application (no remote interface), under the caller's own identity.
+    confidence: medium
+    confidence_basis: >
+      The permission is declarative and unambiguous. Whether this is a deliberate access
+      decision or the default of a local-only component cannot be told from the source.
+      It is filed under sign-on because that is the only listed capability covering access
+      control.
+    risk_class: operational
+    basis: >
+      Every method of the four beans has an <unchecked/> method-permission. SupplierOrderEJB
+      uses caller identity and exposes only local interfaces; the local interface comment
+      says it has no remote interface.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 318
+        line_end: 325
+        excerpt: |
+            <assembly-descriptor>
+              <method-permission>
+                <unchecked />
+                <method>
+                  <ejb-name>SupplierOrderEJB</ejb-name>
+                  <method-name>*</method-name>
+                </method>
+              </method-permission>
+      - path: legacy-source/petstore1.3.2/src/components/supplierpo/src/ejb-jar.xml
+        line_start: 91
+        line_end: 94
+        excerpt: |
+                <security-identity>
+                  <description></description>
+                  <use-caller-identity></use-caller-identity>
+                </security-identity> 
+    stack_metadata:
+      ejb.bean: SupplierOrderEJB, ContactInfoEJB, AddressEJB, LineItemEJB
+
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrderEJB.java
+    description: >
+      getData() (line 209) calls supplierOrder.setShippingInfo(supplierOrder.getShippingInfo())
+      on a newly created object, so the returned order always has a null shipping contact.
+      The persisted contactInfo relation is never read. Calling toDOM/toXML on that result
+      would throw a NullPointerException at shippingInfo.toDOM. A human needs to decide
+      whether "read back a supplier order including its shipping contact" is a requirement.
+      The persisted relation says it is; this accessor loses the contact.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/OrderStatusNames.java
+    description: >
+      This component's OrderStatusNames documents PENDING->APPROVED->COMPLETED or
+      PENDING->DENIED, but only PENDING is used inside the shard. Outside the shard, the
+      supplier fulfilment facade (apps/supplier .../OrderFulfillmentFacadeEJB.java:198) imports
+      the process manager's OrderStatusNames and sets a supplier PO directly to COMPLETED,
+      and the OPC also uses a SHIPPED_PART status that is not defined here. Decide which set
+      of supplier-PO states is authoritative and whether APPROVED/DENIED ever apply to a
+      supplier PO, or only to the customer order.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/rsrc/schemas/SupplierOrder.dtd
+    description: >
+      A second SupplierOrder.dtd exists at components/xmldocuments/src/rsrc/schemas/SupplierOrder.dtd,
+      along with TPASupplierOrder.dtd (outside this shard). It was not compared. The pass over
+      xmldocuments should confirm whether the two supplier order schemas are identical, and
+      which one is exchanged with suppliers.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+    description: >
+      TRACE is hard-coded true, and fromXML(String, ...) prints every incoming document to
+      stderr (lines 145-147, 172). Supplier orders carry customer name, address, email and
+      telephone, so this writes personal data to server logs. A human should decide whether
+      the rebuild must avoid logging exchanged documents. No requirement was emitted because
+      this is almost certainly debug residue, not intended behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/supplierpo/src/com/sun/j2ee/blueprints/supplierpo/ejb/SupplierOrder.java
+    description: >
+      The main() method (lines 239-276) is a command-line round-trip test harness with no
+      business rule. It is treated as non-production code and no record was emitted.
