@@ -1,0 +1,535 @@
+records:
+  - record_key: localization-requirement-0001
+    kind: requirement
+    capability_key: localization
+    requirement: >-
+      The system SHALL assign every new visitor session the configured default locale (en_US) when no locale
+      has yet been chosen for that session.
+    confidence: medium
+    confidence_basis: >-
+      Enforced in one code path and declared in one configuration value (declarative + programmatic), but the
+      petstore application re-declares the value in its own deployment descriptor, and I cannot see whether
+      the earlier passes agree, so high is not justified.
+    risk_class: operational
+    basis: >-
+      The front controller reads the default_locale init parameter at startup and, on every request, stores it
+      in the session when no session locale exists. The WAF descriptor sets it to en_US and the petstore
+      descriptor sets the same value.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/MainServlet.java
+        line_start: 79
+        line_end: 81
+        excerpt: |2
+              public void init(ServletConfig config) throws ServletException {
+                  String defaultLocaleString = config.getInitParameter("default_locale");
+                  defaultLocale = I18nUtil.getLocaleFromString(defaultLocaleString);
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/MainServlet.java
+        line_start: 108
+        line_end: 113
+        excerpt: |2
+              private void doProcess(HttpServletRequest request, HttpServletResponse response)
+                             throws IOException, ServletException {
+                  // set the locale of the user to default if not set
+                  if (request.getSession().getAttribute(WebKeys.LOCALE) == null) {
+                      request.getSession().setAttribute(WebKeys.LOCALE, defaultLocale);
+                  }
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/web.xml
+        line_start: 57
+        line_end: 60
+        excerpt: |2
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 97
+        line_end: 98
+        excerpt: |2
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      session.scope: com.sun.j2ee.blueprints.waf.LOCALE
+      servlet: MainServlet (*.do)
+  - record_key: localization-business-rule-0002
+    kind: business-rule
+    capability_key: localization
+    requirement: >-
+      The system SHALL let a user change the session locale by submitting a locale code of the form
+      language_COUNTRY; GIVEN a locale code that cannot be parsed WHEN the change is submitted THEN the system
+      SHALL reject it with an error and leave the session locale unchanged.
+    confidence: medium
+    confidence_basis: >-
+      Single source (one action class) for both the success and the rejection path; reachability into the
+      petstore is confirmed through petstore mappings.xml. Not two independent enforcement points, so not
+      high.
+    risk_class: operational
+    basis: >-
+      The change-locale action reads the 'locale' request parameter, converts it to a Locale, stores it in the
+      session and raises an event to the business tier. A null parse result throws an action exception
+      carrying 'Unable to change language to <value>' before any session write.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/action/actions/ChangeLocaleHTMLAction.java
+        line_start: 70
+        line_end: 84
+        excerpt: |2
+              public Event perform(HttpServletRequest request)
+                  throws HTMLActionException {
+                  // Extract attributes we will need
+                  String localeString = request.getParameter("locale");
+                  Locale locale = I18nUtil.getLocaleFromString(localeString);
+                  //MessageResources messages = getResources();
+                  HttpSession session = request.getSession();
+
+                  if (locale != null) {
+                      session.setAttribute(LOCALE,locale);
+                      return new ChangeLocaleEvent(locale);
+                  } else {
+                      throw new HTMLActionException("ChangeLocaleAction: Unable to change language to " + localeString);
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 101
+        line_end: 104
+        excerpt: |2
+              <url-mapping url="changelocale.do" useFlowHandler="true" >
+                  <web-action-class>com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction</web-action-class>
+                  <flow-handler class="com.sun.j2ee.blueprints.waf.controller.web.flow.handlers.ClientStateFlowHandler"/>
+             </url-mapping>
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      struts.action: ChangeLocaleHTMLAction
+      url: changelocale.do
+      event: ChangeLocaleEvent
+  - record_key: localization-business-rule-0003
+    kind: business-rule
+    capability_key: localization
+    requirement: >-
+      The system SHALL interpret a locale code as follows. GIVEN the code 'default' (any case) THEN the
+      server's own default locale SHALL be used. GIVEN a code with no underscore (for example 'en') THEN the
+      code SHALL be treated as invalid. GIVEN a code language_COUNTRY THEN the language and country SHALL be
+      taken from the two parts. GIVEN a code with a third variant part (language_COUNTRY_VARIANT) THEN the
+      observed legacy behaviour does not yield a usable locale (see findings) and the rebuild SHALL NOT rely
+      on it.
+    confidence: low
+    confidence_basis: >-
+      The parsing rules are only implicit in string-index code with no comment, test or configuration. The
+      variant branch cannot run because variantIndex is never assigned, and the three-part case leaves country
+      null. Whether that is intended cannot be told from the source.
+    risk_class: operational
+    basis: >-
+      The locale parser returns null for null input and for input without '_', returns Locale.getDefault() for
+      'default', and otherwise builds Locale(language, country). The same parser is used for the startup
+      default, the locale-change action and, in petstore, for the customer's preferred language at sign-on.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+        line_start: 168
+        line_end: 196
+        excerpt: |2
+              public static Locale getLocaleFromString(String localeString) {
+                  if (localeString == null) return null;
+                  if (localeString.toLowerCase().equals("default")) return Locale.getDefault();
+                  int languageIndex = localeString.indexOf('_');
+                  if (languageIndex  == -1) return null;
+                  int countryIndex = localeString.indexOf('_', languageIndex +1);
+                  String country = null;
+                  if (countryIndex  == -1) {
+                      if (localeString.length() > languageIndex) {
+                          country = localeString.substring(languageIndex +1, localeString.length());
+                      } else {
+                          return null;
+                      }
+                  }
+                  int variantIndex = -1;
+                  if (countryIndex != -1) countryIndex = localeString.indexOf('_', countryIndex +1);
+                  String language = localeString.substring(0, languageIndex);
+                  String variant = null;
+                  if (variantIndex  != -1) {
+
+                      variant = localeString.substring(variantIndex +1, localeString.length());
+                  }
+                  if (variant != null) {
+                      return new Locale(language, country, variant);
+                  } else {
+                      return new Locale(language, country);
+                  }
+
+              }
+      - path: >-
+          legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/SignOnEJBAction.java
+        line_start: 87
+        line_end: 87
+        excerpt: |2
+                       Locale locale = I18nUtil.getLocaleFromString(profile.getPreferredLanguage());
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      class: com.sun.j2ee.blueprints.waf.util.I18nUtil#getLocaleFromString
+  - record_key: localization-requirement-0004
+    kind: requirement
+    capability_key: localization
+    requirement: >-
+      The system SHALL render each screen using the screen definition for the requested locale, where a
+      'locale' request parameter overrides the session locale. GIVEN a locale for which no screen definitions
+      are loaded WHEN a screen is requested THEN the default locale's definitions SHALL be used. GIVEN a
+      screen that is not defined for the chosen locale THEN the default locale's definition of that screen
+      SHALL be used. GIVEN a screen defined in neither THEN an error stating the screen definition was not
+      found SHALL be shown.
+    confidence: medium
+    confidence_basis: >-
+      One programmatic source that is directly configured by the locales/default_locale init parameters in
+      both the WAF and petstore descriptors. The fallback ordering is explicit in code. Only one enforcement
+      layer, so medium.
+    risk_class: presentational
+    basis: >-
+      The template servlet loads one screen-definition file per configured locale. When processing a request
+      it takes the locale from the request parameter first, then from the session, and falls back to
+      default_locale when no definitions exist for that locale. It then looks up the screen, retries in the
+      default locale's definitions, and writes a 'Definition for screen X not found' message if the screen is
+      still missing. Petstore configures locales en_US, ja_JP and zh_CN.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/view/template/com/sun/j2ee/blueprints/waf/view/template/TemplateServlet.java
+        line_start: 102
+        line_end: 112
+        excerpt: |2
+                  defaultLocale = config.getInitParameter("default_locale");
+                  if (defaultLocale == null) {
+                      defaultLocale = (Locale.getDefault()).toString();
+                  }
+                  String locales = config.getInitParameter("locales");
+                  if (locales != null) {
+                      StringTokenizer strTok = new StringTokenizer(locales,",");
+                      while (strTok.hasMoreTokens()) {
+                          initScreens(config.getServletContext(), strTok.nextToken());
+                      }
+                  }
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/view/template/com/sun/j2ee/blueprints/waf/view/template/TemplateServlet.java
+        line_start: 157
+        line_end: 166
+        excerpt: |2
+                  String languageParam = request.getParameter("locale");
+                  // The language when specified as a parameter overrides the language set in the session
+                  if (languageParam != null) {
+                      localeString = languageParam;
+                  } else if (request.getSession().getAttribute(WebKeys.LOCALE) != null) {
+                      localeString = ((Locale)request.getSession().getAttribute(WebKeys.LOCALE)).toString();
+                  }
+                  if (allScreens.get(localeString) == null) {
+                     localeString = defaultLocale;
+                  }
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/view/template/com/sun/j2ee/blueprints/waf/view/template/TemplateServlet.java
+        line_start: 231
+        line_end: 253
+        excerpt: |2
+                  // get the screen information for the coresponding language
+                  Screen screen = null;
+                  if (screenName != null){
+                      Screens localeScreens = (Screens)allScreens.get(localeString);
+                      if (localeScreens != null) screen = (Screen)localeScreens.getScreen(screenName);
+                      // default to the default locale screen if it was not defined in the locale specific definitions
+                      if (screen == null) {
+                          System.err.println("Screen not Found loading default from " + defaultLocale);
+                          localeScreens = (Screens)allScreens.get(defaultLocale);
+                          screen = (Screen)localeScreens.getScreen(screenName);
+                      }
+                      if (screen != null) {
+                          request.setAttribute(WebKeys.CURRENT_SCREEN, screen);
+                          String templateName = localeScreens.getTemplate(screenName);
+                          if (templateName != null) {
+                              insertTemplate(request, response, templateName);
+                          }
+                      } else {
+                          response.setContentType("text/html;charset=8859_1");
+                          PrintWriter out = response.getWriter();
+                          out.println("<font size=+4>Error:</font><br>Definition for screen " + screenName + " not found");
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 109
+        line_end: 115
+        excerpt: |2
+                <param-name>locales</param-name>
+                <param-value>en_US,ja_JP,zh_CN</param-value>
+              </init-param>
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      servlet: TemplateServlet (*.screen)
+      config: /WEB-INF/screendefinitions_<locale>.xml
+  - record_key: localization-workflow-0005
+    kind: workflow
+    capability_key: localization
+    requirement: >-
+      The system SHALL return the user to the screen they were viewing after a locale change, re-displayed in
+      the new locale with that screen's request data restored, rather than to a fixed landing screen.
+    confidence: medium
+    confidence_basis: >-
+      The WAF flow handler and the petstore URL mapping that binds it to changelocale.do agree. The
+      state-restoring half depends on a page-embedded client-state form whose use on petstore pages I did not
+      verify in this shard.
+    risk_class: presentational
+    basis: >-
+      In petstore, changelocale.do uses the client-state flow handler. That handler forwards to the
+      'referring_screen' request parameter and restores request attributes that the client-state form
+      serialized into hidden '<cacheId>_attribute_<name>' fields. The form records the session's previous
+      screen as referring_screen.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/handlers/ClientStateFlowHandler.java
+        line_start: 66
+        line_end: 101
+        excerpt: |2
+              public String processFlow(HttpServletRequest request)
+                  throws FlowHandlerException {
+
+
+                  String forwardScreen = request.getParameter("referring_screen");
+                  // de-serialize the request attributes.
+                  Map params = (Map)request.getParameterMap();
+                  HashMap newParams = new HashMap();
+                  String cacheId= request.getParameter("cacheId");
+                  if (!params.isEmpty()) {
+                      Iterator it = params.keySet().iterator();
+                      // put the request attributes stored in the session in the request
+                      while (it.hasNext()) {
+                          String key = (String)it.next();
+                          if (key.startsWith(cacheId + "_attribute_")) {
+                              String[] values = (String[])params.get(key);
+                              String valueString = values[0];
+                              byte[] bytes  = Base64.decode(valueString.getBytes());
+                              try {
+                                  ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                                  Object requestObject = requestObject = ois.readObject();
+                                  ois.close();
+                                  // put the de-serialized object back into the request
+                                  String requestObjectKey = key.substring((cacheId + "_attribute_").length(), key.length());
+                                  request.setAttribute(requestObjectKey, requestObject);
+                              } catch (java.io.OptionalDataException ode) {
+                                  System.err.println("ClientCacheLinkFlowHandler caught: " + ode);
+                              } catch (java.lang.ClassNotFoundException cnfe) {
+                                  System.err.println("ClientCacheLinkFlowHandler caught: " + cnfe);
+                              } catch (java.io.IOException iox) {
+                                  System.err.println("ClientCacheLinkFlowHandler caught: " + iox);
+                              }
+                          }
+                      }
+                  }
+                  return forwardScreen;
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/ClientStateTag.java
+        line_start: 149
+        line_end: 155
+        excerpt: |2
+                  String referringScreen =
+                          (String)request.getSession().getAttribute(WebKeys.PREVIOUS_SCREEN);
+                  buffer.append(" <input type=\"hidden\" name=\"referring_screen\"" +
+                                         "value=\"" + referringScreen +
+                                         "\">");
+                  buffer.append(" <input type=\"hidden\" name=\"cacheId\"" +
+                                         "value=\"" + cacheId +  "\">");
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 101
+        line_end: 104
+        excerpt: |2
+              <url-mapping url="changelocale.do" useFlowHandler="true" >
+                  <web-action-class>com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction</web-action-class>
+                  <flow-handler class="com.sun.j2ee.blueprints.waf.controller.web.flow.handlers.ClientStateFlowHandler"/>
+             </url-mapping>
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      flow_handler: ClientStateFlowHandler
+      jsp.tag: waf:clientState
+  - record_key: localization-screen-0006
+    kind: screen
+    capability_key: localization
+    requirement: >-
+      The system SHALL offer a locale selector listing US English (en_US), German (de_DE), Japanese (ja_JP)
+      and Simplified Chinese (zh_CN), submitting the chosen code to the locale-change operation.
+    confidence: low
+    confidence_basis: >-
+      Taken from the WAF sample docroot, which is a framework demonstration page rather than a petstore
+      screen. It lists German, which the petstore does not configure and the capability summary does not
+      mention. Reachability in the production application is unresolved.
+    risk_class: presentational
+    basis: >-
+      The WAF sample change-locale page renders a select named 'locale' with four options posting to
+      changelocale.do.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/changelocale.jsp
+        line_start: 48
+        line_end: 57
+        excerpt: |
+          <form action="changelocale.do">
+           Set Locale to:
+           <select name="locale">
+            <option value="en_US">US English</option>
+            <option value="de_DE">German</option>
+            <option value="ja_JP">Japanese</option>
+            <option value="zh_CN">Simplified Chinese</option>
+           </select>
+           <input type="submit" value="Change Locale"/>
+          </form>
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      jsp.page: waf/src/docroot/changelocale.jsp
+      disputed: true
+      reachability: WAF sample app only
+  - record_key: localization-integration-0007
+    kind: integration
+    capability_key: localization
+    requirement: >-
+      The system SHALL notify the business tier of a user's locale change so that business-side processing for
+      that user uses the new locale.
+    confidence: low
+    confidence_basis: >-
+      The event is raised and dispatched, but in the WAF sample the event-to-handler mapping names a class
+      that does not exist, and the component manager creates a fresh stateful controller per event. Whether
+      the stored locale survives to later processing is doubtful (see findings).
+    risk_class: operational
+    basis: >-
+      The change-locale action returns a ChangeLocaleEvent. The request processor maps it to a business-tier
+      action and hands it to the stateful controller, whose WAF action stores the locale in the controller
+      state map. The controller method runs in a container-managed Required transaction.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/RequestProcessor.java
+        line_start: 126
+        line_end: 144
+        excerpt: |2
+                  URLMapping urlMapping = getURLMapping(selectedURL);
+                  HTMLAction action = getAction(urlMapping);
+                  if (action != null) {
+                      action.setServletContext(request.getSession().getServletContext());
+                      action.doStart(request);
+                      ev = action.perform(request);
+                      EventResponse eventResponse = null;
+                      if (ev != null) {
+                         // set the ejb action class name on the event
+                          EventMapping eventMapping = getEventMapping(ev);
+                          if (eventMapping != null) {
+                                  ev.setEJBActionClassName(eventMapping.getEJBActionClassName());
+                          }
+                         ComponentManager sl = (ComponentManager)request.getSession().getAttribute(WebKeys.COMPONENT_MANAGER);
+                         WebController wcc =  sl.getWebController(request.getSession());
+                         eventResponse  = wcc.handleEvent(ev, request.getSession());
+                     }
+                     action.doEnd(request, eventResponse);
+                  }
+      - path: >-
+          legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/ejb/action/actions/ChangeLocaleEJBAction.java
+        line_start: 50
+        line_end: 56
+        excerpt: |
+          public class ChangeLocaleEJBAction extends EJBActionSupport {
+
+            public EventResponse perform(Event e) throws EventException {
+                ChangeLocaleEvent ce = (ChangeLocaleEvent)e;
+                machine.setAttribute("locale", ce.getLocale());
+                return null;
+            }
+      - path: legacy-source/petstore1.3.2/src/waf/src/ejb-jar.xml
+        line_start: 56
+        line_end: 57
+        excerpt: |2
+                <session-type>Stateful</session-type>
+                <transaction-type>Container</transaction-type>
+      - path: legacy-source/petstore1.3.2/src/waf/src/ejb-jar.xml
+        line_start: 63
+        line_end: 73
+        excerpt: "    <container-transaction>\n      <method>\n\t<ejb-name>EJBController</ejb-name>\n\t<method-intf>Local</method-intf>\n\t<method-name>processEvent</method-name>\n\t<method-params>\n\t  <method-param>com.sun.j2ee.blueprints.waf.event.Event</method-param>\n\t</method-params>\n      </method>\n      <trans-attribute>Required</trans-attribute>\n    </container-transaction>\n"
+    stack_metadata:
+      framework: J2EE BluePrints WAF
+      ejb.bean: EJBController (Stateful)
+      ejb.transaction: Required
+      event: ChangeLocaleEvent
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+    description: >-
+      The WAF sample event-mapping names com.sun.j2ee.blueprints.waf.event.events.ChangeLocaleEvent, but the
+      class is in package ...waf.event.impl. The request processor matches on the exact class name, so in the
+      sample the business-tier locale action is never selected. The petstore mappings.xml uses the correct
+      .impl name. A human should confirm this is a sample-only defect and does not reflect intended behaviour.
+  - kind: conflict
+    path: >-
+      legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/DefaultComponentManager.java
+    description: >-
+      getEJBController (lines 96-108) creates a new stateful controller when none is in the session, but never
+      stores it in the session. Every event therefore goes to a fresh bean, and state such as the locale saved
+      by the change-locale business action is lost, contrary to the class comment about a per-session
+      controller. PetstoreComponentManager inherits this method. Decide whether business-tier per-user state
+      is required behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+    description: >-
+      getLocaleFromString never assigns variantIndex, so a variant is never parsed. For a three-part code the
+      country stays null and new Locale(language, null) throws NullPointerException. It is unclear whether
+      variants were ever meant to be supported. The rebuild needs a decision on accepted locale-code formats.
+      The same parser is used for customer preferred language at sign-on.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/ScreenFlowManager.java
+    description: >-
+      forwardToNextScreen initialises currentScreen to "", so the 'Screen not found' error (line 153) never
+      fires for an unmapped *.do URL; the request is forwarded to '/'. If a flow handler fails to load, the
+      exception is swallowed with the same result. The intended behaviour for an unknown action URL (error vs
+      home) needs a human decision.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/ScreenFlowManager.java
+    description: >-
+      Unhandled exceptions are routed to a configured error screen by exception type, including subclasses
+      (lines 164-183, MainServlet 117-127); unmapped exceptions become a generic server error. No capability
+      in capabilities.csv covers cross-cutting error handling, so no record was filed. The WAF sample maps a
+      petstore-package exception class (mappings.xml line 57) that is not in this module. A human should
+      decide which capability owns error-screen behaviour.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/handlers/ClientStateFlowHandler.java
+    description: >-
+      Deserializes arbitrary Java objects from client-supplied Base64 request parameters
+      (ObjectInputStream.readObject, line 86) and forwards to a client-supplied 'referring_screen' (line 70).
+      Petstore reaches this on changelocale.do. The rebuild must not reproduce this. Keep client-side state as
+      plain data and validate the return screen against known screens. Flagged for security review.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/CheckboxTag.java
+    description: >-
+      The checkbox tag writes the 'checked' attribute when checked is false (line 82), and
+      ClientStateTag.setEncodeRequestParameters sets encodeRequestAttributes instead (line 112). Both look
+      like defects. The HTML-generating tags (Input, Select, Checkbox, ClientState, Form) also emit attribute
+      values without escaping. Check whether any petstore screen depends on the inverted checkbox behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/FormTag.java
+    description: >-
+      The form tag generates client-side validation that alerts '<field> is empty.' and blocks submit for
+      every nested input carrying a validation attribute (lines 87-111; InputTag 82-84). This is a generic
+      required-field mechanism. The fields it applies to are declared in petstore JSPs outside this shard, so
+      no record was filed here.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+    description: >-
+      formatCurrency/formatNumber (fixed min/max fraction digits per locale) and parseKeywords (locale-aware
+      word-break keyword split for search) have no caller anywhere in the petstore1.3.2 tree outside this
+      class. I treated them as unreachable and emitted no record. If a caller exists outside the source tree
+      (for example in a JSP compiled elsewhere), currency precision and search tokenisation rules live here.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/CacheTag.java
+    description: >-
+      The cache tag keys cached fragments by request URL, name and query string only (lines 74-80), not by
+      locale or user. With context scope, a fragment rendered in one locale would be served to users in
+      another locale until the duration (milliseconds) expires. Whether petstore uses it with context scope is
+      outside this shard. Confirm before relying on this caching behaviour.
+  - kind: ambiguity
+    path: legacy-analysis/sources
+    description: >-
+      No legacy-analysis/sources/**/extracted.md documents exist in this checkout, so no document trace
+      pointers could be cited for this module.
