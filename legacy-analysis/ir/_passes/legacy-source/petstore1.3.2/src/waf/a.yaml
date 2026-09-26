@@ -1,0 +1,762 @@
+records:
+  - record_key: localization-requirement-0001
+    kind: requirement
+    capability_key: localization
+    requirement: >
+      The system SHALL assign every new session a default locale when the session
+      has no locale yet, and that default SHALL be US English (en_US) unless
+      deployment configuration says otherwise.
+    confidence: medium
+    confidence_basis: >
+      Declared in configuration and applied in code, so the behaviour is clear. Not
+      high because this is the framework's own sample deployment descriptor; the
+      storefront supplies its own default_locale value, which this pass did not
+      compare. Only one pass so far.
+    risk_class: presentational
+    basis: >
+      The front controller reads a default_locale init parameter and, on every
+      request, stores it in the session when no locale is present. The WAF sample
+      deployment descriptor sets it to en_US.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/MainServlet.java
+        line_start: 108
+        line_end: 113
+        excerpt: |2
+              private void doProcess(HttpServletRequest request, HttpServletResponse response)
+                             throws IOException, ServletException {
+                  // set the locale of the user to default if not set
+                  if (request.getSession().getAttribute(WebKeys.LOCALE) == null) {
+                      request.getSession().setAttribute(WebKeys.LOCALE, defaultLocale);
+                  }
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/web.xml
+        line_start: 56
+        line_end: 60
+        excerpt: |2
+              <servlet-class>com.sun.j2ee.blueprints.waf.controller.web.MainServlet</servlet-class>
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+    stack_metadata:
+      framework: WAF (BluePrints Web Application Framework)
+      session.scope: com.sun.j2ee.blueprints.waf.LOCALE
+
+  - record_key: localization-business-rule-0001
+    kind: business-rule
+    capability_key: localization
+    requirement: >
+      The system SHALL let a user change their locale by submitting a locale code
+      of the form language_COUNTRY (for example ja_JP), and SHALL store the chosen
+      locale for the rest of the session.
+      GIVEN a locale value with no underscore separator (for example "ja")
+      WHEN the user requests a locale change
+      THEN the system SHALL reject the change with an error and SHALL leave the
+      session locale unchanged.
+      GIVEN the locale value "default" (any case)
+      WHEN the user requests a locale change
+      THEN the system SHALL use the server's default locale.
+    confidence: medium
+    confidence_basis: >
+      Behaviour is read directly from the parsing and action code. The storefront
+      maps this same action, so it is reachable. Not high because only code
+      enforces the format (no declarative validator), and the rejection path ends
+      in an exception whose user-facing screen depends on the host application's
+      exception mappings.
+    risk_class: presentational
+    basis: >
+      The change-locale action reads the "locale" request parameter and parses it
+      with getLocaleFromString. That parser returns null when there is no '_',
+      returns the JVM default for "default", and otherwise builds
+      Locale(language, country). A null result makes the action throw
+      HTMLActionException "Unable to change language to ...". Any segment after a
+      second underscore (the variant) is folded into the country code, because
+      variantIndex is never assigned. See the findings.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/action/actions/ChangeLocaleHTMLAction.java
+        line_start: 70
+        line_end: 84
+        excerpt: |2
+              public Event perform(HttpServletRequest request)
+                  throws HTMLActionException {
+                  // Extract attributes we will need
+                  String localeString = request.getParameter("locale");
+                  Locale locale = I18nUtil.getLocaleFromString(localeString);
+                  //MessageResources messages = getResources();
+                  HttpSession session = request.getSession();
+
+                  if (locale != null) {
+                      session.setAttribute(LOCALE,locale);
+                      return new ChangeLocaleEvent(locale);
+                  } else {
+                      throw new HTMLActionException("ChangeLocaleAction: Unable to change language to " + localeString);
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+        line_start: 168
+        line_end: 181
+        excerpt: |2
+              public static Locale getLocaleFromString(String localeString) {
+                  if (localeString == null) return null;
+                  if (localeString.toLowerCase().equals("default")) return Locale.getDefault();
+                  int languageIndex = localeString.indexOf('_');
+                  if (languageIndex  == -1) return null;
+                  int countryIndex = localeString.indexOf('_', languageIndex +1);
+                  String country = null;
+                  if (countryIndex  == -1) {
+                      if (localeString.length() > languageIndex) {
+                          country = localeString.substring(languageIndex +1, localeString.length());
+                      } else {
+                          return null;
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+        line_start: 48
+        line_end: 50
+        excerpt: |2
+              <url-mapping url="changelocale.do" screen="locale_change_success.screen" >
+                  <web-action-class>com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction</web-action-class>
+             </url-mapping>
+    stack_metadata:
+      framework: WAF
+      struts.action: com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction
+      session.scope: com.sun.j2ee.blueprints.waf.LOCALE
+      url: changelocale.do
+
+  - record_key: localization-workflow-0001
+    kind: workflow
+    capability_key: localization
+    requirement: >
+      WHEN a user changes locale, the system SHALL propagate the new locale to the
+      user's server-side business session so later business operations for that
+      user run under the chosen locale.
+    confidence: low
+    confidence_basis: >
+      The WAF action exists, but in the WAF sample mapping file the event class name
+      does not match the real event class, so the WAF sample never reaches this
+      action. The storefront maps the event to its own action class (not in this
+      shard), which this pass did not read. Reachability of this WAF class is
+      unresolved.
+    risk_class: presentational
+    basis: >
+      ChangeLocaleEJBAction stores the event's locale as the "locale" attribute of
+      the per-user state machine. The web tier dispatches the ChangeLocaleEvent
+      only when mappings.xml resolves an EJB action for its class name.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/ejb/action/actions/ChangeLocaleEJBAction.java
+        line_start: 50
+        line_end: 56
+        excerpt: |2
+            public class ChangeLocaleEJBAction extends EJBActionSupport {
+
+              public EventResponse perform(Event e) throws EventException {
+                  ChangeLocaleEvent ce = (ChangeLocaleEvent)e;
+                  machine.setAttribute("locale", ce.getLocale());
+                  return null;
+              }
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+        line_start: 43
+        line_end: 46
+        excerpt: |2
+              <event-mapping>
+                  <event-class>com.sun.j2ee.blueprints.waf.event.events.ChangeLocaleEvent</event-class>
+                  <ejb-action-class>com.sun.j2ee.blueprints.waf.controller.ejb.action.actions.ChangeLocaleEJBAction</ejb-action-class>
+              </event-mapping>
+    stack_metadata:
+      framework: WAF
+      ejb.bean: EJBController (stateful session, local)
+      disputed: true
+
+  - record_key: localization-workflow-0002
+    kind: workflow
+    capability_key: localization
+    requirement: >
+      WHEN a user changes locale from any page, the system SHALL return the user to
+      the page they came from, re-rendered in the new locale, with that page's
+      request state restored.
+    confidence: medium
+    confidence_basis: >
+      The flow handler code is clear, and the storefront maps its changelocale.do
+      to this same handler, so it is reachable. Not high because the referring
+      screen comes from a hidden form field that the client supplies, and only one
+      pass exists.
+    risk_class: presentational
+    basis: >
+      ClientStateFlowHandler returns the "referring_screen" request parameter as the
+      next screen. It restores request attributes by decoding each
+      "<cacheId>_attribute_*" parameter. ClientStateTag writes the previous screen
+      and the serialized request attributes into hidden fields.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/handlers/ClientStateFlowHandler.java
+        line_start: 66
+        line_end: 90
+        excerpt: |2
+              public String processFlow(HttpServletRequest request)
+                  throws FlowHandlerException {
+
+
+                  String forwardScreen = request.getParameter("referring_screen");
+                  // de-serialize the request attributes.
+                  Map params = (Map)request.getParameterMap();
+                  HashMap newParams = new HashMap();
+                  String cacheId= request.getParameter("cacheId");
+                  if (!params.isEmpty()) {
+                      Iterator it = params.keySet().iterator();
+                      // put the request attributes stored in the session in the request
+                      while (it.hasNext()) {
+                          String key = (String)it.next();
+                          if (key.startsWith(cacheId + "_attribute_")) {
+                              String[] values = (String[])params.get(key);
+                              String valueString = values[0];
+                              byte[] bytes  = Base64.decode(valueString.getBytes());
+                              try {
+                                  ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                                  Object requestObject = requestObject = ois.readObject();
+                                  ois.close();
+                                  // put the de-serialized object back into the request
+                                  String requestObjectKey = key.substring((cacheId + "_attribute_").length(), key.length());
+                                  request.setAttribute(requestObjectKey, requestObject);
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+        line_start: 52
+        line_end: 55
+        excerpt: |2
+              <url-mapping url="changeclientchachelinklocale.do"  useFlowHandler="true" >
+                  <web-action-class>com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction</web-action-class>
+                   <flow-handler class="com.sun.j2ee.blueprints.waf.controller.web.flow.handlers.ClientStateFlowHandler"/>
+             </url-mapping>
+    stack_metadata:
+      framework: WAF
+      flow_handler: com.sun.j2ee.blueprints.waf.controller.web.flow.handlers.ClientStateFlowHandler
+      reused_by: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml changelocale.do
+
+  - record_key: localization-business-rule-0002
+    kind: business-rule
+    capability_key: localization
+    requirement: >
+      The system SHALL render each page using the content defined for the effective
+      locale, where a locale named explicitly on the request takes precedence over
+      the session locale.
+      GIVEN the effective locale has no page definitions at all, or has no
+      definition for the requested page
+      WHEN a page is requested
+      THEN the system SHALL render the default locale's definition of that page.
+      GIVEN no locale defines the requested page
+      WHEN it is requested
+      THEN the system SHALL show an error stating that the page definition was not
+      found.
+    confidence: medium
+    confidence_basis: >
+      The precedence and fallback are explicit in code, with a comment stating the
+      override. Single source (code only). The WAF sample configures only en_US,
+      so the fallback has no second locale to exercise in this module.
+    risk_class: presentational
+    basis: >
+      TemplateServlet takes the "locale" request parameter over the session LOCALE.
+      When no screen set is loaded for that locale it falls back to default_locale.
+      When the locale's set lacks the screen, it reloads from the default locale's
+      set. If the screen is still missing it prints
+      "Definition for screen X not found".
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/template/com/sun/j2ee/blueprints/waf/view/template/TemplateServlet.java
+        line_start: 157
+        line_end: 166
+        excerpt: |2
+                  String languageParam = request.getParameter("locale");
+                  // The language when specified as a parameter overrides the language set in the session
+                  if (languageParam != null) {
+                      localeString = languageParam;
+                  } else if (request.getSession().getAttribute(WebKeys.LOCALE) != null) {
+                      localeString = ((Locale)request.getSession().getAttribute(WebKeys.LOCALE)).toString();
+                  }
+                  if (allScreens.get(localeString) == null) {
+                     localeString = defaultLocale;
+                  }
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/template/com/sun/j2ee/blueprints/waf/view/template/TemplateServlet.java
+        line_start: 232
+        line_end: 252
+        excerpt: |2
+                  Screen screen = null;
+                  if (screenName != null){
+                      Screens localeScreens = (Screens)allScreens.get(localeString);
+                      if (localeScreens != null) screen = (Screen)localeScreens.getScreen(screenName);
+                      // default to the default locale screen if it was not defined in the locale specific definitions
+                      if (screen == null) {
+                          System.err.println("Screen not Found loading default from " + defaultLocale);
+                          localeScreens = (Screens)allScreens.get(defaultLocale);
+                          screen = (Screen)localeScreens.getScreen(screenName);
+                      }
+                      if (screen != null) {
+                          request.setAttribute(WebKeys.CURRENT_SCREEN, screen);
+                          String templateName = localeScreens.getTemplate(screenName);
+                          if (templateName != null) {
+                              insertTemplate(request, response, templateName);
+                          }
+                      } else {
+                          response.setContentType("text/html;charset=8859_1");
+                          PrintWriter out = response.getWriter();
+                          out.println("<font size=+4>Error:</font><br>Definition for screen " + screenName + " not found");
+                      }
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/web.xml
+        line_start: 68
+        line_end: 75
+        excerpt: |2
+              <init-param>
+                <param-name>locales</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+    stack_metadata:
+      framework: WAF
+      servlet: TemplateServlet (*.screen)
+      config_file_pattern: /WEB-INF/screendefinitions_<locale>.xml
+
+  - record_key: localization-screen-0001
+    kind: screen
+    capability_key: localization
+    requirement: >
+      The system SHALL provide a locale selection form listing US English (en_US),
+      German (de_DE), Japanese (ja_JP) and Simplified Chinese (zh_CN), and after a
+      successful change SHALL show a confirmation page displaying the locale now in
+      effect.
+    confidence: low
+    confidence_basis: >
+      These are the WAF framework's demonstration pages, not storefront pages. The
+      German option conflicts with the capability list, which names only English,
+      Japanese and Chinese. Whether any production screen offers this list cannot
+      be settled from this module.
+    risk_class: presentational
+    basis: >
+      changelocale.jsp posts a "locale" select with four options to changelocale.do.
+      mappings.xml sends a successful change to locale_change_success, whose body
+      changelocalesuccess.jsp prints the session locale.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/changelocale.jsp
+        line_start: 48
+        line_end: 57
+        excerpt: |2
+            <form action="changelocale.do">
+             Set Locale to:
+             <select name="locale">
+              <option value="en_US">US English</option>
+              <option value="de_DE">German</option>
+              <option value="ja_JP">Japanese</option>
+              <option value="zh_CN">Simplified Chinese</option>
+             </select>
+             <input type="submit" value="Change Locale"/>
+            </form>
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/changelocalesuccess.jsp
+        line_start: 46
+        line_end: 47
+        excerpt: |2
+            The locale is:
+              <%=session.getAttribute("com.sun.j2ee.blueprints.waf.LOCALE") %>
+    stack_metadata:
+      framework: WAF
+      jsp.page: changelocale.jsp, changelocalesuccess.jsp
+      demo_only: true
+      disputed: true
+
+  - record_key: localization-business-rule-0003
+    kind: business-rule
+    capability_key: localization
+    requirement: >
+      The system SHALL format monetary amounts in the user's locale currency format
+      with a fixed number of decimal places, always showing that many digits.
+    confidence: low
+    confidence_basis: >
+      A utility method with no caller outside the WAF module (grep of the rest of
+      the source tree found none), so reachability is unresolved. The precision is
+      supplied by the caller; the rounding mode is the JDK default and is not stated
+      anywhere.
+    risk_class: financial
+    basis: >
+      I18nUtil.formatCurrency sets minimum and maximum fraction digits to the same
+      precision on a locale currency NumberFormat. No caller in this shard.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+        line_start: 100
+        line_end: 105
+        excerpt: |2
+              public static String formatCurrency(double amount, int precision, Locale locale){
+                  NumberFormat nf = NumberFormat.getCurrencyInstance(locale);
+                  nf.setMinimumFractionDigits(precision);
+                  nf.setMaximumFractionDigits(precision);
+                  return nf.format(amount);
+              }
+    stack_metadata:
+      framework: WAF
+      disputed: true
+      reachability: unresolved
+
+  - record_key: catalog-browsing-business-rule-0001
+    kind: business-rule
+    capability_key: catalog-browsing
+    requirement: >
+      WHEN a user enters a search string, the system SHALL split it into keywords at
+      word boundaries appropriate to the user's locale and SHALL discard blank
+      tokens.
+    confidence: low
+    confidence_basis: >
+      A utility with no caller found outside the WAF module, so reachability is
+      unresolved. The catalog search may tokenise keywords itself in a module this
+      pass did not read.
+    risk_class: presentational
+    basis: >
+      I18nUtil.parseKeywords(String, Locale) walks a locale-specific word
+      BreakIterator and keeps each non-blank segment.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+        line_start: 136
+        line_end: 150
+        excerpt: |2
+              public static Vector parseKeywords(String keywordString, Locale locale){
+                  if (keywordString != null){
+                      Vector keywords = new Vector();
+                      BreakIterator breakIt = BreakIterator.getWordInstance(locale);
+                      int index=0;
+                      int previousIndex =0;
+                      breakIt.setText(keywordString);
+                      try{
+                          while(index < keywordString.length()){
+                              previousIndex = index;
+                              index = breakIt.next();
+                              String word = keywordString.substring(previousIndex, index);
+                              if (!word.trim().equals("")) keywords.addElement(word);
+                          }
+                          return keywords;
+    stack_metadata:
+      framework: WAF
+      disputed: true
+      reachability: unresolved
+
+  - record_key: localization-business-rule-0004
+    kind: business-rule
+    capability_key: localization
+    requirement: >
+      The system SHALL accept Japanese text submitted in Shift-JIS or JIS encoding
+      and convert it to Unicode by automatic encoding detection.
+    confidence: low
+    confidence_basis: >
+      No caller found outside the WAF module; reachability is unresolved.
+    risk_class: presentational
+    basis: >
+      I18nUtil.convertJISEncoding re-reads the characters as bytes and decodes them
+      with the "JISAutoDetect" charset. An unsupported encoding is silently
+      swallowed and null is returned.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+        line_start: 63
+        line_end: 77
+        excerpt: |2
+              public static String convertJISEncoding(String target) {
+                  ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                  if (target == null) return null;
+                  String paramString = target.trim();
+
+                  for (int loop =0; loop < paramString.length(); loop++) {
+                      int i = (int)paramString.charAt(loop);
+                      bos.write(i);
+                  }
+                  String convertedString = null;
+                  try {
+                      convertedString =  new String(bos.toByteArray(), "JISAutoDetect");
+                  } catch (java.io.UnsupportedEncodingException uex) {}
+                  return convertedString;
+              }
+    stack_metadata:
+      framework: WAF
+      disputed: true
+      reachability: unresolved
+
+  - record_key: customer-account-business-rule-0001
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      GIVEN a form field is marked as validated
+      WHEN the user submits the form with that field empty
+      THEN the system SHALL block the submission and tell the user
+      "<field name> is empty." for each empty validated field.
+    confidence: medium
+    confidence_basis: >
+      The generated check is unambiguous. The storefront uses these tags on
+      sign-on, edit-customer and order-information forms, so it is reachable. Not
+      high because it is client-side only; this module has no server-side
+      counterpart, and which fields carry validation is decided in each page, not
+      here.
+    risk_class: operational
+    basis: >
+      InputTag registers its field with the enclosing FormTag when a validation
+      attribute is set. FormTag emits a validate_<form>() function that alerts
+      "<field> is empty." for each registered field whose value is "", and wires it
+      to onSubmit. This is a generic mechanism shared by the sign-on, account and
+      checkout forms. It is filed under customer-account as the closest listed
+      capability, because no capability covers generic form validation.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/FormTag.java
+        line_start: 84
+        line_end: 111
+        excerpt: |2
+                      javaScript.append("<script language=\"JavaScript\">\n");
+                      javaScript.append("function validate_" + name +"() {\n");
+                      javaScript.append("    var ret = true;\n");
+                      for (Iterator it = validatedFields.keySet().iterator();
+                           it.hasNext(); ) {
+                          String fieldName = (String) it.next();
+                          String fieldType = (String) validatedFields.get(fieldName);
+                          javaScript.append("    if (window.document.");
+                          javaScript.append(name + ".");
+                          javaScript.append(fieldName + ".");
+                          javaScript.append("value");
+                          javaScript.append(" ==");
+                          javaScript.append(" \"\"");
+                          javaScript.append(") {\n");
+                          javaScript.append("        alert(\"" + fieldName
+                                            + " is empty.\");\n");
+                          javaScript.append("        ret = false;\n");
+                          javaScript.append("    }\n");
+                      }
+                      javaScript.append("    return ret;\n");
+                      javaScript.append("}\n");
+                      javaScript.append("</script>\n");
+
+                      html.append("<form");
+                      html.append(" name=\"" + name +"\"");
+                      html.append(" action=\"" + action + "\"");
+                      html.append(" method=\"" + method + "\"");
+                      html.append(" onSubmit=\"return validate_" + name + "();\"");
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/InputTag.java
+        line_start: 80
+        line_end: 84
+        excerpt: |2
+                      FormTag tag
+                          = (FormTag) findAncestorWithClass(this, FormTag.class);
+                      if (tag != null && validation != null) {
+                          tag.putValidatedField(name, type);
+                      }
+    stack_metadata:
+      framework: WAF
+      declarative_validator: client-side JavaScript generated by waf:form / waf:input tags
+      used_by: petstore signon.jsp, edit_customer.jsp, enter_order_information.jsp (en/ja/zh)
+
+  - record_key: checkout-workflow-0001
+    kind: workflow
+    capability_key: checkout
+    requirement: >
+      WHEN processing a user request raises an error, the system SHALL show the
+      error page configured for that error type or its nearest configured parent
+      type. WHEN no error page is configured for it, the system SHALL fail the
+      request with a generic server error.
+    confidence: medium
+    confidence_basis: >
+      The mechanism is clear in code. The storefront relies on it for the
+      empty-cart order rejection screen, so it is reachable. Filed under checkout
+      only as the closest capability (see basis). The WAF sample's single mapping
+      names a class that does not exist in WAF (see findings).
+    risk_class: operational
+    basis: >
+      MainServlet catches any Throwable from request processing and asks
+      ScreenFlowManager for a screen. The lookup matches configured exception
+      classes by isAssignableFrom (so subclasses match), puts the exception in the
+      request as javax.servlet.jsp.jspException and forwards. When nothing matches
+      it throws ServletException "unknown exception". This is a cross-cutting
+      mechanism. It is filed under checkout because the storefront's empty-cart
+      order rejection is delivered through it; no capability covers generic error
+      handling.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/MainServlet.java
+        line_start: 114
+        line_end: 128
+        excerpt: |2
+                  try {
+                           getRequestProcessor().processRequest(request);
+                           getScreenFlowManager().forwardToNextScreen(request,response);
+                  } catch (Throwable ex) {
+                      String className = ex.getClass().getName();
+                      String nextScreen = getScreenFlowManager().getExceptionScreen(ex);
+                      // put the exception in the request
+                      request.setAttribute("javax.servlet.jsp.jspException", ex);
+                      if (nextScreen == null) {
+                          // send to general error screen
+                          ex.printStackTrace();
+                          throw new ServletException("MainServlet: unknown exception: " + className);
+                      }
+                      context.getRequestDispatcher(nextScreen).forward(request, response);
+                }
+      - path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/ScreenFlowManager.java
+        line_start: 164
+        line_end: 183
+        excerpt: |2
+              public String getExceptionScreen(Throwable e) {
+                  Iterator it = exceptionMappings.keySet().iterator();
+                  while (it.hasNext()) {
+                      String exceptionName = (String)it.next();
+                      Class targetExceptionClass = null;
+                      try {
+                          targetExceptionClass = this.getClass().getClassLoader().loadClass(exceptionName);
+                      } catch (ClassNotFoundException cnfe) {
+                          System.err.println("ScreenFlowManager: Could not load exception " + exceptionName);
+                      }
+                      System.err.println("Checking exception: " + exceptionName + " against " + e.getClass().getName());
+                      // check if the exception is a sub class of matches the exception
+                      if ((targetExceptionClass != null) &&
+                          targetExceptionClass.isAssignableFrom(e.getClass())) {
+                          System.err.println("ScreenFlowManager: found exception for " + exceptionName + " matches");;
+                          return "/" + (String)exceptionMappings.get(exceptionName);
+                      }
+                  }
+                  return null;
+              }
+    stack_metadata:
+      framework: WAF
+      config: WEB-INF/mappings.xml <exception-mapping>
+
+  - record_key: catalog-browsing-business-rule-0002
+    kind: business-rule
+    capability_key: catalog-browsing
+    requirement: >
+      The system SHALL serve a cached copy of a page fragment for a configured
+      duration, keyed by page URL, fragment name and query string, and SHALL
+      rebuild it once that duration has elapsed.
+    confidence: medium
+    confidence_basis: >
+      The code is unambiguous, and the storefront category and product pages use
+      the cache tag, so it is reachable. The durations and scopes are set in those
+      pages, outside this shard, so no values are recorded here.
+    risk_class: presentational
+    basis: >
+      CacheTag stores rendered body content with a timestamp under
+      URL#name?query in the chosen scope (context, session, request or page). An
+      entry older than duration milliseconds is removed and re-rendered. Filed under
+      catalog-browsing because its only observed storefront users are the catalog
+      category and product pages.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/CacheTag.java
+        line_start: 65
+        line_end: 80
+        excerpt: |2
+              public int doStartTag() throws JspTagException {
+                  entry = getEntry();
+                  if ((entry != null) && entry.isExpired()) {
+                      entry = null;
+                      removeEntry();
+                  }
+                  return (entry == null) ? EVAL_BODY_BUFFERED : SKIP_BODY;
+              }
+
+              private String getKey() {
+                      HttpServletRequest req =
+                      ((HttpServletRequest) pageContext.getRequest());
+                      return  (req.getRequestURL().toString()
+                                      + '#' + name
+                                      + '?' + req.getQueryString());
+              }
+      - path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/CacheTag.java
+        line_start: 169
+        line_end: 172
+        excerpt: |2
+                    public boolean isExpired() {
+                        long currentTime = System.currentTimeMillis();
+                        return ((currentTime - timestamp) > duration);
+                    }
+    stack_metadata:
+      framework: WAF
+      jsp.tag: waf:cache
+      used_by: petstore category.jsp, product.jsp
+
+  - record_key: sign-on-requirement-0001
+    kind: requirement
+    capability_key: sign-on
+    requirement: >
+      The system SHALL end an idle user session after 30 minutes of inactivity.
+    confidence: low
+    confidence_basis: >
+      A bare literal in the WAF framework's own sample descriptor. The storefront
+      (15), admin (54) and supplier (54) applications each declare their own
+      timeout, so this value probably does not govern any production application.
+      Recorded so the SME can confirm it is sample-only.
+    risk_class: operational
+    basis: >
+      web.xml session-config sets session-timeout to 30 (minutes). Filed under
+      sign-on as the closest capability for session lifetime.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/web.xml
+        line_start: 100
+        line_end: 102
+        excerpt: |2
+             <session-config>
+              <session-timeout>30</session-timeout>
+            </session-config>
+    stack_metadata:
+      framework: WAF
+      descriptor: waf sample web.xml
+      disputed: true
+
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+    description: >
+      The WAF sample event mapping (line 44) names
+      com.sun.j2ee.blueprints.waf.event.events.ChangeLocaleEvent, but the class is
+      com.sun.j2ee.blueprints.waf.event.impl.ChangeLocaleEvent. RequestProcessor
+      looks mappings up by the event's real class name, so the WAF sample never
+      invokes ChangeLocaleEJBAction and the back-end locale is never updated. The
+      storefront's own mappings.xml uses the correct impl package. A human needs to
+      confirm whether back-end locale propagation is a required behaviour (see
+      localization-workflow-0001).
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/mappings.xml
+    description: >
+      The WAF sample exception mapping (line 57) names
+      com.sun.j2ee.blueprints.petstore.controller.exceptions.GeneralFailureException,
+      while WAF's own class is com.sun.j2ee.blueprints.waf.exceptions.GeneralFailureException
+      (thrown by DefaultComponentManager). In the stand-alone WAF sample the class
+      cannot be loaded, so WAF's GeneralFailureException falls through to a generic
+      ServletException rather than error.screen. Also, no "error" screen is defined in
+      screendefinitions_en_US.xml.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/util/I18nUtil.java
+    description: >
+      getLocaleFromString (lines 168-196) never assigns variantIndex. When a code
+      has a second underscore (for example "ja_JP_TRAD"), country stays null and
+      Locale(language, null) is built, which would throw at runtime. Codes like
+      "en" with no country are rejected. A human should decide whether the rebuild
+      must accept language-only or variant locale codes.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/waf/src/docroot/changelocale.jsp
+    description: >
+      The WAF demo locale picker offers German (de_DE). The capability list names
+      only English, Japanese and Chinese, and the WAF TemplateServlet loads only
+      en_US screen definitions, so a de_DE request silently falls back to en_US
+      content while the session records de_DE. Confirm whether German is ever in
+      scope.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/controller/com/sun/j2ee/blueprints/waf/controller/web/flow/handlers/ClientStateFlowHandler.java
+    description: >
+      Security. The locale-change flow deserializes Java objects from client-supplied
+      Base64 hidden fields (lines 80-90) with no integrity check, and takes the
+      next screen from the client-supplied "referring_screen" parameter. The
+      storefront maps its changelocale.do to this handler. This is unsafe
+      deserialization and client-controlled forward-target handling. The rebuild
+      must restore the previous page without trusting client-serialized state; a
+      human should confirm no other behaviour depends on round-tripping request
+      attributes through the client.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/docroot/WEB-INF/xml/requestmappings.xml
+    description: >
+      WEB-INF/xml/requestmappings.xml and WEB-INF/xml/screendefinitions.xml use an
+      older schema (request-handler-class, requiresSignin, signin-screen, petstore
+      .control.* handlers). No WAF code reads these paths: MainServlet and
+      ScreenFlowManager read /WEB-INF/mappings.xml, and TemplateServlet reads
+      /WEB-INF/screendefinitions_<locale>.xml. They appear to be dead leftovers from
+      an earlier Pet Store version, so no requirements were emitted from them. Their
+      sign-in-required URL list (editaccount, placeorder, commitorder, and so on) may
+      still be useful to compare against the sign-on capability.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/waf/src/view/taglibs/com/sun/j2ee/blueprints/taglibs/smart/ClientStateTag.java
+    description: >
+      setEncodeRequestParameters (lines 111-113) assigns encodeRequestAttributes
+      instead of encodeRequestParameters, so pages cannot turn off parameter
+      re-posting, and setting the flag toggles attribute serialization instead.
+      Whether any page depends on this behaviour is not determinable here.
