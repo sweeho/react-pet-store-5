@@ -1,0 +1,12 @@
+capability_key,name,summary
+catalog-browsing,Catalog browsing and search,"Category, product and item browsing, localized item details and prices, keyword search and paging through results"
+shopping-cart,Shopping cart,"Adding, updating and removing items in the cart and how the cart subtotal is computed"
+sign-on,Sign-on and access control,"Customer sign-on, sign-off and account creation, which pages require sign-on, and administrator-only access"
+customer-account,Customer account and profile,"Customer contact details, credit card on file, and profile preferences such as language, favourite category, My List and banners"
+checkout,Checkout and order placement,"Entering billing and shipping information, order total calculation, empty-cart rejection and order confirmation"
+order-approval,Order approval,"Automatic approval thresholds by locale and administrator review, approval, denial and reporting of pending orders"
+order-fulfillment,Order fulfillment,"Order status lifecycle from pending to completed, supplier purchase orders, inventory checks, partial shipments and invoices"
+supplier-inventory,Supplier inventory,"Supplier staff viewing and updating stock levels that decide whether an order line can be shipped"
+customer-notifications,Customer notifications,"Emails sent to customers on order approval or denial, shipment invoices and order completion"
+b2b-document-exchange,Partner document exchange,"XML purchase-order and invoice document formats exchanged between the order centre and suppliers, and their validation"
+localization,Localization,"Supported locales (English, Japanese, Chinese), switching locale, and locale-specific content, currency and message templates"

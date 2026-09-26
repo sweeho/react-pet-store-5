@@ -1,0 +1,656 @@
+{
+  "root": "legacy-source/petstore1.3.2/",
+  "generated_by": "SX-0001 discovery",
+  "edge_types": {
+    "java-import": "compile-time import of another module's package (weight = number of importing files)",
+    "jms-queue": "point-to-point JMS message",
+    "jms-topic": "publish/subscribe JMS message",
+    "ejb-remote": "remote EJB reference"
+  },
+  "nodes": [
+    {
+      "id": "apps/opc",
+      "path": "legacy-source/petstore1.3.2/src/apps/opc",
+      "loc": 5830,
+      "screens": 0,
+      "risk": "high",
+      "score": 10,
+      "kind": "application"
+    },
+    {
+      "id": "apps/petstore",
+      "path": "legacy-source/petstore1.3.2/src/apps/petstore",
+      "loc": 19273,
+      "screens": 19,
+      "risk": "high",
+      "score": 9,
+      "kind": "application"
+    },
+    {
+      "id": "components/purchaseorder",
+      "path": "legacy-source/petstore1.3.2/src/components/purchaseorder",
+      "loc": 2437,
+      "screens": 0,
+      "risk": "high",
+      "score": 8,
+      "kind": "component"
+    },
+    {
+      "id": "apps/supplier",
+      "path": "legacy-source/petstore1.3.2/src/apps/supplier",
+      "loc": 4299,
+      "screens": 4,
+      "risk": "high",
+      "score": 8,
+      "kind": "application"
+    },
+    {
+      "id": "components/processmanager",
+      "path": "legacy-source/petstore1.3.2/src/components/processmanager",
+      "loc": 1322,
+      "screens": 0,
+      "risk": "high",
+      "score": 7,
+      "kind": "component"
+    },
+    {
+      "id": "components/signon",
+      "path": "legacy-source/petstore1.3.2/src/components/signon",
+      "loc": 1559,
+      "screens": 0,
+      "risk": "high",
+      "score": 7,
+      "kind": "component"
+    },
+    {
+      "id": "apps/admin",
+      "path": "legacy-source/petstore1.3.2/src/apps/admin",
+      "loc": 5800,
+      "screens": 5,
+      "risk": "medium",
+      "score": 7,
+      "kind": "application"
+    },
+    {
+      "id": "components/cart",
+      "path": "legacy-source/petstore1.3.2/src/components/cart",
+      "loc": 832,
+      "screens": 0,
+      "risk": "medium",
+      "score": 7,
+      "kind": "component"
+    },
+    {
+      "id": "components/catalog",
+      "path": "legacy-source/petstore1.3.2/src/components/catalog",
+      "loc": 2868,
+      "screens": 0,
+      "risk": "medium",
+      "score": 7,
+      "kind": "component"
+    },
+    {
+      "id": "components/customer",
+      "path": "legacy-source/petstore1.3.2/src/components/customer",
+      "loc": 2387,
+      "screens": 0,
+      "risk": "medium",
+      "score": 6,
+      "kind": "component"
+    },
+    {
+      "id": "components/supplierpo",
+      "path": "legacy-source/petstore1.3.2/src/components/supplierpo",
+      "loc": 1977,
+      "screens": 0,
+      "risk": "medium",
+      "score": 6,
+      "kind": "component"
+    },
+    {
+      "id": "components/creditcard",
+      "path": "legacy-source/petstore1.3.2/src/components/creditcard",
+      "loc": 810,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "component"
+    },
+    {
+      "id": "components/lineitem",
+      "path": "legacy-source/petstore1.3.2/src/components/lineitem",
+      "loc": 871,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "component"
+    },
+    {
+      "id": "components/contactinfo",
+      "path": "legacy-source/petstore1.3.2/src/components/contactinfo",
+      "loc": 1314,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "component"
+    },
+    {
+      "id": "components/mailer",
+      "path": "legacy-source/petstore1.3.2/src/components/mailer",
+      "loc": 883,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "component"
+    },
+    {
+      "id": "components/xmldocuments",
+      "path": "legacy-source/petstore1.3.2/src/components/xmldocuments",
+      "loc": 2768,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "component"
+    },
+    {
+      "id": "waf",
+      "path": "legacy-source/petstore1.3.2/src/waf",
+      "loc": 8825,
+      "screens": 0,
+      "risk": "medium",
+      "score": 5,
+      "kind": "framework"
+    },
+    {
+      "id": "components/address",
+      "path": "legacy-source/petstore1.3.2/src/components/address",
+      "loc": 1035,
+      "screens": 0,
+      "risk": "low",
+      "score": 4,
+      "kind": "component"
+    },
+    {
+      "id": "components/uidgen",
+      "path": "legacy-source/petstore1.3.2/src/components/uidgen",
+      "loc": 756,
+      "screens": 0,
+      "risk": "low",
+      "score": 4,
+      "kind": "component"
+    },
+    {
+      "id": "components/asyncsender",
+      "path": "legacy-source/petstore1.3.2/src/components/asyncsender",
+      "loc": 551,
+      "screens": 0,
+      "risk": "low",
+      "score": 3,
+      "kind": "component"
+    },
+    {
+      "id": "docs",
+      "path": "legacy-source/petstore1.3.2/docs",
+      "loc": 3163,
+      "screens": 0,
+      "risk": "low",
+      "score": 3,
+      "kind": "documentation"
+    },
+    {
+      "id": "components/servicelocator",
+      "path": "legacy-source/petstore1.3.2/src/components/servicelocator",
+      "loc": 758,
+      "screens": 0,
+      "risk": "low",
+      "score": 2,
+      "kind": "component"
+    },
+    {
+      "id": "components/encodingfilter",
+      "path": "legacy-source/petstore1.3.2/src/components/encodingfilter",
+      "loc": 180,
+      "screens": 0,
+      "risk": "low",
+      "score": 2,
+      "kind": "component"
+    },
+    {
+      "id": "components/util/tracer",
+      "path": "legacy-source/petstore1.3.2/src/components/util/tracer",
+      "loc": 181,
+      "screens": 0,
+      "risk": "low",
+      "score": 1,
+      "kind": "component"
+    }
+  ],
+  "edges": [
+    {
+      "from": "apps/admin",
+      "to": "apps/opc",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/admin",
+      "to": "components/asyncsender",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/admin",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/admin",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/address",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/contactinfo",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/lineitem",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/mailer",
+      "type": "java-import",
+      "weight": 3
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/processmanager",
+      "type": "java-import",
+      "weight": 17
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/purchaseorder",
+      "type": "java-import",
+      "weight": 7
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 26
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 9
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/address",
+      "type": "java-import",
+      "weight": 5
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/asyncsender",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/cart",
+      "type": "java-import",
+      "weight": 11
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/catalog",
+      "type": "java-import",
+      "weight": 7
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/contactinfo",
+      "type": "java-import",
+      "weight": 10
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/creditcard",
+      "type": "java-import",
+      "weight": 8
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/customer",
+      "type": "java-import",
+      "weight": 16
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/lineitem",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/purchaseorder",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 10
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/signon",
+      "type": "java-import",
+      "weight": 8
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/uidgen",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/util/tracer",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/petstore",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/petstore",
+      "to": "waf",
+      "type": "java-import",
+      "weight": 53
+    },
+    {
+      "from": "apps/supplier",
+      "to": "components/lineitem",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "apps/supplier",
+      "to": "components/processmanager",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "apps/supplier",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 10
+    },
+    {
+      "from": "apps/supplier",
+      "to": "components/supplierpo",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "apps/supplier",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 7
+    },
+    {
+      "from": "components/address",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/asyncsender",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/cart",
+      "to": "components/catalog",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/cart",
+      "to": "components/util/tracer",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/catalog",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "components/catalog",
+      "to": "components/util/tracer",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/contactinfo",
+      "to": "components/address",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "components/contactinfo",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/contactinfo",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/creditcard",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/customer",
+      "to": "components/contactinfo",
+      "type": "java-import",
+      "weight": 3
+    },
+    {
+      "from": "components/customer",
+      "to": "components/creditcard",
+      "type": "java-import",
+      "weight": 3
+    },
+    {
+      "from": "components/lineitem",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/mailer",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/address",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/contactinfo",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/creditcard",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/lineitem",
+      "type": "java-import",
+      "weight": 4
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/purchaseorder",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/supplierpo",
+      "to": "components/address",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "components/supplierpo",
+      "to": "components/contactinfo",
+      "type": "java-import",
+      "weight": 3
+    },
+    {
+      "from": "components/supplierpo",
+      "to": "components/lineitem",
+      "type": "java-import",
+      "weight": 3
+    },
+    {
+      "from": "components/supplierpo",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "components/supplierpo",
+      "to": "components/xmldocuments",
+      "type": "java-import",
+      "weight": 1
+    },
+    {
+      "from": "waf",
+      "to": "components/servicelocator",
+      "type": "java-import",
+      "weight": 2
+    },
+    {
+      "from": "waf",
+      "to": "components/util/tracer",
+      "type": "java-import",
+      "weight": 8
+    },
+    {
+      "from": "apps/petstore",
+      "to": "apps/opc",
+      "type": "jms-queue",
+      "destination": "jms/opc/OrderQueue",
+      "purpose": "Customer order submitted as XML purchase order (via asyncsender)",
+      "trace": "legacy-source/petstore1.3.2/src/apps/petstore/src/sun-j2ee-ri.xml"
+    },
+    {
+      "from": "apps/admin",
+      "to": "apps/opc",
+      "type": "jms-queue",
+      "destination": "jms/opc/OrderApprovalQueue",
+      "purpose": "Administrator approval/denial decisions",
+      "trace": "legacy-source/petstore1.3.2/src/apps/admin/src/sun-j2ee-ri.xml"
+    },
+    {
+      "from": "apps/admin",
+      "to": "apps/opc",
+      "type": "ejb-remote",
+      "destination": "ejb/OPCAdminFacadeRemote",
+      "purpose": "Admin reads orders and chart data through OPCAdminFacadeEJB",
+      "trace": "legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml"
+    },
+    {
+      "from": "apps/opc",
+      "to": "apps/supplier",
+      "type": "jms-queue",
+      "destination": "jms/supplier/PurchaseOrderQueue",
+      "purpose": "Approved order forwarded to supplier as supplier PO",
+      "trace": "legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml"
+    },
+    {
+      "from": "apps/supplier",
+      "to": "apps/opc",
+      "type": "jms-topic",
+      "destination": "jms/opc/InvoiceTopic",
+      "purpose": "Supplier publishes shipment invoices",
+      "trace": "legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml"
+    },
+    {
+      "from": "apps/opc",
+      "to": "components/mailer",
+      "type": "jms-queue",
+      "destination": "jms/opc/MailQueue",
+      "purpose": "Order approval, invoice and completion emails via MailerMDB",
+      "trace": "legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml"
+    }
+  ],
+  "internal_flows": [
+    {
+      "module": "apps/opc",
+      "chain": [
+        "jms/opc/OrderQueue -> PurchaseOrderMDB",
+        "jms/opc/OrderApprovalQueue -> OrderApprovalMDB",
+        "jms/opc/InvoiceTopic -> InvoiceMDB, MailInvoiceMDB",
+        "jms/opc/MailOrderApprovalQueue -> MailOrderApprovalMDB",
+        "jms/opc/MailCompletedOrderQueue -> MailCompletedOrderMDB"
+      ],
+      "trace": "legacy-source/petstore1.3.2/src/apps/opc/src/ejb-jar.xml"
+    },
+    {
+      "module": "apps/admin",
+      "chain": ["Swing client HttpPostPetStoreProxy -> /admin/ApplRequestProcessor (HTTP POST)"],
+      "trace": "legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java"
+    }
+  ],
+  "excluded_from_graph": [
+    "legacy-source/petstore1.3.2/src/lib (third-party JSTL/ant/base64 descriptors)",
+    "legacy-source/petstore1.3.2/src/build.* and per-module build scripts",
+    "legacy-source/petstore1.3.2/top-level licence/copyright HTML",
+    "legacy-source/petstore1.3.2/setup.*"
+  ]
+}
