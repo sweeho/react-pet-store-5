@@ -1,0 +1,532 @@
+# Pass B, independent reading of legacy-source/petstore1.3.2/src/components/processmanager
+# No legacy-analysis/sources/**/extracted.md exists in the tree, so no document traces were available.
+records:
+  - record_key: order-fulfillment-entity-0001
+    kind: entity
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL keep one order-workflow record per order, identified by the
+      order identifier, holding the order's current workflow status.
+    confidence: medium
+    confidence_basis: >
+      Enforced in two independent places (the table DDL declares orderId as primary
+      key; the component descriptor declares orderId as primkey-field with exactly two
+      persisted fields). Not graded high because pass A agreement is not known to this pass.
+    risk_class: operational
+    basis: >
+      The Manager entity persists exactly two fields, orderId (primary key) and status.
+      The deployment DDL creates ManagerEJBTable with orderId as PRIMARY KEY and status
+      as a nullable VARCHAR(255).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/ejb-jar.xml
+        line_start: 57
+        line_end: 65
+        excerpt: |
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>status</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>orderId</field-name>
+                </cmp-field>
+                <primkey-field>orderId</primkey-field>
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/manager/ejb/ManagerEJB.java
+        line_start: 53
+        line_end: 58
+        excerpt: |
+              // CMP fields
+              public abstract String getOrderId();
+              public abstract void setOrderId(String orderId);
+
+              public abstract String getStatus();
+              public abstract void setStatus(String status);
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml
+        line_start: 471
+        line_end: 471
+        excerpt: |
+                    <sql>CREATE TABLE "ManagerEJBTable" ("orderId" VARCHAR(255) , "status" VARCHAR(255), CONSTRAINT "pk_ManagerEJBTabl" PRIMARY KEY ("orderId") )</sql>
+    stack_metadata:
+      ejb.bean: ManagerEJB
+      framework: EJB 2.0 CMP entity bean
+      db.object: ManagerEJBTable
+
+  - record_key: order-fulfillment-business-rule-0001
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL represent an order's workflow status as exactly one of
+      PENDING, APPROVED, DENIED, SHIPPED_PART or COMPLETED, where PENDING means
+      placed but not yet approved, APPROVED means approved, DENIED means denied,
+      SHIPPED_PART means part of the order has shipped, and COMPLETED means the whole
+      order has shipped.
+    confidence: medium
+    confidence_basis: >
+      Single source: a constants class with javadoc meanings. The values are used
+      consistently by callers in the order processing centre, but nothing in the
+      schema or the setter restricts status to this set (see findings).
+    risk_class: operational
+    basis: >
+      OrderStatusNames is documented as "the central location to store the names of
+      the status that an order can be in" and defines five string constants with a
+      one-line meaning each.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/OrderStatusNames.java
+        line_start: 41
+        line_end: 67
+        excerpt: |
+          /**
+           * This class is the central location to store the names of the
+           * status that an order can be in.
+           * The states an order goes through are:
+           * pending->approved->shippedPart(shipped part of order)->completed(whole order shipped)  or
+           * pending->denied
+           */
+          public class OrderStatusNames {
+
+              /** for orders that have been placed but not yet approved */
+              public static final String PENDING = "PENDING";
+
+              /** for orders that have been approved */
+              public  static final String APPROVED = "APPROVED";
+
+              /** for orders that have been denied */
+              public  static final String DENIED = "DENIED";
+
+
+              /** for orders that have been partially completed*/
+              public  static final String SHIPPED_PART = "SHIPPED_PART";
+
+
+              /** for orders that have been completed*/
+              public  static final String COMPLETED = "COMPLETED";
+
+          }
+    stack_metadata:
+      framework: Java constants class
+
+  - record_key: order-fulfillment-workflow-0001
+    kind: workflow
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL move an order through the lifecycle
+      PENDING -> APPROVED -> SHIPPED_PART -> COMPLETED, or PENDING -> DENIED.
+      GIVEN an order in PENDING WHEN it is approved THEN its status SHALL become APPROVED;
+      GIVEN an order in PENDING WHEN it is denied THEN its status SHALL become DENIED;
+      GIVEN an approved order WHEN only part of it has shipped THEN its status SHALL become SHIPPED_PART;
+      GIVEN an approved order WHEN all of it has shipped THEN its status SHALL become COMPLETED.
+    confidence: low
+    confidence_basis: >
+      The lifecycle is stated only in a javadoc comment in this module. The component
+      itself does not enforce it: updateStatus writes any string without checking the
+      current status. The only guard observed is outside the module (the approval
+      handler skips non-PENDING orders); the invoice handler sets SHIPPED_PART or
+      COMPLETED without checking the prior status. Graded low because the stated
+      state machine is not enforced by the code that owns the status.
+    risk_class: operational
+    basis: >
+      Javadoc on OrderStatusNames states the two paths. Callers in the order
+      processing centre create the record as PENDING, move PENDING orders to the
+      approval decision, and set SHIPPED_PART / COMPLETED on invoice receipt.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/OrderStatusNames.java
+        line_start: 44
+        line_end: 46
+        excerpt: |
+           * The states an order goes through are:
+           * pending->approved->shippedPart(shipped part of order)->completed(whole order shipped)  or
+           * pending->denied
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/ejb/OrderApprovalMDB.java
+        line_start: 201
+        line_end: 216
+        excerpt: |
+                // only PENDING orders can be updated
+                //if order alreay APPROVED or DENIED or COMPLETED, then order
+                //already processed so dont process again
+                String curStatus = processManager.getStatus(co.getOrderId());
+                if(!curStatus.equals(OrderStatusNames.PENDING)) {
+                  continue;
+                }
+                //generate list of valid orders to return
+                //list contains orders to notify the customer of
+                //order status changes. List is sent to customer
+                //relations for emailing.
+                oaMailList.addOrder(co);
+
+                //update process manager
+                //for this purchase order workflow
+                processManager.updateStatus(co.getOrderId(), co.getOrderStatus());
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/ejb/InvoiceMDB.java
+        line_start: 166
+        line_end: 171
+        excerpt: |
+               if(orderDone) {
+                 processManager.updateStatus(invoiceXDE.getOrderId(), OrderStatusNames.COMPLETED);
+                 completedOrder = invoiceXDE.getOrderId();
+               } else {
+                 processManager.updateStatus(invoiceXDE.getOrderId(), OrderStatusNames.SHIPPED_PART);
+               }
+    stack_metadata:
+      ejb.bean: ProcessManagerEJB
+      framework: EJB 2.0 stateless session bean
+
+  - record_key: order-fulfillment-requirement-0001
+    kind: requirement
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL start an order workflow when a new purchase order is received,
+      by recording the order identifier with an initial status; the order processing
+      centre supplies PENDING as that initial status.
+    confidence: medium
+    confidence_basis: >
+      The create operation is explicit in this module; the PENDING initial value is
+      supplied by the single caller outside the module, not defaulted here.
+    risk_class: operational
+    basis: >
+      createManager(orderId, status) creates the workflow record; javadoc says it is
+      used "when new purchase orders are recieved and want to start the workflow
+      process". PurchaseOrderMDB calls it with OrderStatusNames.PENDING immediately
+      after persisting the purchase order.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+        line_start: 62
+        line_end: 68
+        excerpt: |
+              /**
+               * Business method used for when new purchase orders are recieved
+               * and want to start the workflow process to fullfil the order
+               */
+              public void createManager(String orderId, String status) throws CreateException {
+                ManagerLocal manager = mlh.create(orderId, status);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/ejb/PurchaseOrderMDB.java
+        line_start: 154
+        line_end: 156
+        excerpt: |
+              poHome.create(purchaseOrder);
+              //update process manager to start workflow for this purchase order
+              processManager.createManager(purchaseOrder.getOrderId(), OrderStatusNames.PENDING);
+    stack_metadata:
+      ejb.bean: ProcessManagerEJB
+      ejb.transaction: Required
+
+  - record_key: order-fulfillment-business-rule-0002
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      GIVEN an order workflow already exists for an order identifier
+      WHEN a workflow is started again for the same order identifier
+      THEN the system SHALL reject the creation and leave the existing workflow unchanged.
+    confidence: medium
+    confidence_basis: >
+      Follows from the primary-key constraint declared both in the DDL and in the
+      component descriptor; no explicit duplicate handling or message exists in the
+      code, so the rejection behaviour is inferred from the key rather than stated.
+    risk_class: operational
+    basis: >
+      orderId is the primary key of ManagerEJBTable and the primkey-field of the
+      entity; creation declares CreateException. A second create for the same orderId
+      would violate the key.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml
+        line_start: 471
+        line_end: 471
+        excerpt: |
+                    <sql>CREATE TABLE "ManagerEJBTable" ("orderId" VARCHAR(255) , "status" VARCHAR(255), CONSTRAINT "pk_ManagerEJBTabl" PRIMARY KEY ("orderId") )</sql>
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/manager/ejb/ManagerEJB.java
+        line_start: 61
+        line_end: 65
+        excerpt: |
+              public String ejbCreate(String orderId, String status) throws CreateException {
+                  setOrderId(orderId);
+                  setStatus(status);
+                  return null;
+              }
+    stack_metadata:
+      db.object: ManagerEJBTable
+      ejb.bean: ManagerEJB
+
+  - record_key: order-fulfillment-requirement-0002
+    kind: requirement
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL allow the status of an existing order workflow to be updated by
+      order identifier.
+      GIVEN no workflow exists for the order identifier WHEN a status update is requested
+      THEN the system SHALL fail the update with a not-found error and create nothing.
+    confidence: medium
+    confidence_basis: >
+      Single source (session bean method); the not-found behaviour follows from the
+      finder-by-key lookup that precedes the write and the declared FinderException.
+    risk_class: operational
+    basis: >
+      updateStatus looks the record up by primary key and then sets status; the
+      lookup throws FinderException when the order is unknown, so no record is
+      created implicitly.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+        line_start: 70
+        line_end: 76
+        excerpt: |
+              /**
+               * Business method used to keep track of an order in the workflow process
+               */
+              public void updateStatus(String orderId, String status) throws FinderException {
+                ManagerLocal manager = mlh.findByPrimaryKey(orderId);
+                manager.setStatus(status);
+              }
+    stack_metadata:
+      ejb.bean: ProcessManagerEJB
+      ejb.transaction: Required
+
+  - record_key: order-fulfillment-requirement-0003
+    kind: requirement
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL return the current workflow status of an order given its order
+      identifier, and SHALL fail with a not-found error when no workflow exists for it.
+    confidence: medium
+    confidence_basis: >
+      Single source in this module; used by the approval step to decide whether an
+      order is still PENDING.
+    risk_class: operational
+    basis: >
+      getStatus(orderId) performs a primary-key lookup and returns the status field.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+        line_start: 78
+        line_end: 84
+        excerpt: |
+              /**
+               * Business method used to keep track of an order in the workflow process
+               */
+              public String getStatus(String orderId) throws FinderException {
+                ManagerLocal manager = mlh.findByPrimaryKey(orderId);
+                return manager.getStatus();
+              }
+    stack_metadata:
+      ejb.bean: ProcessManagerEJB
+      ejb.transaction: Required
+
+  - record_key: order-approval-requirement-0001
+    kind: requirement
+    capability_key: order-approval
+    requirement: >
+      The system SHALL let an administrator retrieve all orders whose current workflow
+      status equals a given status, with each order appearing at most once.
+    confidence: medium
+    confidence_basis: >
+      Stated in both the declarative query (SELECT DISTINCT ... WHERE status = ?1) and
+      the session bean javadoc "for the admin"; the admin facade caller corroborates.
+      Not high because pass A agreement is unknown to this pass.
+    risk_class: operational
+    basis: >
+      getOrdersByStatus delegates to findOrdersByStatus, whose query selects distinct
+      workflow records by exact status match. OPCAdminFacadeEJB uses it to build the
+      administrator's order list.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+        line_start: 86
+        line_end: 91
+        excerpt: |
+              /**
+               * Business method to get all orders of given status for the admin
+               */
+              public Collection getOrdersByStatus(String status) throws FinderException {
+                  return mlh.findOrdersByStatus(status);
+              }
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/ejb-jar.xml
+        line_start: 70
+        line_end: 79
+        excerpt: |
+                <query>
+                  <description></description>
+                  <query-method>
+                    <method-name>findOrdersByStatus</method-name>
+                    <method-params>
+                      <method-param>java.lang.String</method-param>
+                    </method-params>
+                  </query-method>
+                  <ejb-ql>SELECT DISTINCT OBJECT(a) FROM Manager a WHERE a.status = ?1</ejb-ql>
+                </query>
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/admin/ejb/OPCAdminFacadeEJB.java
+        line_start: 131
+        line_end: 139
+        excerpt: |
+              public OrdersTO getOrdersByStatus(String status)
+                                                        throws OPCAdminFacadeException {
+                  OrdersTO.MutableOrdersTO retVal = new OrdersTO.MutableOrdersTO();
+                  PurchaseOrderLocal po;
+                  ProcessManagerLocal mgr = getProcMgr();
+
+                  try {
+                      PurchaseOrderLocalHome pohome = getPO();
+                      Collection orders = mgr.getOrdersByStatus(status);
+    stack_metadata:
+      ejb.bean: ProcessManagerEJB
+      ejb.transaction: Required
+      ejb.query: findOrdersByStatus
+
+  - record_key: order-fulfillment-business-rule-0003
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL perform every workflow create, status update, status read and
+      status query within the caller's transaction (starting one if none exists), so a
+      status change commits or rolls back together with the order processing that
+      triggered it.
+    confidence: medium
+    confidence_basis: >
+      Declarative and explicit for every business method of both components; single
+      source (the deployment descriptor), and the business consequence (atomicity with
+      the caller's processing) is inferred from the transaction attribute.
+    risk_class: operational
+    basis: >
+      Container-transaction entries set Required on createManager, updateStatus,
+      getStatus and getOrdersByStatus of the session component and on create, finders,
+      getStatus, setStatus and remove of the entity.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/ejb-jar.xml
+        line_start: 345
+        line_end: 368
+        excerpt: |
+              <container-transaction>
+                <method>
+                  <ejb-name>ProcessManagerEJB</ejb-name>
+                  <method-intf>Local</method-intf>
+                  <method-name>createManager</method-name>
+                  <method-params>
+                    <method-param>java.lang.String</method-param>
+                    <method-param>java.lang.String</method-param>
+                  </method-params>
+                </method>
+                <trans-attribute>Required</trans-attribute>
+              </container-transaction>
+              <container-transaction>
+                <method>
+                  <ejb-name>ProcessManagerEJB</ejb-name>
+                  <method-intf>Local</method-intf>
+                  <method-name>updateStatus</method-name>
+                  <method-params>
+                    <method-param>java.lang.String</method-param>
+                    <method-param>java.lang.String</method-param>
+                  </method-params>
+                </method>
+                <trans-attribute>Required</trans-attribute>
+              </container-transaction>
+    stack_metadata:
+      ejb.transaction: Required
+      ejb.bean: ProcessManagerEJB, ManagerEJB
+
+  - record_key: order-fulfillment-integration-0001
+    kind: integration
+    capability_key: order-fulfillment
+    requirement: >
+      The system SHALL hand the outcome of each order-processing step to a
+      configurable transition handler, selected by name, which receives either a
+      single XML document, a batch of XML documents, or both; a handler that cannot
+      be created or that fails SHALL surface a transition error carrying the root cause.
+    confidence: low
+    confidence_basis: >
+      The module defines only the contract (interface, parameter holder, factory,
+      error type); which handler runs and what it sends is configured and implemented
+      elsewhere, so the concrete behaviour cannot be seen from this module. Filed under
+      order-fulfillment as the closest capability; the handlers carry partner documents
+      and could equally belong to b2b-document-exchange.
+    risk_class: operational
+    basis: >
+      TransitionDelegate declares setup() and doTransition(TransitionInfo);
+      TransitionInfo carries an XML message and/or an XML message batch;
+      TransitionDelegateFactory instantiates a delegate by class name and wraps any
+      failure in TransitionException, which exposes the root cause.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/transitions/TransitionDelegate.java
+        line_start: 44
+        line_end: 50
+        excerpt: |
+          public interface TransitionDelegate {
+
+             public void setup() throws TransitionException;
+
+             public void doTransition(TransitionInfo info) throws TransitionException;
+
+          }
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/transitions/TransitionDelegateFactory.java
+        line_start: 48
+        line_end: 56
+        excerpt: |
+            public TransitionDelegate getTransitionDelegate(String className) throws TransitionException {
+              TransitionDelegate td = null;
+              try {
+                td = (TransitionDelegate)Class.forName(className).newInstance();
+              } catch(Exception e) {
+                throw new TransitionException(e);
+              }
+              return td;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/transitions/TransitionInfo.java
+        line_start: 45
+        line_end: 62
+        excerpt: |
+          public class TransitionInfo {
+
+            private String xmlMessage;
+            private Collection xmlMessageBatch;
+
+
+            public TransitionInfo(String xmlMessage) {
+              this.xmlMessage = xmlMessage;
+            }
+
+            public TransitionInfo(Collection xmlMessageBatch) {
+              this.xmlMessageBatch = xmlMessageBatch;
+            }
+
+            public TransitionInfo(String xmlMessage, Collection xmlMessageBatch) {
+              this.xmlMessage = xmlMessage;
+              this.xmlMessageBatch = xmlMessageBatch;
+            }
+    stack_metadata:
+      framework: reflection-based delegate factory
+      callers: OrderApprovalMDB, SupplierOrderMDB, RcvrRequestProcessor
+
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+    description: >
+      The documented lifecycle (OrderStatusNames.java:44-46, pending->approved->
+      shippedPart->completed or pending->denied) is not enforced by the component that
+      owns the status. updateStatus (ProcessManagerEJB.java:73-76) writes any string
+      with no check of the current status or of the allowed set, and the DDL
+      (sun-j2ee-ri.xml:471) has no CHECK constraint and allows a NULL status. Guarding
+      is left to callers: OrderApprovalMDB skips non-PENDING orders, but InvoiceMDB
+      sets SHIPPED_PART / COMPLETED unconditionally, so an out-of-order or repeated
+      invoice could move COMPLETED back to SHIPPED_PART, or set a DENIED order to
+      SHIPPED_PART. A human must decide whether the rebuild enforces the state machine
+      centrally (recommended) or preserves the permissive legacy behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/OrderStatusNames.java
+    description: >
+      The same status vocabulary is reused outside the customer-order workflow: the
+      supplier purchase order sets its own status to OrderStatusNames.PENDING
+      (supplierpo SupplierOrderEJB.java:154) and to COMPLETED in the supplier's
+      fulfilment facade. It is unresolved whether supplier purchase orders are meant
+      to share the customer-order lifecycle or merely borrow the string constants. A
+      human should decide whether the rebuild keeps one shared status set or two.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/processmanager/src/ejb-jar.xml
+    description: >
+      Every method of both components is declared <unchecked/> (ejb-jar.xml:103-261)
+      and both use the caller's identity, so the workflow store imposes no role
+      restriction of its own; any local caller may create workflows or change status.
+      Access control is presumably provided by the callers (message consumers and the
+      admin facade), which is outside this module. A human should confirm that status
+      changes in the rebuild are restricted to the order-processing and admin paths.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/ProcessManagerEJB.java
+    description: >
+      The component exposes no operation to remove a workflow record (the remove
+      methods in ejb-jar.xml are container lifecycle methods with no business caller
+      found in this module), and the status set has no terminal archival state. It is
+      unresolved whether completed or denied order workflows are ever purged; no
+      retention rule is visible in this module.
