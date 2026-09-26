@@ -1,0 +1,400 @@
+# Spec extraction SX-0001, pass A, shard legacy-source/petstore1.3.2/src/components/lineitem
+# No legacy-analysis/sources/**/extracted.md exists in the tree, so no document traces are cited.
+records:
+  - record_key: order-fulfillment-entity-0001
+    kind: entity
+    capability_key: order-fulfillment
+    requirement: >-
+      The system SHALL persist each order line item with a category id, a product id, an item id, a
+      line number, an ordered quantity (integer), a unit price, and a quantity shipped (integer).
+    confidence: medium
+    confidence_basis: >-
+      The field set is declared in the deployment descriptor and matched one-for-one by the bean
+      accessors and the create method, but both are in this one component and there is no DDL in the
+      shard, so column types, lengths and nullability cannot be seen. The other pass has not been
+      compared.
+    risk_class: operational
+    basis: >-
+      Seven container-managed persistent fields are declared; the bean declares matching abstract
+      accessors and the full create method sets all seven. Line number is typed as a String, not an
+      integer. The entity is used by both the customer purchase order and the supplier order
+      components (outside this shard).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/lineitem/src/ejb-jar.xml
+        line_start: 58
+        line_end: 78
+        excerpt: |2
+                <cmp-field>
+                  <field-name>categoryId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>productId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>itemId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>lineNumber</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>quantity</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>unitPrice</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>quantityShipped</field-name>
+                </cmp-field>
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+        line_start: 141
+        line_end: 152
+        excerpt: |2
+            public Object ejbCreate(String catId, String prodId, String itemId,
+                                    String lineNo, int qty, float price, int qtyShipped)
+              throws CreateException {
+                setCategoryId(catId);
+                setProductId(prodId);
+                setItemId(itemId);
+                setLineNumber(lineNo);
+                setQuantity(qty);
+                setUnitPrice(price);
+                setQuantityShipped(qtyShipped);
+                return null;
+            }
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      ejb.transaction: Required
+      db.object: LineItem (CMP abstract schema)
+  - record_key: order-fulfillment-business-rule-0001
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >-
+      The system SHALL record the unit price on each line item at the time the line item is created,
+      so that the line carries its own price independent of later catalog price changes.
+    confidence: medium
+    confidence_basis: >-
+      The per-line price field and its population at creation are unambiguous in code; whether the
+      snapshot is intentional business policy (versus convenience) is not stated anywhere, and no
+      catalog-price re-read path was looked for outside this shard.
+    risk_class: financial
+    basis: >-
+      unitPrice is a persistent field set only by the create methods; the local interface exposes no
+      setter for it after creation. The value is stored as a single-precision float.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+        line_start: 141
+        line_end: 152
+        excerpt: |2
+            public Object ejbCreate(String catId, String prodId, String itemId,
+                                    String lineNo, int qty, float price, int qtyShipped)
+              throws CreateException {
+                setCategoryId(catId);
+                setProductId(prodId);
+                setItemId(itemId);
+                setLineNumber(lineNo);
+                setQuantity(qty);
+                setUnitPrice(price);
+                setQuantityShipped(qtyShipped);
+                return null;
+            }
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemLocal.java
+        line_start: 55
+        line_end: 57
+        excerpt: |2
+            public float getUnitPrice();
+            public int getQuantityShipped();
+            public void setQuantityShipped(int qty);
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      ejb.transaction: Required
+      db.object: LineItem (CMP abstract schema)
+      java.type.unitPrice: float
+  - record_key: order-fulfillment-business-rule-0002
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >-
+      The system SHALL treat the category, product, item, line number, ordered quantity and unit
+      price of a line item as fixed after creation, and SHALL allow only the quantity shipped to be
+      updated.
+    confidence: medium
+    confidence_basis: >-
+      Derived from the absence of setters on the only client-visible interface; single source, and
+      it is an interface-shape inference rather than an explicit rule.
+    risk_class: operational
+    basis: >-
+      The local interface (the bean has no remote interface) exposes getters for all fields and
+      exactly one mutator, setQuantityShipped. Callers outside this shard increment quantity shipped
+      as shipments arrive.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemLocal.java
+        line_start: 48
+        line_end: 59
+        excerpt: |
+          public interface LineItemLocal extends EJBLocalObject{
+
+            public String getCategoryId();
+            public String getProductId();
+            public String getItemId();
+            public String getLineNumber();
+            public int getQuantity();
+            public float getUnitPrice();
+            public int getQuantityShipped();
+            public void setQuantityShipped(int qty);
+            public LineItem getData();
+          }
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemLocalHome.java
+        line_start: 47
+        line_end: 51
+        excerpt: |2
+           * This is the Local Home Interface for
+           * LineItem EJB. This EJB has no remote interface.
+           **/
+
+          public interface LineItemLocalHome extends EJBLocalHome{
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      ejb.transaction: Required
+      db.object: LineItem (CMP abstract schema)
+  - record_key: order-fulfillment-business-rule-0003
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: >-
+      GIVEN an existing line item WHEN a new line item is created from it with a stated shipped
+      quantity THEN the system SHALL copy the category, product, item, line number, ordered quantity
+      and unit price unchanged and SHALL set the quantity shipped to the stated value rather than
+      the source's.
+    confidence: medium
+    confidence_basis: >-
+      Directly visible in one create method; the business purpose (supplier order lines are created
+      from purchase-order lines with shipped = 0) is inferred from a caller outside this shard, not
+      verified end to end.
+    risk_class: operational
+    basis: >-
+      The second create method copies six fields from the supplied LineItem value and sets
+      quantityShipped from the separate qty argument. The LineItem value object has no
+      quantityShipped field, so the shipped count can never be carried over from the source.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+        line_start: 158
+        line_end: 167
+        excerpt: |2
+            public Object ejbCreate(LineItem lineItem, int qty) throws CreateException {
+              setCategoryId(lineItem.getCategoryId());
+              setProductId(lineItem.getProductId());
+              setItemId(lineItem.getItemId());
+              setLineNumber(lineItem.getLineNumber());
+              setQuantity(lineItem.getQuantity());
+              setUnitPrice(lineItem.getUnitPrice());
+              setQuantityShipped(qty);
+              return null;
+            }
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemLocalHome.java
+        line_start: 57
+        line_end: 57
+        excerpt: |2
+            LineItemLocal create(LineItem lineItem, int qty) throws CreateException;
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      ejb.transaction: Required
+      db.object: LineItem (CMP abstract schema)
+  - record_key: b2b-document-exchange-integration-0001
+    kind: integration
+    capability_key: b2b-document-exchange
+    requirement: >-
+      The system SHALL represent a line item in exchanged order documents as a LineItem element
+      containing, in this order and each exactly once, CategoryId, ProductId, ItemId, LineNum,
+      Quantity and UnitPrice, each as text content.
+    confidence: high
+    confidence_basis: >-
+      Stated in two independent places that agree: the DTD content model and the serializer/parser
+      that emit and read the elements in the same order with none optional. Pass B not yet compared,
+      so this is provisional.
+    risk_class: operational
+    basis: >-
+      The DTD declares a strict sequence of six mandatory PCDATA children. toDOM appends them in
+      that order; fromDOM reads them as first-child then next-sibling in the same order with
+      optional=false. The document is identified by a public id at version 1.1.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/rsrc/schemas/LineItem.dtd
+        line_start: 38
+        line_end: 50
+        excerpt: |
+          <!ELEMENT LineItem (CategoryId, ProductId, ItemId, LineNum, Quantity, UnitPrice)>
+
+          <!ELEMENT CategoryId (#PCDATA)>
+
+          <!ELEMENT ProductId (#PCDATA)>
+
+          <!ELEMENT ItemId (#PCDATA)>
+
+          <!ELEMENT LineNum (#PCDATA)>
+
+          <!ELEMENT Quantity (#PCDATA)>
+
+          <!ELEMENT UnitPrice (#PCDATA)>
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItem.java
+        line_start: 54
+        line_end: 62
+        excerpt: |2
+            public static final String DTD_PUBLIC_ID = "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD LineItem 1.1//EN";
+            public static final String DTD_SYSTEM_ID = "/com/sun/j2ee/blueprints/lineitem/rsrc/schemas/LineItem.dtd";
+            public static final String XML_LINEITEM = "LineItem";
+            public static final String XML_CATEGORYID = "CategoryId";
+            public static final String XML_PRODUCTID = "ProductId";
+            public static final String XML_ITEMID = "ItemId";
+            public static final String XML_LINENUM = "LineNum";
+            public static final String XML_QUANTITY = "Quantity";
+            public static final String XML_UNITPRICE = "UnitPrice";
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItem.java
+        line_start: 137
+        line_end: 146
+        excerpt: |2
+            public Node toDOM(Document document) {
+              Element root = document.createElement(XML_LINEITEM);
+              XMLDocumentUtils.appendChild(document, root, XML_CATEGORYID, categoryId);
+              XMLDocumentUtils.appendChild(document, root, XML_PRODUCTID, productId);
+              XMLDocumentUtils.appendChild(document, root, XML_ITEMID, itemId);
+              XMLDocumentUtils.appendChild(document, root, XML_LINENUM, lineNumber);
+              XMLDocumentUtils.appendChild(document, root, XML_QUANTITY, quantity);
+              XMLDocumentUtils.appendChild(document, root, XML_UNITPRICE, unitPrice);
+              return root;
+            }
+    stack_metadata:
+      framework: J2EE XML documents
+      dtd.public_id: '-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD LineItem 1.1//EN'
+  - record_key: b2b-document-exchange-business-rule-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >-
+      GIVEN an incoming line item document fragment WHEN the element is not named LineItem, or any
+      of its six child elements is missing or out of order, or Quantity is not an integer, or
+      UnitPrice is not a decimal number THEN the system SHALL reject the fragment with a document
+      error.
+    confidence: medium
+    confidence_basis: >-
+      The element-name check and the required-child parsing are visible in this shard; the
+      integer/float format errors come from the shared XML utility in another component, which was
+      read but not traced in this shard.
+    risk_class: operational
+    basis: >-
+      fromDOM throws 'LineItem element expected.' when the node is not a LineItem element; every
+      child read is non-optional, Quantity is parsed with getContentAsInt and UnitPrice with
+      getContentAsFloat, which throw a content-format error on unparseable text.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItem.java
+        line_start: 148
+        line_end: 163
+        excerpt: |2
+            public static LineItem fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_LINEITEM)) {
+                Element child;
+                LineItem lineItem = new LineItem();
+                lineItem.categoryId = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getFirstChild(element, XML_CATEGORYID, false), false);
+                lineItem.productId = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_PRODUCTID, false), false);
+                lineItem.itemId = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_ITEMID, false), false);
+                lineItem.lineNumber = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_LINENUM, false), false);
+                lineItem.quantity = XMLDocumentUtils.getContentAsInt(child = XMLDocumentUtils.getNextSibling(child, XML_QUANTITY, false), false);
+                lineItem.unitPrice = XMLDocumentUtils.getContentAsFloat(child = XMLDocumentUtils.getNextSibling(child, XML_UNITPRICE, false), false);
+                return lineItem;
+              }
+              throw new XMLDocumentException(XML_LINEITEM + " element expected.");
+            }
+          }
+    stack_metadata:
+      framework: J2EE XML documents
+  - record_key: b2b-document-exchange-business-rule-0002
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >-
+      The system SHALL NOT include the quantity shipped when a line item is exported as a document
+      value; only the six ordered-line fields are carried.
+    confidence: medium
+    confidence_basis: >-
+      Both getData and the DTD omit the field, which is consistent, but whether the omission is a
+      deliberate rule or just the value object's shape is not stated.
+    risk_class: operational
+    basis: >-
+      getData copies six fields into the LineItem value object and does not copy quantityShipped;
+      the LineItem value class and the DTD have no quantity-shipped element.
+    traces:
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+        line_start: 171
+        line_end: 180
+        excerpt: |2
+            public LineItem getData() {
+              LineItem lineItem = new LineItem();
+              lineItem.setCategoryId(getCategoryId());
+              lineItem.setProductId(getProductId());
+              lineItem.setItemId(getItemId());
+              lineItem.setLineNumber(getLineNumber());
+              lineItem.setQuantity(getQuantity());
+              lineItem.setUnitPrice(getUnitPrice());
+              return lineItem;
+            }
+      - path: >-
+          legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/rsrc/schemas/LineItem.dtd
+        line_start: 38
+        line_end: 38
+        excerpt: |
+          <!ELEMENT LineItem (CategoryId, ProductId, ItemId, LineNum, Quantity, UnitPrice)>
+    stack_metadata:
+      framework: EJB 2.x CMP
+      ejb.bean: LineItemEJB
+      ejb.transaction: Required
+      db.object: LineItem (CMP abstract schema)
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/lineitem/src/ejb-jar.xml
+    description: >-
+      The line item entity declares java.lang.Object as its primary-key class with no primkey-field,
+      so identity is container-generated. Nothing enforces that a line number is unique within an
+      order, or that the (order, line number) pair is unique. A human must decide whether the
+      rebuild SHALL enforce unique line numbers per order.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+    description: >-
+      No validation exists on quantity, unit price or quantity shipped: create accepts zero or
+      negative quantities and prices, and setQuantityShipped accepts any integer, including a value
+      greater than the ordered quantity (callers outside this shard add shipped amounts without a
+      cap). Decide whether the rebuild SHALL require quantity > 0, price >= 0 and 0 <=
+      quantityShipped <= quantity.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItem.java
+    description: >-
+      Unit price is held as a single-precision float in the entity, value object and XML parser.
+      This loses cents precision for larger amounts. The rebuild needs an explicit decision on the
+      money representation (integer minor units or fixed decimal) and rounding rule; the legacy
+      behaviour gives none.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/lineitem/src/ejb-jar.xml
+    description: >-
+      Method permission for all line item methods is <unchecked/> with caller identity propagated,
+      so the entity itself enforces no role. Access control depends entirely on the calling
+      components; confirm in the purchaseorder/supplierpo/app shards that no unauthenticated path
+      reaches line item updates.
+  - kind: ambiguity
+    path: >-
+      legacy-source/petstore1.3.2/src/components/lineitem/src/com/sun/j2ee/blueprints/lineitem/ejb/LineItemEJB.java
+    description: >-
+      Line number is stored and exchanged as a free-text String, not an integer; ordering of line
+      items within an order therefore cannot rely on numeric sort. Decide whether the rebuild treats
+      line number as an integer sequence.
