@@ -1,0 +1,1153 @@
+records:
+  - record_key: SUPINV-ENT-0001
+    kind: entity
+    capability_key: supplier-inventory
+    requirement: The system SHALL hold one supplier inventory record per catalogue item, identified uniquely by the item identifier, carrying a mandatory whole-number quantity on hand.
+    confidence: high
+    confidence_basis: "Enforced in two independent places: the generated table DDL (primary key on itemId, quantity INTEGER NOT NULL) and the entity deployment descriptor (primkey-field itemId, cmp-fields itemId and quantity). Not graded higher because only one pass is visible to me."
+    risk_class: operational
+    basis: The Inventory entity has exactly two persistent fields, itemId (primary key, String) and quantity (int). The deployed table makes itemId the primary key and quantity NOT NULL.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 396
+        line_end: 396
+        excerpt: |2
+                    <sql>CREATE TABLE "InventoryEJBTable" ("itemId" VARCHAR(255) , "quantity" INTEGER NOT NULL, CONSTRAINT "pk_InventoryEJBTabl" PRIMARY KEY ("itemId") )</sql>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml
+        line_start: 56
+        line_end: 67
+        excerpt: |2
+                <persistence-type>Container</persistence-type>
+                <prim-key-class>java.lang.String</prim-key-class>
+                <reentrant>False</reentrant>
+                <cmp-version>2.x</cmp-version>  
+                <abstract-schema-name>Inventory</abstract-schema-name>
+                <cmp-field>
+                  <field-name>itemId</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <field-name>quantity</field-name>
+                </cmp-field>
+                <primkey-field>itemId</primkey-field>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/ejb/InventoryEJB.java
+        line_start: 57
+        line_end: 75
+        excerpt: |2
+              public abstract String getItemId();
+
+              /**
+               * setter method for setting the container managed field itemId
+               * @param itemId a String that represents the itemId
+               */
+              public abstract void setItemId(String itemId);
+
+              /**
+               * Accessor method to get container managed field quantity
+               * @return int that represents the quantity
+               */
+              public abstract int getQuantity();
+
+              /**
+               * setter method for setting the container managed field quantity
+               * @param quantity an integer that represents the quantity
+               */
+              public abstract void setQuantity(int quantity);
+    stack_metadata:
+      ejb.bean: InventoryEJB (CMP 2.x, local)
+      db.object: InventoryEJBTable
+  - record_key: SUPINV-SCR-0001
+    kind: screen
+    capability_key: supplier-inventory
+    requirement: The system SHALL provide supplier staff with an inventory screen that lists every inventory item with its item identifier and existing quantity, and for each item offers a new-quantity entry field and an update-selection checkbox, submitted together as a single batch. GIVEN no inventory could be retrieved WHEN the screen is shown THEN the system SHALL display a message that there are no items in inventory instead of the table.
+    confidence: medium
+    confidence_basis: Single source (the page itself plus the finder it calls). Layout and columns are unambiguous; the empty-state branch fires only when the lookup returns null (the finder returns an empty collection for an empty table, which renders an empty table instead), so the empty-state trigger is weaker than the copy suggests.
+    risk_class: presentational
+    basis: The page renders Item Id / Existing Quantity / New Quantity / Update columns from findAllInventoryItems (EJB-QL select of all Inventory), with qty_<itemId> text inputs and item_<itemId> checkboxes, and one submit.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 53
+        line_end: 56
+        excerpt: |2
+                <h1>Inventory Update Page</h1>
+                <h3>The existing inventory of all items is displayed below. Please
+                    enter the new quantity, check the adjacent box and, when all updates
+          	  are done, click "submit" button</h3>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 73
+        line_end: 111
+        excerpt: |2
+              Collection inventoryItems = displayInventory.getInventory();
+              if (inventoryItems != null) {
+          %>
+                      <br>
+          	    <br>
+          	    <table border="0" bgcolor="#336666">
+          	    <tr>
+          		<td><font color="white" size="3">Item Id</font></td>
+          		<td><font color="white" size="3">Existing Quantity</font></td>
+          		<td><font color="white" size="3">New Quantity</font></td>
+          		<td><font color="white" size="3">Update</font></td>
+          	    </tr>
+
+          <%
+          	    Iterator it = null;
+          	    if(inventoryItems != null)
+          		it = inventoryItems.iterator();
+          	    while ((it != null) && it.hasNext()) {
+          		InventoryLocal anItem = (InventoryLocal)it.next();
+          %>
+
+          		<tr bgcolor="#eeebcc">
+          		<td align="center"><%= anItem.getItemId() %></td>
+          		<td align="right"><%= anItem.getQuantity() %></td>
+          		<td><input type="text"
+          			   name="<%= "qty_"+ anItem.getItemId() %>"
+          			   size="6"></td>
+          		<td align="center">
+              		       <input type=checkbox 
+          		       name="<%= "item_"+ anItem.getItemId() %>" 
+          		       value="false"></td>
+          		</tr>
+          <%
+          	    }
+          %>
+                      </table>
+          	    <br><br>
+          	    <input type="image" border="0"
+          	           src="images/button_submit.gif" name="button">
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 114
+        line_end: 118
+        excerpt: |2
+              } else {
+          %>
+              	<font size="5" color="green">
+              	There are no items in inventory at all !!!!!! 
+              	</font>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/DisplayInventoryBean.java
+        line_start: 73
+        line_end: 89
+        excerpt: |2
+              public Collection getInventory() {
+                  Collection invColl = null;
+
+                  try {
+                      if(inventoryHomeRef == null) {
+                          ServiceLocator serviceLocator = new ServiceLocator();
+                          inventoryHomeRef = (InventoryLocalHome)
+                                       serviceLocator.getLocalHome(JNDINames.INV_EJB);
+                      }
+                      invColl = inventoryHomeRef.findAllInventoryItems();
+                  } catch(ServiceLocatorException ne) {
+                      ne.printStackTrace();
+                  } catch(FinderException fe) {
+                      fe.printStackTrace();
+                  }
+                  return invColl;
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml
+        line_start: 72
+        line_end: 80
+        excerpt: |2
+                <query>
+                  <description>EJBQL to find all Inventory Items</description>
+                  <query-method>
+                    <method-name>findAllInventoryItems</method-name>
+          	  <!--method-intf>LocalHome</method-intf--> 
+          	  <method-params />
+                  </query-method>
+                  <ejb-ql>Select OBJECT(a) From Inventory a</ejb-ql>
+                </query>
+    stack_metadata:
+      jsp.page: displayinventory.jsp
+      session.scope: DisplayInventoryBean (session)
+  - record_key: SUPINV-RULE-0001
+    kind: business-rule
+    capability_key: supplier-inventory
+    requirement: The system SHALL change an item's stock level only when that item is selected for update AND a non-empty new quantity is supplied for it, and SHALL replace (not add to) the existing quantity with the supplied value. GIVEN an item has a new quantity entered but is not selected WHEN the batch is submitted THEN its stock level SHALL remain unchanged.
+    confidence: medium
+    confidence_basis: Single programmatic source, consistent with the on-screen instruction to enter a quantity and tick the box. Replacement semantics are explicit (setQuantity); the additive alternative exists only as commented-out code, which reinforces rather than disputes it.
+    risk_class: operational
+    basis: updateInventory iterates only request parameters beginning with item_ (i.e. ticked checkboxes), skips when qty_<id> is missing or empty, and calls setQuantity with the parsed value. The addQuantity method is commented out.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+        line_start: 116
+        line_end: 130
+        excerpt: |2
+                Enumeration e = req.getParameterNames();
+                while ((e != null) && e.hasMoreElements()) {
+                  String param = ((String)e.nextElement()).trim();
+                  if ((param != null) && param.startsWith("item_")) {
+                    // get the item id number from the parameter
+                    itemId = param.substring("item_".length(),param.length());
+                    if(itemId != null) {
+                      String newQty = req.getParameter("qty_" + itemId);
+                      if((newQty == null) || (newQty.length() <= 0))
+                        continue;
+                      Integer qty = new Integer(newQty);
+                      if(qty.intValue() >= 0 ) {
+                        inventory = inventoryHomeRef.findByPrimaryKey(itemId);
+                        inventory.setQuantity(qty.intValue());
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 54
+        line_end: 56
+        excerpt: |2
+                <h3>The existing inventory of all items is displayed below. Please
+                    enter the new quantity, check the adjacent box and, when all updates
+          	  are done, click "submit" button</h3>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/ejb/InventoryEJB.java
+        line_start: 87
+        line_end: 96
+        excerpt: |2
+              /**
+               * This method allows increasing the quantity by a given amount
+               * @param quantity an integer that represents the amount by which the
+               *                 quantity has to be increased
+
+              public void addQuantity(int quantity) {
+                  int q = this.getQuantity();
+                  setQuantity(q+quantity);
+              }
+              */
+    stack_metadata:
+      framework: Servlet
+      struts.action: n/a — RcvrRequestProcessor servlet, currentScreen=updateinventory
+  - record_key: SUPINV-RULE-0002
+    kind: business-rule
+    capability_key: supplier-inventory
+    requirement: The system SHALL reject a negative new stock quantity for an item by leaving that item's stock level unchanged, while still applying the other items in the same batch. GIVEN a selected item with new quantity -5 WHEN the batch is submitted THEN that item's stock SHALL remain unchanged AND no error SHALL be shown for it.
+    confidence: medium
+    confidence_basis: The >= 0 guard is explicit in code; single source, no schema CHECK backs it (quantity is only NOT NULL). The silent-skip behaviour (no user feedback) is observed, not necessarily intended.
+    risk_class: operational
+    basis: Only qty.intValue() >= 0 reaches setQuantity; negatives fall through with no message. Non-numeric input is not handled here (see findings).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+        line_start: 126
+        line_end: 130
+        excerpt: |2
+                      Integer qty = new Integer(newQty);
+                      if(qty.intValue() >= 0 ) {
+                        inventory = inventoryHomeRef.findByPrimaryKey(itemId);
+                        inventory.setQuantity(qty.intValue());
+                      }
+    stack_metadata:
+      framework: Servlet
+  - record_key: SUPINV-WF-0001
+    kind: workflow
+    capability_key: supplier-inventory
+    requirement: WHEN supplier staff submit an inventory update, the system SHALL, as one atomic unit of work, apply the stock changes, then re-attempt fulfilment of every supplier order still in PENDING status against the new stock, then dispatch an invoice for each order from which anything was shipped, and on success SHALL show a confirmation that inventory was updated successfully.
+    confidence: medium
+    confidence_basis: Ordering and the transaction boundary are explicit in one servlet; the index page copy corroborates intent (updating inventory lets the supplier fill back-ordered items). Graded medium because error paths inside the unit swallow failures (see findings) so atomicity is weaker than the begin/commit suggests.
+    risk_class: operational
+    basis: doPost for updateinventory begins a UserTransaction, calls updateInventory, then processPendingPO (finds PENDING orders and processes each), then sendInvoices, commits, and forwards to back.jsp ('Inventory was updated successfully').
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+        line_start: 179
+        line_end: 189
+        excerpt: |2
+                  if(curScreen.equals("updateinventory")) {
+                    UserTransaction ut = null;
+                    try {
+                      InitialContext ic = new InitialContext();
+                      ut = (UserTransaction) ic.lookup(JNDINames.USER_TRANSACTION);
+                      ut.begin();        // start the xaction.
+                      updateInventory(req);
+                      Collection invoices = procPO.processPendingPO();
+                      sendInvoices(invoices);
+                      ut.commit();        // end xaction
+                      getServletConfig().getServletContext().getRequestDispatcher("/back.jsp").forward(req, resp);
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 247
+        line_end: 269
+        excerpt: |2
+            public Collection processPendingPO() throws FinderException {
+              ArrayList invoices = new ArrayList();
+
+              Collection coll =
+                supplierOrderLocalHome.findOrdersByStatus(OrderStatusNames.PENDING);
+              if(coll != null) {
+                Iterator it = coll.iterator();
+                while((it!=null) && (it.hasNext())) {
+                  SupplierOrderLocal order = (SupplierOrderLocal) it.next();
+                  String newInvoice = null;
+                  try {
+                    newInvoice = processAnOrder(order);
+                  } catch (XMLDocumentException xe) {
+                    // ignore since means we cant fulfill this order now
+                    System.out.println("OrderFulfillmentFacade:" + xe);
+                  }
+                  if(newInvoice != null) {
+                    invoices.add(newInvoice);
+                  }
+                }//end while
+              }
+              return invoices;
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/index.jsp
+        line_start: 50
+        line_end: 52
+        excerpt: |2
+              This application of the Java Pet Store enables updating the
+              inventory items. This will enable the supplier component fill the
+              items that are marked "Back Ordered"
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/back.jsp
+        line_start: 47
+        line_end: 47
+        excerpt: |2
+              Inventory was updated successfully !!!!!
+    stack_metadata:
+      framework: Servlet
+      ejb.transaction: UserTransaction (bean-managed in web tier); processPendingPO Required
+      jsp.page: back.jsp
+  - record_key: SUPINV-REQ-0001
+    kind: requirement
+    capability_key: supplier-inventory
+    requirement: The system SHALL provide a supplier home screen offering two actions, display inventory and log out, and SHALL return to it on a plain (non-form) visit to the supplier application entry point.
+    confidence: medium
+    confidence_basis: Single source (home page and dispatcher). Straightforward navigation with no competing path.
+    risk_class: presentational
+    basis: GET requests are forwarded to index.jsp; index.jsp posts currentScreen=displayinventory or logout; the dispatcher routes those to displayinventory.jsp and logout.jsp.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+        line_start: 159
+        line_end: 178
+        excerpt: |2
+            public void doGet(HttpServletRequest req, HttpServletResponse resp)
+              throws java.io.IOException, javax.servlet.ServletException {
+                fromDoGet = true;
+                doPost(req, resp);
+                fromDoGet = false;
+            }
+
+            public void doPost(HttpServletRequest req, HttpServletResponse resp)
+              throws java.io.IOException, javax.servlet.ServletException {
+
+                if(fromDoGet) {
+                  getServletConfig().getServletContext().getRequestDispatcher("/index.jsp").forward(req, resp);
+                } else {
+                  String curScreen = req.getParameter("currentScreen").trim();
+                  if(curScreen.equals("logout")) {
+                    getServletConfig().getServletContext().getRequestDispatcher("/logout.jsp").forward(req, resp);
+                  }
+                  if(curScreen.equals("displayinventory")) {
+                    getServletConfig().getServletContext().getRequestDispatcher("/displayinventory.jsp").forward(req, resp);
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/index.jsp
+        line_start: 55
+        line_end: 70
+        excerpt: |2
+              <form action="RcvrRequestProcessor" method=post>
+              <p>
+              <p>
+              <p>
+               To view current inventory, click here :
+              <input type="hidden" name="currentScreen" value="displayinventory">
+              <input type="submit" value="Display Inventory">
+              </form>
+              <form action="RcvrRequestProcessor" method=post>
+              <p>
+              <p>
+              <p>
+               To logout of Pet Store Supplier, click here :
+              <input type="hidden" name="currentScreen" value="logout">
+              <input type="submit" value="Logout">
+              </form>
+    stack_metadata:
+      jsp.page: index.jsp
+      framework: Servlet
+  - record_key: SUPINV-RULE-0003
+    kind: business-rule
+    capability_key: supplier-inventory
+    requirement: The system SHALL provide an initial stock-loading function that, when the supplier inventory is empty, creates inventory for items EST-1 through EST-29 at 10000 units each, and SHALL skip loading when any inventory already exists unless loading is explicitly forced, in which case each listed item SHALL be replaced with the seeded quantity.
+    confidence: low
+    confidence_basis: The 29 items and the 10000 figure are bare literals in seed data with no comment or configuration explaining them; this is demo/bootstrapping data and may not be a business requirement at all. The skip/force logic is explicit in code.
+    risk_class: operational
+    basis: PopulateServlet.populate checks InventoryPopulator.check() (true when findAllInventoryItems is non-empty) and parses Populate-UTF8.xml only when forcefully or not already populated; createInventory removes any existing row for the id before creating it. The seed file lists EST-1..EST-29 each with quantity 10000.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/tools/populate/PopulateServlet.java
+        line_start: 98
+        line_end: 124
+        excerpt: |2
+            private boolean populate(boolean forcefully) throws PopulateException {
+              XMLReader reader = null;
+              boolean alreadyPopulated = false;
+              try {
+                SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+                //parserFactory.setValidating(true);
+                parserFactory.setNamespaceAware(true);
+                reader = parserFactory.newSAXParser().getXMLReader();
+                InventoryPopulator inventoryPopulator = new InventoryPopulator();
+                if (!forcefully) {
+                  try {
+                    alreadyPopulated = inventoryPopulator.check();
+                  } catch (PopulateException exception) {}
+                  //System.err.println("Already populated: " + alreadyPopulated);
+                }
+                if (forcefully || !alreadyPopulated) {
+                  try {
+                    inventoryPopulator.setup(reader).parse(new InputSource(getResource(populateDataPath)));
+                  } catch (Exception exception) {
+                    throw new PopulateException(exception);
+                  }
+                }
+              } catch (Exception exception) {
+                throw new PopulateException(exception);
+              }
+              return forcefully || !alreadyPopulated;
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/tools/populate/InventoryPopulator.java
+        line_start: 83
+        line_end: 113
+        excerpt: |2
+            public boolean check() throws PopulateException {
+              try {
+                    InitialContext context = new InitialContext();
+                    inventoryHome = (InventoryLocalHome) context.lookup(JNDI_INVENTORY_HOME);
+                    Collection inventoryItems = inventoryHome.findAllInventoryItems();
+                    if ((inventoryItems == null) || (inventoryItems.size() == 0)) {
+                  return false;
+                }
+              } catch (Exception e) {
+                    return false;
+              }
+              return true;
+            }
+
+            private InventoryLocal createInventory(String id, int quantity) throws PopulateException {
+              try {
+                if (inventoryHome == null) {
+                  InitialContext context = new InitialContext();
+                  inventoryHome = (InventoryLocalHome) context.lookup(JNDI_INVENTORY_HOME);
+                }
+                InventoryLocal inventory;
+                try {
+                  inventory = inventoryHome.findByPrimaryKey(id);
+                  inventory.remove();
+                } catch (Exception exception) {}
+                inventory = inventoryHome.create(id, quantity);
+                return inventory;
+              } catch (Exception exception) {
+                throw new PopulateException ("Could not create: " + exception.getMessage(), exception);
+              }
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/populate/Populate-UTF8.xml
+        line_start: 50
+        line_end: 80
+        excerpt: |
+          <InventoryList>
+          	<Inventory id="EST-1" quantity="10000" />
+          	<Inventory id="EST-2" quantity="10000" />
+          	<Inventory id="EST-3" quantity="10000" />
+          	<Inventory id="EST-4" quantity="10000" />
+          	<Inventory id="EST-5" quantity="10000" />
+          	<Inventory id="EST-6" quantity="10000" />
+          	<Inventory id="EST-7" quantity="10000" />
+          	<Inventory id="EST-8" quantity="10000" />
+          	<Inventory id="EST-9" quantity="10000" />
+          	<Inventory id="EST-10" quantity="10000" />
+          	<Inventory id="EST-11" quantity="10000" />
+          	<Inventory id="EST-12" quantity="10000" />
+          	<Inventory id="EST-13" quantity="10000" />
+          	<Inventory id="EST-14" quantity="10000" />
+          	<Inventory id="EST-15" quantity="10000" />
+          	<Inventory id="EST-16" quantity="10000" />
+          	<Inventory id="EST-17" quantity="10000" />
+          	<Inventory id="EST-18" quantity="10000" />
+          	<Inventory id="EST-19" quantity="10000" />
+          	<Inventory id="EST-20" quantity="10000" />
+          	<Inventory id="EST-21" quantity="10000" />
+          	<Inventory id="EST-22" quantity="10000" />
+          	<Inventory id="EST-23" quantity="10000" />
+          	<Inventory id="EST-24" quantity="10000" />
+          	<Inventory id="EST-25" quantity="10000" />
+          	<Inventory id="EST-26" quantity="10000" />
+          	<Inventory id="EST-27" quantity="10000" />
+          	<Inventory id="EST-28" quantity="10000" />
+          	<Inventory id="EST-29" quantity="10000" />
+          </InventoryList>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/WEB-INF/web.xml
+        line_start: 52
+        line_end: 61
+        excerpt: |2
+            <servlet>
+              <servlet-name>PopulateServlet</servlet-name>
+              <display-name>PopulateServlet</display-name>
+              <description>no description</description>
+              <servlet-class>com.sun.j2ee.blueprints.supplier.tools.populate.PopulateServlet</servlet-class>
+              <init-param>
+                <param-name>PopulateData</param-name>
+                <param-value>/populate/Populate-UTF8.xml</param-value>
+              </init-param>
+            </servlet>
+    stack_metadata:
+      framework: Servlet
+      batch.trigger: HTTP GET/POST /Populate (invoked from populating.jsp meta-refresh)
+  - record_key: ORDFUL-WF-0001
+    kind: workflow
+    capability_key: order-fulfillment
+    requirement: WHEN the supplier receives a purchase order from the order processing centre, the system SHALL persist the order, then immediately attempt to fulfil it from current stock, and SHALL send an invoice back to the order processing centre only if at least one line was shipped; otherwise the order SHALL wait until new stock arrives.
+    confidence: medium
+    confidence_basis: Consistent across the message listener, the facade and the facade's class comment; single implementation path. Not high because no schema or declarative rule independently enforces the sequence.
+    risk_class: operational
+    basis: onMessage -> doWork -> processPO (parse XML, create SupplierOrder, processAnOrder); if the returned invoice is non-null doTransition publishes it; the else-branch comment says to wait for inventory at the receiver.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/processpo/ejb/SupplierOrderMDB.java
+        line_start: 101
+        line_end: 113
+        excerpt: |2
+            public void onMessage(Message recvMsg) {
+              try {
+                String messageID = recvMsg.getJMSMessageID();
+                TextMessage recdTM = (TextMessage)recvMsg;
+                String recdText = recdTM.getText();
+
+                // Do processing work on received message
+                String invoice = doWork(recdText);
+
+                // If orders were shipped, do the transition
+                if(invoice!=null) {
+                  doTransition(invoice);
+                } //else wait for the inventory to arrive at the inventory receiver
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 223
+        line_end: 237
+        excerpt: |2
+            public String processPO(String poXmlDoc) throws CreateException,
+                XMLDocumentException {
+              String invoiceXml = null;
+              SupplierOrderLocal order = null;
+
+              // Convert Po in XML to PO as Java Obj
+              SupplierOrder supplierOrder = null;
+              supplierOrderXDE.setDocument(poXmlDoc);
+              supplierOrder = supplierOrderXDE.getSupplierOrder();
+              //persist order
+              order = supplierOrderLocalHome.create(supplierOrder);
+              //fullfil order
+              invoiceXml = processAnOrder(order);
+              return invoiceXml;
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/processpo/ejb/SupplierOrderMDB.java
+        line_start: 151
+        line_end: 154
+        excerpt: |2
+            private void doTransition(String xmlMessage) throws TransitionException  {
+              TransitionInfo info = new TransitionInfo(xmlMessage);
+              transitionDelegate.doTransition(info);
+            }
+    stack_metadata:
+      ejb.bean: SupplierOrderMDB, OrderFulfillmentFacadeEJB
+      jms.queue: jms/supplier/PurchaseOrderQueue
+      ejb.transaction: Required (onMessage, processPO)
+  - record_key: ORDFUL-RULE-0001
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: "The system SHALL ship an order line only in full: a line SHALL be shipped when the item's stock on hand is at least the line quantity, in which case stock SHALL be reduced by the line quantity and the whole line quantity recorded as shipped; otherwise nothing of that line SHALL be shipped or reserved. GIVEN a line for 5 units and 3 units on hand WHEN fulfilment is attempted THEN no units SHALL ship and stock SHALL remain 3."
+    confidence: medium
+    confidence_basis: Explicit comparison and decrement in one method; no split-quantity path exists anywhere in the shard. Single source.
+    risk_class: financial
+    basis: checkInventory returns false when inv.getQuantity() < item.getQuantity(), otherwise reduceQuantity(item.getQuantity()); processAnOrder then sets quantityShipped = quantity.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 126
+        line_end: 139
+        excerpt: |2
+            private boolean checkInventory(LineItemLocal item)  {
+              try {
+                InventoryLocal inv = invHome.findByPrimaryKey(item.getItemId());
+                if(inv.getQuantity() < item.getQuantity())
+                  return(false);
+                inv.reduceQuantity(item.getQuantity());
+              } catch (FinderException fe) {
+                // swallow the finder exception because this means
+                // supplier has not been populated; So we cant fulfill
+                // this part of the order now
+                return(false);
+              }
+              return(true);
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 189
+        line_end: 193
+        excerpt: |2
+                  if(!checkInventory(li)) {
+                    allItemsAvailable = false;
+                    continue;
+                  }
+                  li.setQuantityShipped(li.getQuantity());
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/ejb/InventoryEJB.java
+        line_start: 82
+        line_end: 85
+        excerpt: |2
+              public void reduceQuantity(int quantity) {
+                  int q = this.getQuantity();
+                  setQuantity(q-quantity);
+              }
+    stack_metadata:
+      ejb.bean: OrderFulfillmentFacadeEJB
+      ejb.transaction: Required
+  - record_key: ORDFUL-RULE-0002
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: The system SHALL fulfil each line of an order independently, shipping those lines that can be filled even when other lines of the same order cannot (partial shipment), and SHALL skip lines whose full quantity has already been shipped when fulfilment is re-attempted.
+    confidence: medium
+    confidence_basis: Explicit in the fulfilment loop (continue on unavailable line; continue on already-shipped line). Single source.
+    risk_class: operational
+    basis: processAnOrder iterates line items; a line where quantity == quantityShipped is skipped; a line failing checkInventory marks the order not fully available but the loop continues to later lines.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 182
+        line_end: 196
+        excerpt: |2
+                HashMap items = new HashMap();
+                Collection liColl = po.getLineItems();
+                Iterator liIt = liColl.iterator();
+                while((liIt != null) && (liIt.hasNext())) {
+                  LineItemLocal li = (LineItemLocal) liIt.next();
+                  if(li.getQuantity() == li.getQuantityShipped())
+                    continue;
+                  if(!checkInventory(li)) {
+                    allItemsAvailable = false;
+                    continue;
+                  }
+                  li.setQuantityShipped(li.getQuantity());
+                  items.put(li.getItemId(), OrderStatusNames.COMPLETED);
+                  invoiceReqd = true;
+                }//end while
+    stack_metadata:
+      ejb.bean: OrderFulfillmentFacadeEJB
+  - record_key: ORDFUL-RULE-0003
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: The system SHALL mark a supplier order COMPLETED when, in a fulfilment attempt, every line not previously shipped could be filled from stock; GIVEN any unshipped line cannot be filled WHEN fulfilment is attempted THEN the order status SHALL remain unchanged (pending).
+    confidence: medium
+    confidence_basis: The COMPLETED transition is explicit. The 'remains pending' half depends on the order being created with PENDING status, which is set in the supplier-order entity outside this shard and could not be confirmed here.
+    risk_class: operational
+    basis: po.setPoStatus(COMPLETED) only if allItemsAvailable; processPendingPO selects orders by status PENDING, implying unfulfilled orders stay PENDING. OrderStatusNames defines PENDING and COMPLETED.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 197
+        line_end: 198
+        excerpt: |2
+                if(allItemsAvailable)
+                  po.setPoStatus(OrderStatusNames.COMPLETED);
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 250
+        line_end: 251
+        excerpt: |2
+              Collection coll =
+                supplierOrderLocalHome.findOrdersByStatus(OrderStatusNames.PENDING);
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 202
+        line_end: 202
+        excerpt: |2
+                    <sql>SELECT DISTINCT "a"."poId" FROM "SupplierOrderEJBTable" "a" WHERE ("a"."poStatus"  = ? )</sql>
+    stack_metadata:
+      db.object: SupplierOrderEJBTable.poStatus
+  - record_key: ORDFUL-RULE-0004
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: GIVEN an order line for an item that has no supplier inventory record WHEN fulfilment is attempted THEN the system SHALL treat the line as out of stock (not ship it, leave the order pending) rather than fail the order.
+    confidence: medium
+    confidence_basis: Explicit catch with an explanatory comment; single source.
+    risk_class: operational
+    basis: checkInventory catches FinderException and returns false, commenting that the supplier has not been populated so this part cannot be fulfilled now.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 132
+        line_end: 137
+        excerpt: |2
+              } catch (FinderException fe) {
+                // swallow the finder exception because this means
+                // supplier has not been populated; So we cant fulfill
+                // this part of the order now
+                return(false);
+              }
+    stack_metadata:
+      ejb.bean: OrderFulfillmentFacadeEJB
+  - record_key: ORDFUL-RULE-0005
+    kind: business-rule
+    capability_key: order-fulfillment
+    requirement: The system SHALL issue, for each fulfilment attempt that ships at least one line, an invoice containing the order identifier, the original order date, a shipping date equal to the current date, and only the lines shipped in that attempt (category, product, item, line number, quantity, unit price); the invoice recipient field SHALL be the fixed text 'Dear PetStore Customer'.
+    confidence: medium
+    confidence_basis: All fields are set explicitly in one method. The fixed recipient text is a bare literal with no explanation, and whether it is a requirement or a placeholder cannot be told from the source (see findings).
+    risk_class: financial
+    basis: createInvoice sets orderId=poId, userId literal, orderDate=poDate, shippingDate=new Date(), and adds line items whose itemId is in the set shipped in this pass.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 145
+        line_end: 171
+        excerpt: |2
+            private String createInvoice(SupplierOrderLocal po, HashMap newLis)
+              throws XMLDocumentException {
+                invoiceXDE.newDocument();
+                invoiceXDE.setOrderId(po.getPoId());
+                invoiceXDE.setUserId("Dear PetStore Customer");
+                Date poDate = new Date(po.getPoDate());
+                invoiceXDE.setOrderDate(poDate);
+                Date curDate = new Date();
+                invoiceXDE.setShippingDate(curDate);
+                Collection items = po.getLineItems();
+                Iterator it = items.iterator();
+                while((it != null) && (it.hasNext())) {
+                  LineItemLocal anItem = (LineItemLocal)it.next();
+                  if(newLis.containsKey(anItem.getItemId())) {
+                    invoiceXDE.addLineItem(anItem.getCategoryId(),
+                                           anItem.getProductId(),
+                                           anItem.getItemId(),
+                                           anItem.getLineNumber(),
+                                           anItem.getQuantity(),
+                                           anItem.getUnitPrice());
+                  }
+                }//end while
+
+                String invDoc = null;
+                invDoc = invoiceXDE.getDocumentAsString();
+                return(invDoc);
+            }
+    stack_metadata:
+      ejb.bean: OrderFulfillmentFacadeEJB
+  - record_key: ORDFUL-INT-0001
+    kind: integration
+    capability_key: order-fulfillment
+    requirement: The system SHALL publish each supplier invoice as an XML text message to the order processing centre's invoice channel, both after processing a newly received purchase order and after re-fulfilling pending orders following a stock update.
+    confidence: medium
+    confidence_basis: Both call sites and the sender are explicit; the destination is fixed by deployment configuration. Single source per path.
+    risk_class: operational
+    basis: SupplierOrderTD.doTransition publishes the invoice XML via TopicSender to jms/opc/InvoiceTopic; used by SupplierOrderMDB and RcvrRequestProcessor.sendInvoices.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/transitions/SupplierOrderTD.java
+        line_start: 58
+        line_end: 83
+        excerpt: |2
+            public void setup() throws TransitionException {
+              try {
+                ServiceLocator servicelocator = new ServiceLocator();
+                topicFactory = servicelocator.getTopicConnectionFactory(JNDINames.TOPIC_CONNECTION_FACTORY);
+                topic = servicelocator.getTopic(JNDINames.INVOICE_MDB_TOPIC);
+                invoiceTopicSender = new TopicSender(topicFactory, topic);
+              } catch(ServiceLocatorException se) {
+                  throw new TransitionException(se);
+              }
+            }
+
+            /**
+             * Send Purchase Orders to supplier to fulfill a customer order and
+             * also send a list of approvals/denials to customer service to send emails
+             *
+             * @param supplierPoList is the list of Purchase Orders to send to supplier
+             * @param xmlMailOrderApprovals is the list of approvals/denials to send to customers
+             */
+            public void doTransition(TransitionInfo info) throws TransitionException {
+              String xmlInvoice = info.getXMLMessage();
+              try {
+                invoiceTopicSender.sendMessage(xmlInvoice);
+              } catch(JMSException je) {
+                  throw new TransitionException(je);
+              }
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+        line_start: 139
+        line_end: 157
+        excerpt: |2
+            private void sendInvoices(Collection invoices) {
+              try {
+                ServiceLocator serviceLocator = ServiceLocator.getInstance();
+                String tdClassName = serviceLocator.getString(JNDINames.TRANSITION_DELEGATE__SUPPLIER_ORDER);
+                TransitionDelegateFactory tdf = new TransitionDelegateFactory();
+                transitionDelegate = tdf.getTransitionDelegate(tdClassName);
+                transitionDelegate.setup();
+                Iterator it = invoices.iterator();
+                while((it!=null) && (it.hasNext())) {
+                  String anInvoice = (String) it.next();
+                  TransitionInfo info = new TransitionInfo(anInvoice);
+                  transitionDelegate.doTransition(info);
+                }
+              } catch(ServiceLocatorException se) {
+                se.printStackTrace();
+              } catch(TransitionException te) {
+                te.printStackTrace();
+              }
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 69
+        line_end: 70
+        excerpt: |2
+                <resource-env-ref-name>jms/opc/InvoiceTopic</resource-env-ref-name>
+                <jndi-name>jms/opc/InvoiceTopic</jndi-name>
+    stack_metadata:
+      jms.queue: jms/opc/InvoiceTopic (topic)
+      framework: JMS pub/sub, non-transacted session AUTO_ACKNOWLEDGE
+  - record_key: ORDFUL-INT-0002
+    kind: integration
+    capability_key: order-fulfillment
+    requirement: The system SHALL receive supplier purchase orders as XML text messages on a point-to-point channel from the order processing centre, and GIVEN a received order cannot be parsed, persisted, or its invoice cannot be sent WHEN processing the message THEN the system SHALL abandon the whole unit of work so the message is not consumed as processed.
+    confidence: medium
+    confidence_basis: The listener rethrows every checked failure as a system exception under a Required container transaction, which rolls back and makes the message eligible for redelivery. Redelivery count/limits are container configuration not visible in the shard.
+    risk_class: operational
+    basis: message-driven destination-type javax.jms.Queue bound to jms/supplier/PurchaseOrderQueue; onMessage wraps TransitionException, CreateException, XMLDocumentException, JMSException in EJBException; onMessage trans-attribute Required.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml
+        line_start: 85
+        line_end: 93
+        excerpt: |2
+              <message-driven>
+                <description>opc node to process PurchaseOrders from the Java Pet Store</description>
+                <display-name>SupplierOrderMDB</display-name>
+                <ejb-name>SupplierOrderMDB</ejb-name>
+                <ejb-class>com.sun.j2ee.blueprints.supplier.processpo.ejb.SupplierOrderMDB</ejb-class>
+                <transaction-type>Container</transaction-type>
+                <message-driven-destination>
+                  <destination-type>javax.jms.Queue</destination-type>
+                </message-driven-destination>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/processpo/ejb/SupplierOrderMDB.java
+        line_start: 114
+        line_end: 122
+        excerpt: |2
+              } catch (TransitionException te) {
+                  throw new EJBException(te);
+              } catch  (CreateException ce) {
+                throw new EJBException(ce);
+              } catch  (XMLDocumentException xe) {
+                throw new EJBException(xe);
+              } catch  (JMSException je) {
+                throw new EJBException(je);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml
+        line_start: 317
+        line_end: 326
+        excerpt: |2
+              <container-transaction>
+                <method>
+                  <ejb-name>SupplierOrderMDB</ejb-name>
+                  <method-name>onMessage</method-name>
+                  <method-params>
+                    <method-param>javax.jms.Message</method-param>
+                  </method-params>
+                </method>
+                <trans-attribute>Required</trans-attribute>
+              </container-transaction>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 311
+        line_end: 311
+        excerpt: |2
+                <jndi-name>jms/supplier/PurchaseOrderQueue</jndi-name>
+    stack_metadata:
+      jms.queue: jms/supplier/PurchaseOrderQueue
+      ejb.transaction: Required
+  - record_key: ORDFUL-ENT-0001
+    kind: entity
+    capability_key: order-fulfillment
+    requirement: The system SHALL store each supplier order with a unique order identifier, a mandatory order date, a status, shipping contact details, and line items each holding category, product, item, line number, a mandatory ordered quantity, a mandatory shipped quantity and a mandatory unit price.
+    confidence: medium
+    confidence_basis: Taken from the deployed DDL in this shard; the entity classes themselves live in the supplierpo component outside this shard, so the programmatic side of the invariant was not read.
+    risk_class: financial
+    basis: "SupplierOrderEJBTable: poId primary key, poDate NOT NULL, poStatus; LineItemEJBTable: quantity, quantityShipped INTEGER NOT NULL, unitPrice REAL NOT NULL; ContactInfo/Address tables linked."
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 189
+        line_end: 189
+        excerpt: |2
+                    <sql>CREATE TABLE "SupplierOrderEJBTable" ("_contactInfo___PMPrimaryKey" LONGINT , "poDate" LONGINT NOT NULL , "poId" VARCHAR(255) , "poStatus" VARCHAR(255), CONSTRAINT "pk_SupplierOrderEJBTabl" PRIMARY KEY ("poId") )</sql>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 107
+        line_end: 107
+        excerpt: |2
+                    <sql>CREATE TABLE "LineItemEJBTable" ("__PMPrimaryKey" LONGINT , "categoryId" VARCHAR(255) , "itemId" VARCHAR(255) , "lineNumber" VARCHAR(255) , "productId" VARCHAR(255) , "quantity" INTEGER NOT NULL , "quantityShipped" INTEGER NOT NULL , "unitPrice" REAL NOT NULL, CONSTRAINT "pk_LineItemEJBTabl" PRIMARY KEY ("__PMPrimaryKey") )</sql>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 241
+        line_end: 241
+        excerpt: |2
+                    <sql>CREATE TABLE "ContactInfoEJBTable" ("__PMPrimaryKey" LONGINT , "__reverse_contactInfo_poId" VARCHAR(255) , "_address___PMPrimaryKey" LONGINT , "email" VARCHAR(255) , "familyName" VARCHAR(255) , "givenName" VARCHAR(255) , "telephone" VARCHAR(255), CONSTRAINT "pk_ContactInfoEJBTabl" PRIMARY KEY ("__PMPrimaryKey") )</sql>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 144
+        line_end: 144
+        excerpt: |2
+                    <sql>CREATE TABLE "AddressEJBTable" ("__PMPrimaryKey" LONGINT , "__reverse_address___PMPrimaryKey" LONGINT , "city" VARCHAR(255) , "country" VARCHAR(255) , "state" VARCHAR(255) , "streetName1" VARCHAR(255) , "streetName2" VARCHAR(255) , "zipCode" VARCHAR(255), CONSTRAINT "pk_AddressEJBTabl" PRIMARY KEY ("__PMPrimaryKey") )</sql>
+    stack_metadata:
+      db.object: SupplierOrderEJBTable, LineItemEJBTable, ContactInfoEJBTable, AddressEJBTable
+      ejb.bean: SupplierOrderEJB, LineItemEJB (supplierpo component)
+  - record_key: B2BDOC-RULE-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL accept inbound supplier purchase orders in the trading-partner supplier-order XML format and convert them to the internal supplier-order format, mapping order id, order date, shipping address, contact name, email, phone and each line item's category, product, item, line number, quantity and unit price.
+    confidence: medium
+    confidence_basis: Mapping is explicit in the stylesheet and the catalogue that selects it; single source. The name mapping in that stylesheet looks inverted (see findings), so the field-level mapping is not fully trustworthy.
+    risk_class: operational
+    basis: TPASupplierOrderXDE looks up a stylesheet per schema URI in SupplierOrderStyleSheetCatalog.properties and transforms the input to SupplierOrder 1.1; TPASupplierOrder.xsl defines the field mapping.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/TPASupplierOrderXDE.java
+        line_start: 55
+        line_end: 59
+        excerpt: |
+          public class TPASupplierOrderXDE extends XMLDocumentEditor.DefaultXDE {
+            public static final String DEFAULT_SCHEMA_URI
+            = "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD TPA-SupplierOrder 1.0//EN";
+            public static final String STYLE_SHEET_CATALOG_PATH
+            = "/com/sun/j2ee/blueprints/supplier/rsrc/SupplierOrderStyleSheetCatalog.properties";
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/TPASupplierOrderXDE.java
+        line_start: 116
+        line_end: 122
+        excerpt: |2
+            public void setDocument(Source source) throws XMLDocumentException {
+              supplierOrder = null;
+              supplierOrder
+                = SupplierOrder.fromDOM(XMLDocumentUtils.transform(transformer, source, schemaURI,
+                                                                   getEntityCatalogURL(), isValidating(), isSupportingXSD()));
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/rsrc/SupplierOrderStyleSheetCatalog.properties
+        line_start: 2
+        line_end: 6
+        excerpt: |
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ TPA-SupplierOrder\ 1.0//EN: /com/sun/j2ee/blueprints/supplier/rsrc/xsl/TPASupplierOrder.xsl
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ TPA-SupplierOrder\ 1.0//EN.XSDSupport: false
+
+          http\://blueprints.j2ee.sun.com/TPASupplierOrder: /com/sun/j2ee/blueprints/supplier/rsrc/xsl/TPASupplierOrder.xsl
+          http\://blueprints.j2ee.sun.com/TPASupplierOrder.XSDSupport: true
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/rsrc/xsl/TPASupplierOrder.xsl
+        line_start: 15
+        line_end: 50
+        excerpt: |2
+            	<xsl:template match="/">
+          		<SupplierOrder>
+          			<OrderId><xsl:value-of select="/tpaso:SupplierOrder/tpaso:OrderId" /></OrderId>
+          			<OrderDate><xsl:value-of select="/tpaso:SupplierOrder/tpaso:OrderDate" /></OrderDate>
+          			<xsl:apply-templates select=".//tpaso:ShippingAddress|.//tpali:LineItem"/>
+          		</SupplierOrder>
+          	</xsl:template>
+
+          	<xsl:template match="/tpaso:SupplierOrder/tpaso:ShippingAddress">
+          		<ShippingInfo>
+          			<ContactInfo>
+          				<FamilyName><xsl:value-of select="tpaso:FirstName" /></FamilyName>
+          				<GivenName><xsl:value-of select="tpaso:LastName" /></GivenName>
+          				<Address>
+          					<StreetName><xsl:value-of select="tpaso:Street" /></StreetName>
+          					<City><xsl:value-of select="tpaso:City" /></City>
+          					<State><xsl:value-of select="tpaso:State" /></State>
+          					<ZipCode><xsl:value-of select="tpaso:ZipCode" /></ZipCode>
+          					<Country><xsl:value-of select="tpaso:Country" /></Country>
+          				</Address>
+          				<Email><xsl:value-of select="tpaso:Email" /></Email>
+          				<Phone><xsl:value-of select="tpaso:Phone" /></Phone>
+          			</ContactInfo>
+          		</ShippingInfo>
+          	</xsl:template>
+
+          	<xsl:template match="/tpaso:SupplierOrder/tpaso:LineItems/tpali:LineItem">
+          		<LineItem>
+          			<CategoryId><xsl:value-of select="@categoryId" /></CategoryId>
+          			<ProductId><xsl:value-of select="@productId" /></ProductId>
+          			<ItemId><xsl:value-of select="@itemId" /></ItemId>
+          			<LineNum><xsl:value-of select="@lineNo" /></LineNum>
+          			<Quantity><xsl:value-of select="@quantity" /></Quantity>
+          			<UnitPrice><xsl:value-of select="@unitPrice" /></UnitPrice>
+          		</LineItem>
+          	</xsl:template>
+    stack_metadata:
+      framework: JAXP/XSLT
+      db.object: n/a
+  - record_key: B2BDOC-RULE-0002
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL make validation of inbound supplier-order documents and outbound invoice documents configurable per deployment, and GIVEN validation is enabled and a document fails it WHEN the order is received THEN the order SHALL NOT be persisted.
+    confidence: low
+    confidence_basis: The switches exist but their deployed values are redacted in this copy of the descriptor, so whether validation is on in production cannot be determined; failure propagation relies on the rollback behaviour in ORDFUL-INT-0002.
+    risk_class: operational
+    basis: ejbCreate builds the XDEs with booleans read from param/xml/validation/SupplierOrder, param/xml/xsdvalidation/Invoice and schema param/xml/SupplierOrderSchema; parsing happens before create in processPO.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 90
+        line_end: 96
+        excerpt: |2
+                invoiceXDE
+                  = new TPAInvoiceXDE(serviceLocator.getUrl(JNDINames.XML_ENTITY_CATALOG_URL),
+                                      serviceLocator.getBoolean(JNDINames.XML_XSD_VALIDATION_INVOICE));
+                supplierOrderXDE
+                  = new TPASupplierOrderXDE(serviceLocator.getUrl(JNDINames.XML_ENTITY_CATALOG_URL),
+                                            serviceLocator.getBoolean(JNDINames.XML_VALIDATION_SUPPLIER_ORDER),
+                                            serviceLocator.getString(JNDINames.XML_SUPPLIER_ORDER_SCHEMA));
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/ejb-jar.xml
+        line_start: 145
+        line_end: 164
+        excerpt: |2
+                <env-entry>
+                 <env-entry-name>param/xml/validation/SupplierOrder</env-entry-name>
+                 <env-entry-type>java.lang.Boolean</env-entry-type>
+                 <env-entry-value>«REDACTED:secret-finding-55»</env-entry-value>
+                </env-entry>
+                <env-entry>
+                 <env-entry-name>param/xml/xsdvalidation/SupplierOrder</env-entry-name>
+                 <env-entry-type>java.lang.Boolean</env-entry-type>
+                 <env-entry-value>«REDACTED:secret-finding-56»</env-entry-value>
+                </env-entry>
+                <env-entry>
+                 <env-entry-name>param/xml/xsdvalidation/Invoice</env-entry-name>
+                 <env-entry-type>java.lang.Boolean</env-entry-type>
+                 <env-entry-value>«REDACTED:secret-finding-57»</env-entry-value>
+                </env-entry>
+                <env-entry>
+                 <env-entry-name>param/xml/SupplierOrderSchema</env-entry-name>
+                 <env-entry-type>java.lang.String</env-entry-type>
+                 <env-entry-value>«REDACTED:secret-finding-58»</env-entry-value>
+                </env-entry>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+        line_start: 230
+        line_end: 233
+        excerpt: |2
+              supplierOrderXDE.setDocument(poXmlDoc);
+              supplierOrder = supplierOrderXDE.getSupplierOrder();
+              //persist order
+              order = supplierOrderLocalHome.create(supplierOrder);
+    stack_metadata:
+      ejb.bean: OrderFulfillmentFacadeEJB
+      env-entries: param/xml/validation/SupplierOrder, param/xml/xsdvalidation/SupplierOrder, param/xml/xsdvalidation/Invoice, param/xml/SupplierOrderSchema
+  - record_key: SIGNON-RULE-0001
+    kind: business-rule
+    capability_key: sign-on
+    requirement: The system SHALL require supplier staff to sign in with a form-based user ID and password before any supplier inventory function, and SHALL permit those functions only to users holding the administrator role; GIVEN a signed-in user without that role WHEN they open the inventory screen THEN the system SHALL show a not-authorised message instead of the update form.
+    confidence: high
+    confidence_basis: "Enforced in two independent places: the declarative security constraint on the supplier request endpoint (GET and POST, role administrator) and a programmatic role check on the inventory page. Role-to-principal mapping (supplier user) is in the deployment descriptor."
+    risk_class: regulated
+    basis: web.xml security-constraint on /RcvrRequestProcessor for role administrator, FORM login via login.jsp/error.jsp; displayinventory.jsp checks request.isUserInRole("administrator"); sun-j2ee-ri maps principal supplier to administrator.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/WEB-INF/web.xml
+        line_start: 91
+        line_end: 117
+        excerpt: |2
+            <security-constraint>
+              <web-resource-collection>
+                <web-resource-name>MySecureBit0</web-resource-name>
+                <url-pattern>/RcvrRequestProcessor</url-pattern>
+                <http-method>GET</http-method>
+                <http-method>POST</http-method>
+              </web-resource-collection>
+              <auth-constraint>
+                <role-name>administrator</role-name>
+              </auth-constraint>
+              <user-data-constraint>
+                <transport-guarantee>NONE</transport-guarantee>
+              </user-data-constraint>
+            </security-constraint>
+
+            <login-config>
+              <auth-method>FORM</auth-method>
+              <realm-name>default</realm-name>
+              <form-login-config>
+                <form-login-page>/login.jsp</form-login-page>
+                <form-error-page>/error.jsp</form-error-page>
+              </form-login-config>
+            </login-config>
+
+            <security-role>
+              <role-name>administrator</role-name>
+            </security-role>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 65
+        line_end: 69
+        excerpt: |
+          <%
+          if(request.isUserInRole("administrator")) {
+          %>
+
+              <form action="RcvrRequestProcessor" method="post">
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+        line_start: 121
+        line_end: 127
+        excerpt: |
+          } else {
+          %>
+              <font size="5" color="green">
+              You are not authorised to update the status of orders.
+              </font>
+          <%
+          }
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/sun-j2ee-ri.xml
+        line_start: 45
+        line_end: 56
+        excerpt: |2
+              <rolemapping>
+              <role name="administrator">
+                <principals>
+                  <principal>
+                    <name>supplier</name>
+                  </principal>
+                </principals>
+                <groups>
+                  <group name="administrator_group" />
+                </groups>
+              </role>
+            </rolemapping>
+    stack_metadata:
+      framework: Servlet FORM auth
+      jsp.page: login.jsp, error.jsp, displayinventory.jsp
+  - record_key: SIGNON-REQ-0001
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL let supplier staff log out, ending their session, and SHALL expire an idle supplier session after 54 minutes.
+    confidence: low
+    confidence_basis: Logout behaviour is explicit; the 54-minute timeout is a bare literal with no comment or configuration rationale.
+    risk_class: regulated
+    basis: logout.jsp invalidates the session; web.xml session-timeout 54.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/logout.jsp
+        line_start: 38
+        line_end: 40
+        excerpt: |
+          <%
+            request.getSession().invalidate();
+          %>
+      - path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/WEB-INF/web.xml
+        line_start: 72
+        line_end: 74
+        excerpt: |2
+            <session-config>
+              <session-timeout>54</session-timeout>
+            </session-config>
+    stack_metadata:
+      jsp.page: logout.jsp
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+    description: "processAnOrder swallows an XMLDocumentException from invoice creation and returns null (comment: 'po is persisted and can be fulfilled later'), but by then stock has already been reduced and the lines marked fully shipped in the same Required transaction, which commits. Re-fulfilment skips lines where quantity == quantityShipped, so those goods are recorded as shipped with no invoice ever sent. A human must decide whether an invoice-generation failure should roll back the stock reduction (lines 189-207)."
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+    description: "The inventory-update flow wraps update + pending-order fulfilment + invoice sending in one UserTransaction, but sendInvoices catches and only prints TransitionException/ServiceLocatorException, so the transaction still commits: stock is decremented and lines marked shipped while the invoice publish may have failed. Also the invoice topic session is non-transacted, so a published invoice survives a later rollback. Decide the intended atomicity (lines 139-157, 179-206)."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+    description: Non-numeric new-quantity input (e.g. 'abc') makes new Integer(newQty) throw NumberFormatException, which is not caught; the request fails with a server error after ut.begin() and the transaction is never committed or rolled back explicitly. Missing currentScreen parameter on POST causes a NullPointerException. Intended validation feedback for bad input is unspecified (lines 123-127, 172).
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+    description: Failures in the updateinventory branch (FinderException for an unknown item id, RollbackException, etc.) are only printStackTrace'd and no response is forwarded, so the user gets a blank page with no success or error message. Also FinderException in updateInventory aborts processing of the remaining items in the batch. Intended error UX is unknown.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java
+    description: The GET-vs-POST routing uses an instance field fromDoGet on a servlet shared across threads; a concurrent GET can make a simultaneous POST be treated as a GET (forwarded to index.jsp, update silently not applied). Treated as a defect, not a requirement; intended behaviour is 'GET shows home page' (lines 85, 159-171).
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/rsrc/xsl/TPASupplierOrder.xsl
+    description: TPASupplierOrder.xsl maps tpaso:FirstName to FamilyName and tpaso:LastName to GivenName, i.e. first and last names appear swapped in the stored supplier order contact. Confirm whether the trading-partner format actually carries names in that order or this is a defect (lines 26-27).
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/TPASupplierOrderXDE.java
+    description: "Supporting-XSD flag is computed as Boolean.getBoolean(supportingXSD), which reads a JVM system property NAMED by the catalogue value ('true'/'false') rather than parsing it, so XSD support is effectively always false regardless of the catalogue entry 'http://blueprints.j2ee.sun.com/TPASupplierOrder.XSDSupport: true'. Decide whether XSD validation of inbound supplier orders was intended (line 89; catalogue lines 5-6)."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+    description: Invoice recipient is hard-coded to 'Dear PetStore Customer' (line 149) rather than a customer/user id. Unclear whether downstream consumers rely on this field; needs a decision for the rebuild.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/orderfulfillment/ejb/OrderFulfillmentFacadeEJB.java
+    description: The initial status of a newly persisted supplier order (assumed PENDING, required for processPendingPO to retry it) is set in the supplierpo component outside this shard; ORDFUL-RULE-0003's 'remains pending' clause depends on it and should be cross-checked with that shard.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/WEB-INF/web.xml
+    description: The /Populate servlet (initial stock load, including forcefully=true which deletes and recreates inventory rows) has no security constraint and the EJB method permissions are all <unchecked/>, so any unauthenticated caller can reset supplier stock. Decide whether this bootstrap function is in scope for the rebuild and who may run it (web.xml lines 52-70, 91-104; ejb-jar.xml 220-240).
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/login.jsp
+    description: The supplier login form pre-fills user ID and password with 'supplier'/'supplier' (lines 61, 67). Almost certainly demo convenience, but it discloses working credentials; must not be carried into the rebuild without an explicit decision.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/displayinventory.jsp
+    description: The not-authorised message reads 'You are not authorised to update the status of orders.' on the inventory page, and the empty-state message only appears when the inventory lookup fails (returns null), not when inventory is empty. Copy and empty-state trigger need an owner decision (lines 114-125).
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/supplier/src/docroot/populating.jsp
+    description: populating.jsp redirects to Populate with success_page=//petstore/main.screen, i.e. supplier population is chained from the storefront's population flow; reachability of the standalone supplier populate page from any supplier screen could not be established in this shard (line 47).
+  - kind: ambiguity
+    path: legacy-analysis
+    description: No legacy-analysis/sources/**/extracted.md documents exist in the tree, so no document trace pointers could be cited for this module; all records are code-traced only.
