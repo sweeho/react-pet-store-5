@@ -1,0 +1,105 @@
+records:
+  - record_key: LOCALIZATION-REQUIREMENT-0001
+    kind: requirement
+    capability_key: localization
+    requirement: >
+      The system SHALL decode the text of every incoming customer-facing web request
+      (form fields and query parameters) as UTF-8 before any of that text is read, so
+      that input typed in any supported locale (English, Japanese, Chinese) is
+      received without corruption.
+    confidence: medium
+    confidence_basis: >
+      The behaviour is stated in two places that agree (the deployed filter
+      configuration names UTF-8 and maps it to every URL; the filter code applies the
+      configured value to each request), so the rule is not inferred. Not high
+      because this is a single extraction pass with no second-pass agreement, and the
+      link to the three supported locales is my reading of why UTF-8 was chosen, not
+      something the source states.
+    risk_class: operational
+    basis: >
+      web.xml declares the encoding filter with init-param encoding=UTF-8 and maps
+      it to url-pattern /*. The filter reads that init-param at start-up and calls
+      setCharacterEncoding(targetEncoding) on every request before passing it down
+      the chain. The encoding filter mapping is declared before the sign-on filter
+      mapping, so the character encoding is set before the sign-on filter (the next
+      filter in the chain) can read request parameters. Filed under localization as
+      the closest capability; it has no business capability of its own.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 48
+        line_end: 57
+        excerpt: |
+            <filter>
+              <filter-name>EncodingFilter</filter-name>
+              <display-name>EncodingFilter</display-name>
+              <description>no description</description>
+              <filter-class>com.sun.j2ee.blueprints.encodingfilter.web.EncodingFilter</filter-class>
+              <init-param>
+                <param-name>encoding</param-name>
+                <param-value>UTF-8</param-value>
+              </init-param>
+            </filter>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 69
+        line_end: 78
+        excerpt: |
+            <filter-mapping>
+              <filter-name>EncodingFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+            <!-- Encoding Filter Mapping End -->
+            <!-- Signon Filter Mapping Start-->
+            <filter-mapping>
+              <filter-name>SignOnFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+      - path: legacy-source/petstore1.3.2/src/components/encodingfilter/src/com/sun/j2ee/blueprints/encodingfilter/web/EncodingFilter.java
+        line_start: 61
+        line_end: 78
+        excerpt: |
+              public void init(FilterConfig config) throws ServletException {
+                  this.config = config;
+                  this.targetEncoding = config.getInitParameter("encoding");
+              }
+
+              public void destroy() {
+                  config = null;
+                  targetEncoding = null;
+              }
+
+               public  void doFilter(ServletRequest srequest, ServletResponse  sresponse, FilterChain chain)
+                  throws IOException, ServletException {
+
+                  HttpServletRequest request = (HttpServletRequest)srequest;
+                  request.setCharacterEncoding(targetEncoding);
+                  // move on to the next
+                 chain.doFilter(srequest,sresponse);
+              }
+    stack_metadata:
+      framework: servlet-filter
+      servlet.filter: com.sun.j2ee.blueprints.encodingfilter.web.EncodingFilter
+      servlet.filter.url_pattern: /*
+      servlet.filter.init_param.encoding: UTF-8
+      servlet.filter.chain_position: first (before SignOnFilter)
+      deployed_in: petstore web application only
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/encodingfilter/src/com/sun/j2ee/blueprints/encodingfilter/web/EncodingFilter.java
+    description: >
+      Lines 58-59 declare a default of "ASCII" ("default to ASCII"), but init() at
+      line 63 unconditionally overwrites it with config.getInitParameter("encoding"),
+      which is null when the parameter is absent. The ASCII default is therefore
+      never effective; with no parameter the filter would pass null to
+      setCharacterEncoding (container-dependent behaviour). The only deployment
+      (petstore web.xml) supplies UTF-8, so this does not affect the extracted
+      requirement. A human should confirm that the rebuild needs no fallback
+      encoding and that ASCII was never an intended behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+    description: >
+      The filter is declared only in the customer-facing petstore web application;
+      no other web.xml in the tree (admin, order processing centre, supplier)
+      references it. Whether those applications also accepted non-ASCII input, and
+      how they decoded it, cannot be resolved from this module. A human should
+      decide whether UTF-8 request decoding is a system-wide requirement for the
+      rebuild or only for the storefront.
