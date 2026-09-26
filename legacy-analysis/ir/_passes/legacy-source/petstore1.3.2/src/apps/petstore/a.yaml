@@ -1,0 +1,2713 @@
+records:
+  - record_key: sign-on-REQ-0001
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL require a signed-on user before showing the account details screen,
+      before processing an account (customer profile) change, before showing the order-information
+      (checkout) entry screen, and before showing the sign-on welcome screen; an anonymous visitor
+      requesting any of these SHALL be sent to the sign-on form first. All other pages (catalog,
+      search, cart) SHALL be available without signing on.
+    confidence: medium
+    confidence_basis: "Single declarative source (the sign-on configuration). The filter that enforces
+      it lives in the signon component, outside this shard, so I could see the protected list but
+      not the enforcement code or its matching semantics (exact match vs. suffix match). Not high:
+      one layer only."
+    risk_class: operational
+    basis: The sign-on configuration lists exactly four protected resources; the sign-on filter is
+      mapped to every URL in web.xml. The banner's 'Account' link and the cart's 'Check Out' link
+      point at protected resources.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/signon-config.xml
+        line_start: 49
+        line_end: 79
+        excerpt: |2
+           <!-- A Protected Resource-->
+           <security-constraint>
+             <web-resource-collection>
+              <web-resource-name>Customer Screen</web-resource-name>
+              <url-pattern>customer.screen</url-pattern>
+             </web-resource-collection>
+           </security-constraint>
+
+           <!-- A Protected Resource-->
+           <security-constraint>
+             <web-resource-collection>
+              <web-resource-name>Customer Action</web-resource-name>
+              <url-pattern>customer.do</url-pattern>
+             </web-resource-collection>
+           </security-constraint>
+
+           <!-- A Protected Resource-->
+           <security-constraint>
+             <web-resource-collection>
+              <web-resource-name>Enter Order Information Screen</web-resource-name>
+              <url-pattern>enter_order_information.screen</url-pattern>
+             </web-resource-collection>
+           </security-constraint>
+
+           <!-- A Protected Resource-->
+           <security-constraint>
+             <web-resource-collection>
+              <web-resource-name>Sign On Welcome SCreen</web-resource-name>
+              <url-pattern>signon_welcome.screen</url-pattern>
+             </web-resource-collection>
+           </security-constraint>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 74
+        line_end: 79
+        excerpt: |2
+            <!-- Signon Filter Mapping Start-->
+            <filter-mapping>
+              <filter-name>SignOnFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+            <!-- Signon Filter Mapping End -->
+    stack_metadata:
+      framework: WAF signon filter
+      config: signon-config.xml
+  - record_key: sign-on-REQ-0002
+    kind: screen
+    capability_key: sign-on
+    requirement: "The system SHALL present a sign-in screen with two options: a returning-customer form
+      (user name, password, 'Remember My User Name' checkbox) and a new-account form (user name,
+      password, password repeat). GIVEN a remembered-user-name cookie is present WHEN the sign-in
+      screen is shown THEN the user name SHALL be pre-filled from it and the remember box SHALL be
+      checked. WHEN credentials are not found THEN the system SHALL show a sign-in error stating the
+      user name and password were not found in the records and inviting a retry."
+    confidence: medium
+    confidence_basis: Read directly from the screen markup and the configured error page. Cookie
+      read/write and credential checking are in the signon component outside this shard, so only the
+      presentation half is visible.
+    risk_class: presentational
+    basis: signon.jsp renders both forms and reads cookie bp_signon; signon-config names
+      signon_error.screen as the failure page, which renders signon_failed.jsp.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon.jsp
+        line_start: 47
+        line_end: 73
+        excerpt: |
+          <p class="petstore_title">Sign In</p>
+          <p class="petstore"><b>Are you a returning customer?</b></p>
+
+          <table cellpadding="20" cellspacing="0" border="1">
+           <tr>
+            <td valign="top">
+             <waf:form  name="existingcustomer" action="j_signon_check" method="POST">
+              <table cellpadding="5" cellspacing="0" border="0">
+               <tr>
+                <td class="petstore" align="center" colspan="2">
+                 <b>Yes.</b>
+                </td>
+               </tr>
+               <tr>
+                <td class="petstore_form" align="right">
+                 <b>User Name:</b>
+                </td>
+                <td class="petstore_form">
+                <c:choose>
+                <c:when  test="${cookie['bp_signon'] != null && cookie['bp_signon'] !=''}">
+                 <waf:input cssClass="petstore_form"
+                                       type="text"
+                                        size="15"
+                                     name="j_username"
+                              validation="validation">
+                 <waf:value><c:out value="${cookie['bp_signon'].value}"/></waf:value>
+                </waf:input>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon.jsp
+        line_start: 119
+        line_end: 126
+        excerpt: |2
+               <tr>
+                <td align="center" colspan="2">
+                 Remember My User Name 
+                 <waf:checkbox name="j_remember_username">
+                  <waf:checked><c:out value="${cookie['bp_signon'] != null && cookie['bp_signon'] !=''}"/></waf:checked>
+                 </waf:checkbox>
+                </td>
+               </tr>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon.jsp
+        line_start: 130
+        line_end: 172
+        excerpt: |2
+            <td valign="top">
+            <waf:form name="newcustomer" action="createuser.do" method="POST">
+             <table cellpadding="5" cellspacing="0" border="0">
+              <tr>
+               <td class="petstore" align="center" colspan="2">
+                <b>No. I would like to sign up for an account.</b>
+               </td>
+              </tr>
+              <tr>
+               <td class="petstore_form" align="right">
+                <b>User Name:</b>
+               </td>
+               <td class="petstore_form">
+                <waf:input cssClass="petstore_form"
+                                          type="text"
+                                           size="15"
+                                 validation="validation"
+                                        name="j_username"/>
+               </td>
+              </tr>
+              <tr>
+               <td class="petstore_form" align="right">
+                <b>Password:</b>
+               </td>
+               <td class="petstore_form">
+                <waf:input cssClass="petstore_form" 
+                                          type="password"
+                                           size="15"
+                                 validation="validation"
+                                        name="j_password"/>
+               </td>
+              </tr>
+              <tr>
+               <td class="petstore_form" align="right">
+                <b>Password (Repeat):</b>
+               </td>
+               <td class="petstore_form">
+                <waf:input cssClass="petstore_form"
+                                          type="password"
+                                           size="15"
+                                  validation="validation"
+                                         name="j_password_2"/>
+                </td>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/signon-config.xml
+        line_start: 41
+        line_end: 47
+        excerpt: |2
+           <signon-form-login-page>
+            signon.screen
+           </signon-form-login-page>
+           <!-- Error Page When Sign On fails-->
+           <signon-form-error-page>
+            signon_error.screen
+           </signon-form-error-page>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon_failed.jsp
+        line_start: 44
+        line_end: 48
+        excerpt: |
+          <p class="petstore_title">Sign-in Error</p>
+
+          <p class="petstore">There were errors signing you in. The user name
+          and password you entered were not found in our records. Please try
+          again.</p>
+    stack_metadata:
+      jsp.page: signon.jsp, signon_failed.jsp
+      cookie: bp_signon
+  - record_key: sign-on-REQ-0003
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL create a new sign-on account from a submitted user name and password
+      when both are present. WHEN the account cannot be created (the user name is already in use, or
+      creation otherwise fails) THEN the system SHALL show a 'User Creation Error' screen stating
+      that the chosen user name is in use and asking for another.
+    confidence: high
+    confidence_basis: Enforced in code (creation failure raised as a duplicate-account error) and
+      declared in the exception-to-screen mapping; the two agree. Grade is contingent on pass B
+      agreeing. Uniqueness itself is enforced by the user store outside this shard.
+    risk_class: operational
+    basis: CreateUserHTMLAction only raises the create event when user name and password are non-null;
+      CreateUserEJBAction maps any CreateException to DuplicateAccountException, which mappings.xml
+      routes to duplicate_account.screen.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CreateUserHTMLAction.java
+        line_start: 76
+        line_end: 87
+        excerpt: |2
+                  String userName = (String)request.getParameter("j_username");
+                  String password =«REDACTED:secret-finding-25»
+                  String password2 =«REDACTED:secret-finding-26»
+
+                  // put username in session for future use
+                  request.getSession().setAttribute(SignOnFilter.USER_NAME, userName);
+
+                  CreateUserEvent event = null;
+                  if (userName != null && password != null) {
+                      return new CreateUserEvent(userName,password);
+                  }
+                  return event;
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/CreateUserEJBAction.java
+        line_start: 93
+        line_end: 101
+        excerpt: |2
+                  try {
+                       signOn.createUser(userName, password);
+                       // put a copy of the userName in the statemachine atttirbute table for future retrival
+                       ShoppingClientFacadeLocal scf = null;
+                       scf = (ShoppingClientFacadeLocal)machine.getAttribute(PetstoreKeys.SHOPPING_CLIENT_FACADE);
+                       scf.setUserId(userName);
+                  } catch (CreateException ce) {
+                      throw new DuplicateAccountException("Bad UserName or password");
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 111
+        line_end: 111
+        excerpt: |2
+              <exception-mapping exception-class="com.sun.j2ee.blueprints.petstore.controller.exceptions.DuplicateAccountException" screen="duplicate_account.screen"/>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/duplicate_account.jsp
+        line_start: 44
+        line_end: 48
+        excerpt: |
+          <font size="+3" color ="red">User Creation Error!</font>
+          <br>
+          <hr>
+          <br>
+          The User name you have chosen is in use. Please choose another username.
+    stack_metadata:
+      ejb.action: CreateUserEJBAction
+      web.action: CreateUserHTMLAction
+      url: createuser.do
+  - record_key: sign-on-WF-0001
+    kind: workflow
+    capability_key: sign-on
+    requirement: "The system SHALL run new-customer registration as: (1) create sign-on account, (2)
+      show the create-customer profile form, (3) on successful profile submission mark the user as
+      signed on and (4) return the user to the page they originally requested before signing on.
+      GIVEN the originally requested page was the account-change action WHEN registration completes
+      THEN the system SHALL go to the main (home) screen instead."
+    confidence: medium
+    confidence_basis: Chain is declared in the URL mappings and implemented in the flow handler and
+      action; consistent, but the 'original URL' attribute is populated by the signon component
+      outside this shard.
+    risk_class: operational
+    basis: createuser.do forwards to create_customer.screen; createcustomer.do uses
+      CreateUserFlowHandler which returns MAIN_SCREEN when the original URL is customer.do, else the
+      original URL; CustomerHTMLAction.doEnd sets SIGNED_ON_USER=true after a create.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 86
+        line_end: 95
+        excerpt: |2
+              <url-mapping url="createuser.do" screen="create_customer.screen" >
+                  <web-action-class>com.sun.j2ee.blueprints.petstore.controller.web.actions.CreateUserHTMLAction</web-action-class> 
+            </url-mapping>
+
+              <url-mapping url="createcustomer.do" useFlowHandler="true" >
+                  <web-action-class>com.sun.j2ee.blueprints.petstore.controller.web.actions.CustomerHTMLAction</web-action-class>
+                  <flow-handler class="com.sun.j2ee.blueprints.petstore.controller.web.flow.handlers.CreateUserFlowHandler">
+                     <handler-result result="MAIN_SCREEN" screen="main.screen"/>
+                  </flow-handler>
+             </url-mapping>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/flow/handlers/CreateUserFlowHandler.java
+        line_start: 64
+        line_end: 73
+        excerpt: |2
+              public String processFlow(HttpServletRequest request)
+                  throws FlowHandlerException {
+
+                  String forwardScreen = (String)request.getSession().getAttribute(SignOnFilter.ORIGINAL_URL);
+
+                  if (forwardScreen.equals("customer.do")) {
+                      return "MAIN_SCREEN";
+                  }
+                  return forwardScreen;
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 256
+        line_end: 266
+        excerpt: |2
+              public void doEnd(HttpServletRequest request, EventResponse eventResponse) {
+                  // put the signed on ok in the sesion if creating a customer
+                  if (eventType == CustomerEvent.CREATE) {
+                      // remove the SIGNED_ON_USER_SESSION_KEY
+                      if (request.getSession().getAttribute(SignOnFilter.SIGNED_ON_USER) != null) {
+                          request.getSession().removeAttribute(SignOnFilter.SIGNED_ON_USER);
+                      }
+                      request.getSession().setAttribute(SignOnFilter.SIGNED_ON_USER, new Boolean(true));
+                  }
+                  eventType = -1;
+              }
+    stack_metadata:
+      flow_handler: CreateUserFlowHandler
+      url: createuser.do -> createcustomer.do
+  - record_key: sign-on-REQ-0004
+    kind: requirement
+    capability_key: sign-on
+    requirement: WHEN a user signs out THEN the system SHALL discard the user's session state (including
+      the shopping cart), keep the user's currently selected language, start a fresh empty cart, and
+      show a 'You are signed out' screen with a link to sign in again.
+    confidence: medium
+    confidence_basis: Single code path plus its declared target screen; behaviour is clear from the
+      action. The separately mapped sign-off EJB event is dead (see findings), so this web-tier path
+      is the only effective one.
+    risk_class: operational
+    basis: SignOffHTMLAction invalidates the session, re-creates it with the saved locale and
+      re-initialises the component manager (new cart); mappings route signoff.do to signoff.screen.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/SignOffHTMLAction.java
+        line_start: 69
+        line_end: 82
+        excerpt: |2
+              public Event perform(HttpServletRequest request)
+                  throws HTMLActionException {
+                  // kill the session thus prompting a signoff
+                  HttpSession session = request.getSession();
+                  Locale locale = (Locale)session.getAttribute(WebKeys.LOCALE);
+                  session.invalidate();
+                  session = null;
+                  session = request.getSession(true);
+                  session.setAttribute(WebKeys.LOCALE, locale);
+                  // create a new Component Manager
+                  PetstoreComponentManager pcm = new PetstoreComponentManager();
+                  pcm.init(session);
+                  return new ChangeLocaleEvent(locale);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 82
+        line_end: 84
+        excerpt: |2
+              <url-mapping url="signoff.do" screen="signoff.screen" >
+                  <web-action-class>com.sun.j2ee.blueprints.petstore.controller.web.actions.SignOffHTMLAction</web-action-class>
+             </url-mapping>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signoff.jsp
+        line_start: 45
+        line_end: 50
+        excerpt: |
+          <p class="petstore_title">You are signed out.</p>
+
+          <p class="petstore">Thank you for shopping.</p>
+
+          <p class="petstore">You may <a href="signon_welcome.screen">sign
+          in</a> again.</p>
+    stack_metadata:
+      web.action: SignOffHTMLAction
+      url: signoff.do
+  - record_key: sign-on-REQ-0005
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL end an inactive user session after 15 minutes of inactivity.
+    confidence: medium
+    confidence_basis: Declarative, single source, unambiguous value; no code or document states whether
+      15 minutes is a business rule or a container default someone chose.
+    risk_class: operational
+    basis: web.xml session-timeout of 15.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 161
+        line_end: 163
+        excerpt: |2
+            <session-config>
+              <session-timeout>15</session-timeout>
+            </session-config>
+    stack_metadata:
+      session.scope: HttpSession
+      config: web.xml session-config
+  - record_key: sign-on-SCREEN-0001
+    kind: screen
+    capability_key: sign-on
+    requirement: The system SHALL show on every page a header with the store logo (link to home), a
+      keyword search box, links to Account and Cart, and a 'Sign out' link when the user is signed
+      on or a 'Sign in' link otherwise.
+    confidence: medium
+    confidence_basis: Read from the header fragment and the default screen definition; presentation
+      only, single source.
+    risk_class: presentational
+    basis: banner.jsp chooses sign-out vs sign-in on j_signon; each screen definition includes the banner.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/banner.jsp
+        line_start: 48
+        line_end: 69
+        excerpt: |2
+           <table bgcolor="#FFFFFF" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+             <td align="left" valign="middle">
+              <a href="main.screen">
+               <img src="images/banner_logo.gif" alt="Java Pet Store Demo logo" border="0">
+              </a>
+             </td>
+             <td class="petstore" align="right" valign="middle">
+               <form action="search.screen">
+                <input class="petstore_listing" type="text" name="keywords" size="8">
+                <input class="petstore_listing" type="submit" value="Search">
+              </form>
+              <br>
+              <a href="customer.do">Account</a> | <a href="cart.do">
+               Cart
+              </a>
+               |
+              <c:choose>
+               <c:when test="${j_signon == true}"><a href="signoff.do">Sign out</a></c:when>
+               <c:otherwise><a href="signon_welcome.screen">Sign in</a></c:otherwise>
+              </c:choose>
+            </td>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/screendefinitions_en_US.xml
+        line_start: 45
+        line_end: 53
+        excerpt: |2
+            <screen name="main">
+              <parameter key="title" value="Welcome to the BluePrints Petstore" direct="true"/>
+              <parameter key="banner" value="/banner.jsp" />
+              <parameter key="sidebar" value="/sidebar.jsp" />
+              <parameter key="body" value="/main.jsp" />
+              <parameter key="mylist" value="/mylist.jsp" />
+              <parameter key="advicebanner" value="/advice_banner.jsp" />
+              <parameter key="footer" value="/footer.jsp" />
+             </screen>
+    stack_metadata:
+      jsp.page: banner.jsp
+      template: template.jsp
+  - record_key: shopping-cart-REQ-0001
+    kind: requirement
+    capability_key: shopping-cart
+    requirement: The system SHALL let any visitor add an item to the shopping cart, remove an item from
+      it, and update the quantities of all items in the cart in one submission.
+    confidence: medium
+    confidence_basis: Web action and EJB action agree, but they are two halves of one path, not
+      independent enforcement. How the cart stores items and handles duplicates is in the cart
+      component outside this shard.
+    risk_class: operational
+    basis: CartHTMLAction maps action=purchase/remove/update to ADD_ITEM/DELETE_ITEM/UPDATE_ITEMS;
+      CartEJBAction applies them to the cart; cart.do is not a protected resource.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CartHTMLAction.java
+        line_start: 85
+        line_end: 122
+        excerpt: |2
+                  String actionType= (String)request.getParameter("action");
+                  HttpSession session = request.getSession();
+                  // get the shopping cart helper
+
+                  CartEvent event = null;
+                  if (actionType == null) return null;
+                  if (actionType.equals("purchase")) {
+                      String itemId = request.getParameter("itemId");
+                      event = new CartEvent(CartEvent.ADD_ITEM, itemId);
+                  }
+                  else if (actionType.equals("remove")) {
+                      String itemId = request.getParameter("itemId");
+                      event = new CartEvent(CartEvent.DELETE_ITEM, itemId);
+                  }
+                  else if (actionType.equals("update")) {
+                      Map quantities = new HashMap();
+                      Map parameters = request.getParameterMap();
+                      for (Iterator it = parameters.keySet().iterator();
+                           it.hasNext(); ) {
+                          String name = (String) it.next();
+                          String value = ((String[]) parameters.get(name))[0];
+
+                          final String ITEM_QTY = "itemQuantity_";
+                          if (name.startsWith(ITEM_QTY)) {
+                              String itemID = name.substring(ITEM_QTY.length());
+                              Integer quantity = null;
+                              try {
+                                  quantity = new Integer(value);
+                              }
+                              catch (NumberFormatException nfe) {
+                                  quantity = new Integer(0);
+                              }
+                              quantities.put(itemID, quantity);
+                          }
+                      }
+                      event = CartEvent.createUpdateItemEvent(quantities);
+                  }
+                  return event;
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/CartEJBAction.java
+        line_start: 66
+        line_end: 89
+        excerpt: |2
+                    switch (ce.getActionType()) {
+
+                        case  CartEvent.ADD_ITEM  : {
+                            cart.addItem(ce.getItemId());
+                        }
+                        break;
+
+                        case  CartEvent.DELETE_ITEM : {
+                            cart.deleteItem(ce.getItemId());
+                        }
+                        break;
+
+                        case  CartEvent.UPDATE_ITEMS : {
+                            Map items = ce.getItems();
+                            Iterator it = null;
+                            if (items != null) it = items.keySet().iterator();
+                            while ((it != null) && it.hasNext()) {
+                                String itemId = (String)it.next();
+                                int quantity = ((Integer)items.get(itemId)).intValue();
+                                cart.updateItemQuantity(itemId, quantity);
+                            }
+                        }
+                        break;
+                    }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 106
+        line_end: 108
+        excerpt: |2
+              <url-mapping url="cart.do" screen="cart.screen" >
+                  <web-action-class>com.sun.j2ee.blueprints.petstore.controller.web.actions.CartHTMLAction</web-action-class>
+             </url-mapping>
+    stack_metadata:
+      web.action: CartHTMLAction
+      ejb.action: CartEJBAction
+      url: cart.do
+  - record_key: shopping-cart-BR-0001
+    kind: business-rule
+    capability_key: shopping-cart
+    requirement: GIVEN a cart-update submission WHEN a quantity entered for an item is not a whole
+      number THEN the system SHALL treat that item's quantity as 0.
+    confidence: medium
+    confidence_basis: Explicit in code, single source. What a quantity of 0 does to the cart line
+      (remove vs keep at zero) is implemented in the cart component outside this shard, so the end
+      effect is not visible.
+    risk_class: financial
+    basis: NumberFormatException on itemQuantity_<id> is caught and replaced with 0.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CartHTMLAction.java
+        line_start: 107
+        line_end: 118
+        excerpt: |2
+                          final String ITEM_QTY = "itemQuantity_";
+                          if (name.startsWith(ITEM_QTY)) {
+                              String itemID = name.substring(ITEM_QTY.length());
+                              Integer quantity = null;
+                              try {
+                                  quantity = new Integer(value);
+                              }
+                              catch (NumberFormatException nfe) {
+                                  quantity = new Integer(0);
+                              }
+                              quantities.put(itemID, quantity);
+                          }
+    stack_metadata:
+      web.action: CartHTMLAction
+      form_field_prefix: itemQuantity_
+  - record_key: shopping-cart-SCREEN-0001
+    kind: screen
+    capability_key: shopping-cart
+    requirement: The system SHALL show the cart as follows. GIVEN the cart has no items THEN it SHALL
+      show 'Your Shopping Cart is Empty.' GIVEN it has items THEN it SHALL list each item (attribute
+      and name, linked to the item page), a Remove link, an editable quantity (at most 10
+      characters), and the unit price, followed by an 'Update Cart' button, the cart total
+      (subtotal) and a 'Check Out' link to the order-information screen.
+    confidence: medium
+    confidence_basis: Read from the screen markup only; the subtotal value is computed by the cart
+      component outside this shard.
+    risk_class: presentational
+    basis: cart.jsp branches on cart.count == 0 and renders the listed columns; checkout links to
+      enter_order_information.screen.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/cart.jsp
+        line_start: 42
+        line_end: 115
+        excerpt: |
+          <c:choose>
+           <c:when test="${cart.count == 0}">
+            <p class="petstore_title">Your Shopping Cart is Empty.</p>
+           </c:when>
+           <c:otherwise>
+            <fmt:setLocale value="en_US" />
+            <p class="petstore_title">Shopping Cart</p>
+            <form action="cart.do">
+             <input type="hidden" name="action" value="update">
+             <table border="0"width="100%" cellpadding="1" cellspacing="0">
+              <tr>
+               <td bgcolor="#808080">
+                <table width="100%" 
+                                        cellspacing="0" 
+                                        cellpadding="2" 
+                                        border="0"
+                                        bgcolor="#FFFFFF"> 
+                  <c:forEach var="item" items="${cart.items}" >
+                  <tr>
+                   <td width="50%" class="petstore_listing">
+                    <c:url value="/item.screen" var="viewItemURL">
+                     <c:param name="item_id" value="${item.itemId}"/>
+                    </c:url>
+                    <a href='<c:out value="${viewItemURL}"/>'>
+                     <c:out value="${item.attribute}" /> 
+                     <c:out value="${item.name}" />
+                    </a>
+                   </td>
+                   <td class="petstore_listing">
+                    <c:url value="/cart.do" var="removeURL">
+                     <c:param name="action" value="remove"/>
+                     <c:param name="itemId" value="${item.itemId}"/>
+                    </c:url>
+                    <a href='<c:out value="${removeURL}"/>'>
+                    Remove
+                   </a>
+                  </td>
+                  <td class="petstore_listing" align="right">
+                   <waf:input type="text" maxlength="10" size="3">
+                   <waf:name>itemQuantity_<c:out value="${item.itemId}"/></waf:name>
+                   <waf:value><c:out value="${item.quantity}" /></waf:value></waf:input>
+                  </td>
+                  <td class="petstore_listing" align="right"> @
+                   <fmt:formatNumber value="${item.unitCost}" type="currency" />
+                  </td>
+                 </tr>
+                 </c:forEach>
+                 <tr>
+                  <td class="petstore_listing" colspan="2">
+                   <input type="submit" value="Update Cart">
+                  </td>
+                  <td class="petstore_listing" align="right">
+                   <b>Total:</b>
+                  </td>
+                  <td bgcolor="#CCCCFF" class="petstore_listing" align="right">
+                   <fmt:formatNumber value="${cart.subTotal}" type="currency" />
+                  </td>
+                 </tr>
+                </table>
+               </td>
+              </tr>
+              <tr>
+               <td align="right">
+                <p class="petstore">
+                 <a href="enter_order_information.screen">
+                  Check Out
+                 </a>
+                </p>
+               </td>
+              </tr>
+             </table>
+            </form>
+           </c:otherwise>
+          </c:choose>
+    stack_metadata:
+      jsp.page: cart.jsp
+  - record_key: catalog-browsing-ENT-0001
+    kind: entity
+    capability_key: catalog-browsing
+    requirement: The system SHALL store catalog categories with a unique category id (up to 10
+      characters), and per-locale category details keyed by (category id, locale) with a mandatory
+      name (up to 80 characters) and optional image reference and description (up to 255 characters
+      each); every details row SHALL reference an existing category.
+    confidence: high
+    confidence_basis: Schema DDL (primary key, NOT NULL, foreign key) plus the read queries joining on
+      the same keys; identical in both database dialects. Contingent on pass B agreeing.
+    risk_class: operational
+    basis: create table category / category_details with pk_category, pk_category_details(catid,
+      locale), fk_category_details_1.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 51
+        line_end: 52
+        excerpt: |2
+                  create table category (catid char(10) not null,
+                    constraint pk_category primary key (catid))
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 66
+        line_end: 71
+        excerpt: |2
+                  create table category_details (catid char(10) not null,
+                    name varchar(80) not null, image varchar(255) null,
+                    descn varchar(255) null, locale char(10) not null,
+                    constraint pk_category_details primary key (catid, locale),
+                      constraint fk_category_details_1 foreign key (catid)
+                      references category (catid))
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 64
+        line_end: 77
+        excerpt: |2
+                  <SQLStatement method="GET_CATEGORY">
+                      <SQLFragment parameterNb="2">
+                          select name, descn
+                              from (category a join category_details b on a.catid=b.catid)
+                              where locale = ? and a.catid = ?
+                      </SQLFragment>
+                  </SQLStatement>
+                  <SQLStatement method="GET_CATEGORIES">
+                      <SQLFragment parameterNb="1">
+                          select a.catid, name, descn
+                              from (category a join category_details b on a.catid=b.catid) 
+                              where locale = ?  order by name
+                      </SQLFragment>
+                  </SQLStatement>
+    stack_metadata:
+      db.object: category, category_details
+  - record_key: catalog-browsing-ENT-0002
+    kind: entity
+    capability_key: catalog-browsing
+    requirement: The system SHALL store products with a unique product id (up to 10 characters) each
+      belonging to exactly one existing category, and per-locale product details keyed by (product
+      id, locale) with a mandatory name (up to 80 characters) and optional image and description.
+    confidence: high
+    confidence_basis: Schema DDL constraints plus read queries; both dialects agree. Contingent on pass B.
+    risk_class: operational
+    basis: create table product (catid not null, fk to category) and product_details with pk(productid,
+      locale).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 85
+        line_end: 90
+        excerpt: |2
+                  create table product (
+                    productid char(10) not null,
+                    catid char(10) not null,
+                    constraint pk_product primary key (productid),
+                      constraint fk_product_1 foreign key (catid)
+                      references category (catid))
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 104
+        line_end: 112
+        excerpt: |2
+                  create table product_details (
+                    productid char(10) not null,
+                    locale char(10) not null,
+                    name varchar(80) not null,
+                    image varchar(255) null,
+                    descn varchar(255) null,
+                    constraint pk_product_details primary key (productid, locale),
+                      constraint fk_product_details_1 foreign key (productid)
+                      references product (productid))
+    stack_metadata:
+      db.object: product, product_details
+  - record_key: catalog-browsing-ENT-0003
+    kind: entity
+    capability_key: catalog-browsing
+    requirement: The system SHALL store items with a unique item id (up to 10 characters) each belonging
+      to exactly one existing product, and per-locale item details keyed by (item id, locale) with a
+      mandatory list price and a mandatory unit cost (each a decimal with 2 fractional digits and at
+      most 10 digits), a mandatory image reference and description, and up to five optional
+      descriptive attributes (up to 80 characters each).
+    confidence: high
+    confidence_basis: Schema DDL constraints plus read queries selecting listprice and unitcost; both
+      dialects agree. Contingent on pass B.
+    risk_class: financial
+    basis: create table item and item_details with listprice/unitcost decimal(10,2) not null, pk(itemid,
+      locale), fk to item.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 126
+        line_end: 132
+        excerpt: |2
+                  create table item (
+                    itemid char(10) not null,
+                    productid char(10) not null,
+                    constraint pk_item primary key (itemid),
+                      constraint fk_item_1 foreign key (productid)
+                      references product (productid)
+                  )
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 146
+        line_end: 161
+        excerpt: |2
+                  create table item_details (
+                    itemid char(10) not null,
+                    listprice decimal(10,2) not null,
+                    unitcost decimal(10,2) not null,
+                    locale char(10) not null,
+                    image char(255) not null,
+                    descn varchar(255) not null,
+                    attr1 varchar(80) null,
+                    attr2 varchar(80) null,
+                    attr3 varchar(80) null,
+                    attr4 varchar(80) null,
+                    attr5 varchar(80) null,
+                    constraint pk_item_details primary key (itemid, locale),
+                        constraint fk_item_details_1 foreign key (itemid)
+                        references item (itemid)
+                  )
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 92
+        line_end: 101
+        excerpt: |2
+                  <SQLStatement method="GET_ITEM">
+                      <SQLFragment parameterNb="2">
+                          select catid, a.productid, name, b.image, b.descn, attr1, attr2, attr3,
+                                  attr4, attr5, listprice, unitcost
+                              from (((item a join item_details b on a.itemid=b.itemid)
+                                  join product_details c on a.productid=c.productid)
+                                  join product d on d.productid=c.productid and b.locale = c.locale)
+                              where b.locale = ? and a.itemid = ?
+                      </SQLFragment>
+                  </SQLStatement>
+    stack_metadata:
+      db.object: item, item_details
+  - record_key: catalog-browsing-REQ-0001
+    kind: requirement
+    capability_key: catalog-browsing
+    requirement: The system SHALL show on every page a 'Pets' side menu listing all categories for the
+      current language, sorted by category name, each linking to that category's product list.
+    confidence: medium
+    confidence_basis: Query ordering and the menu markup agree; single functional path. The menu is
+      cached for 5 minutes, so a newly added category may appear late (presentation detail, recorded
+      in stack_metadata).
+    risk_class: presentational
+    basis: GET_CATEGORIES orders by name and filters by locale; sidebar.jsp iterates catalog.categories.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 71
+        line_end: 77
+        excerpt: |2
+                  <SQLStatement method="GET_CATEGORIES">
+                      <SQLFragment parameterNb="1">
+                          select a.catid, name, descn
+                              from (category a join category_details b on a.catid=b.catid) 
+                              where locale = ?  order by name
+                      </SQLFragment>
+                  </SQLStatement>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/sidebar.jsp
+        line_start: 48
+        line_end: 83
+        excerpt: |
+          <waf:cache name="sidebar_en_US" scope="context" duration="300000">
+
+          <jsp:useBean
+            id="catalog"
+            class="com.sun.j2ee.blueprints.catalog.client.CatalogHelper"
+            scope="session"
+          />
+
+          <c:set value="en_US" target="${catalog}" property="locale"/>
+          <c:set value="5" target="${catalog}" property="count"/>
+          <c:set value="0" target="${catalog}" property="start"/>
+
+          <table border="0" width="100%" cellpadding="1" cellspacing="0">
+           <tr>
+            <td bgcolor="#336666" class="petstore_title" align="center">
+             <font color="#FFFFFF">Pets</font>
+            </td>
+           </tr>
+           <tr>
+            <td bgcolor="#336666">
+             <table border="0" width="100%" cellpadding="5" cellspacing="1">
+              <tr>
+               <td bgcolor="#FFFFFF" class="petstore">
+                <c:forEach var="item" items="${catalog.categories.list}" >
+                 <a href="category.screen?category_id=<c:out value="${item.id}" />">
+                  <c:out value="${item.name}" />
+                 </a>
+                 <br>
+                </c:forEach>
+               </td>
+              </tr>
+             </table>
+            </td>
+           </tr>
+          </table>
+          </waf:cache>
+    stack_metadata:
+      jsp.page: sidebar.jsp
+      cache.duration_ms: 300000
+      cache.scope: application
+  - record_key: catalog-browsing-REQ-0002
+    kind: requirement
+    capability_key: catalog-browsing
+    requirement: The system SHALL list the products of a selected category for the current language,
+      sorted by product name, showing name (linked to the product's items) and description, paged
+      with Previous/Next links.
+    confidence: medium
+    confidence_basis: Query and page markup agree; single path.
+    risk_class: presentational
+    basis: GET_PRODUCTS filters by locale and catid and orders by name; category.jsp renders and pages
+      the result.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 85
+        line_end: 91
+        excerpt: |2
+                  <SQLStatement method="GET_PRODUCTS">
+                      <SQLFragment parameterNb="2">
+                          select a.productid, name, descn
+                              from (product a join product_details b on a.productid=b.productid)
+                              where locale = ? and a.catid = ? order by name
+                      </SQLFragment>
+                  </SQLStatement>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/category.jsp
+        line_start: 65
+        line_end: 107
+        excerpt: |
+          <c:choose>
+           <c:when test="${param.count != null}">
+            <c:set value="${param.start}" target="${catalog}" property="start"/>
+            <c:set value="${param.count}" target="${catalog}" property="count"/>
+           </c:when>
+           <c:otherwise>
+            <c:set value="0" target="${catalog}" property="start"/>
+            <c:set value="2" target="${catalog}" property="count"/>
+           </c:otherwise>
+          </c:choose>
+          <c:set value="en_US" target="${catalog}" property="locale"/>
+          <c:set value="${param.category_id}" target="${catalog}" property="categoryId"/>
+          <c:set value="${catalog.products}" var="pageResults" />
+
+          <p class="petstore_title">Products for this Category</p>
+
+
+          <table border="0"
+                 width="100%"
+                 cellpadding="1"
+                 cellspacing="0">
+          <tr>
+          <td bgcolor="#808080">
+          <table width="100%"
+                 cellspacing="0" 
+                 cellpadding="2" 
+                 border="0" 
+                 bgcolor="#FFFFFF">
+
+          <c:forEach var="item" items="${pageResults.list}" >
+          <tr>
+           <td class="petstore_listing">
+              <c:url value="/product.screen" var="productURL">
+               <c:param name="product_id" value="${item.id}"/>
+              </c:url>
+              <a href='<c:out value="${productURL}"/>'>
+              <c:out value="${item.name}"/>
+             </a>
+             <br>
+             <c:out value="${item.description}"/>
+            </td>
+           </tr>
+          </c:forEach>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/category.jsp
+        line_start: 118
+        line_end: 138
+        excerpt: |2
+            <c:if test="${pageResults.previousPageAvailable == true}">
+              <c:url value="/category.screen" var="previousURL">
+                <c:param name="category_id" value="${param.category_id}"/>
+                <c:param name="start" value="${pageResults.startOfPreviousPage}"/>
+                <c:param name="count" value="2"/>
+              </c:url>
+              <a href='<c:out value="${previousURL}"/>'>
+               Previous
+              </a>
+            </c:if>
+
+            <c:if test="${pageResults.nextPageAvailable == true}">
+              <c:url value="/category.screen" var="nextURL">
+                <c:param name="category_id" value="${param.category_id}"/>
+                <c:param name="start" value="${pageResults.startOfNextPage}"/>
+                <c:param name="count" value="${pageResults.size}"/>
+              </c:url>
+              <a href='<c:out value="${nextURL}"/>'>
+               Next
+              </a>
+            </c:if>
+    stack_metadata:
+      jsp.page: category.jsp
+  - record_key: catalog-browsing-BR-0001
+    kind: business-rule
+    capability_key: catalog-browsing
+    requirement: The system SHALL page category product lists, product item lists and search results 2
+      entries per page, starting at the first entry when a new list is opened.
+    confidence: low
+    confidence_basis: Bare literal 2 repeated in three pages with no comment, configuration or test
+      explaining it; likely a demo choice rather than a business rule.
+    risk_class: presentational
+    basis: start=0, count=2 when no paging parameters are present, and Previous links hard-code count=2.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/category.jsp
+        line_start: 65
+        line_end: 74
+        excerpt: |
+          <c:choose>
+           <c:when test="${param.count != null}">
+            <c:set value="${param.start}" target="${catalog}" property="start"/>
+            <c:set value="${param.count}" target="${catalog}" property="count"/>
+           </c:when>
+           <c:otherwise>
+            <c:set value="0" target="${catalog}" property="start"/>
+            <c:set value="2" target="${catalog}" property="count"/>
+           </c:otherwise>
+          </c:choose>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/product.jsp
+        line_start: 65
+        line_end: 74
+        excerpt: |
+          <c:choose>
+           <c:when test="${param.count != null}">
+            <c:set value="${param.start}" target="${catalog}" property="start"/>
+            <c:set value="${param.count}" target="${catalog}" property="count"/>
+           </c:when>
+           <c:otherwise>
+            <c:set value="0" target="${catalog}" property="start"/>
+            <c:set value="2" target="${catalog}" property="count"/>
+           </c:otherwise>
+          </c:choose>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/search.jsp
+        line_start: 64
+        line_end: 73
+        excerpt: |
+          <c:choose>
+           <c:when test="${param.count != null}">
+            <c:set value="${param.start}" target="${catalog}" property="start"/>
+            <c:set value="${param.count}" target="${catalog}" property="count"/>
+           </c:when>
+           <c:otherwise>
+            <c:set value="0" target="${catalog}" property="start"/>
+            <c:set value="2" target="${catalog}" property="count"/>
+           </c:otherwise>
+          </c:choose>
+    stack_metadata:
+      jsp.page: category.jsp, product.jsp, search.jsp
+  - record_key: catalog-browsing-REQ-0003
+    kind: requirement
+    capability_key: catalog-browsing
+    requirement: The system SHALL list the items of a selected product for the current language, showing
+      each item's attribute and product name (linked to the item page), description, list price and
+      an 'Add to Cart' link, paged with Previous/Next links.
+    confidence: medium
+    confidence_basis: Query and page markup agree; single path.
+    risk_class: presentational
+    basis: GET_ITEMS filters by locale and productid; product.jsp renders listCost and add-to-cart.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 102
+        line_end: 111
+        excerpt: |2
+                  <SQLStatement method="GET_ITEMS">
+                      <SQLFragment parameterNb="2">
+                          select catid, name, a.itemid, b.image, b.descn, attr1, attr2, attr3,
+                                  attr4, attr5, listprice, unitcost
+                              from (((item a join item_details b on a.itemid=b.itemid)
+                                  join product_details c on a.productid=c.productid)
+                                  join product d on d.productid=c.productid and b.locale = c.locale)
+                              where b.locale = ? and a.productid = ?
+                      </SQLFragment>
+                  </SQLStatement>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/product.jsp
+        line_start: 93
+        line_end: 118
+        excerpt: |
+          <c:forEach var="item" items="${pageResults.list}" >
+           <tr>
+            <td class="petstore_listing">
+             <c:url value="/item.screen" var="viewItemURL">
+              <c:param name="item_id" value="${item.itemId}"/>
+             </c:url>
+             <a href='<c:out value="${viewItemURL}"/>'>
+              <c:out value="${item.attribute}" />
+              <c:out value="${item.productName}"/>
+             </a>
+             <br>
+             <c:out value="${item.description}"/>
+            </td>
+            <td class="petstore_listing" align="right">
+             <fmt:formatNumber value="${item.listCost}" type="currency" />
+             <br>
+             <c:url value="/cart.do" var="cartURL">
+               <c:param name="action" value="purchase"/>
+               <c:param name="itemId" value="${item.itemId}"/>
+             </c:url>
+             <a href='<c:out value="${cartURL}"/>'>
+              Add to Cart
+             </a>
+            </td>
+           </tr>
+          </c:forEach>
+    stack_metadata:
+      jsp.page: product.jsp
+  - record_key: catalog-browsing-SCREEN-0001
+    kind: screen
+    capability_key: catalog-browsing
+    requirement: The system SHALL show an item detail page with the item's attribute and product name,
+      its image, a 'List Price', a 'Your Price' (the unit cost the customer pays) and an 'Add to
+      Cart' link.
+    confidence: medium
+    confidence_basis: Single screen source. That 'Your Price' is the price charged is corroborated by
+      order total calculation using unit cost (see checkout-BR-0003).
+    risk_class: financial
+    basis: item.jsp formats listCost as List Price and unitCost as Your Price.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/item.jsp
+        line_start: 54
+        line_end: 81
+        excerpt: |
+          <c:set value="en_US" target="${catalog}" property="locale"/>
+          <c:set value="${param.item_id}" target="${catalog}" property="itemId"/>
+          <c:set value="${catalog.item}" var="item" />
+
+          <p class="petstore_title">
+           <c:out value="${item.attribute}"/>
+           <c:out value="${item.productName}"/>
+          </p>
+          <fmt:setLocale value="en_US" />
+          <table cellpadding="2" cellspacing="0" border="0" width="100%">
+           <tr>
+            <td><img src='images/<c:out value="${item.imageLocation}"/>'></td>
+            <td class="petstore" width="100%"><b>List Price:</b>
+             <fmt:formatNumber value="${item.listCost}" type="currency" />
+             <br><br>
+             <b>Your Price:</b>
+             <fmt:formatNumber value="${item.unitCost}" type="currency" />
+             <br><br>
+             <c:url value="/cart.do" var="cartURL">
+               <c:param name="action" value="purchase"/>
+               <c:param name="itemId" value="${item.itemId}"/>
+             </c:url>
+             <a href='<c:out value="${cartURL}"/>'>
+              Add to Cart
+             </a>
+            </td>
+           </tr>
+          </table>
+    stack_metadata:
+      jsp.page: item.jsp
+  - record_key: catalog-browsing-REQ-0004
+    kind: requirement
+    capability_key: catalog-browsing
+    requirement: The system SHALL search items in the current language by keywords, returning an item
+      when any keyword matches, case-insensitively, the product name, the category id or the item
+      description. Results SHALL show attribute and product name (linked to the item), description,
+      unit price and 'Add to Cart', paged with Previous/Next. GIVEN the keyword field is empty OR
+      nothing matches THEN the system SHALL show 'No results were found for your search.'
+    confidence: medium
+    confidence_basis: SQL and page agree. Keyword splitting and wildcard wrapping of the LIKE parameters
+      are done in the catalog component outside this shard, so 'contains' vs 'equals' matching is
+      inferred, not seen.
+    risk_class: operational
+    basis: SEARCH_ITEMS ORs lower(name)/lower(catid)/lower(descn) LIKE ? per keyword; search.jsp handles
+      the empty/no-result case.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml
+        line_start: 112
+        line_end: 127
+        excerpt: |2
+                  <SQLStatement method="SEARCH_ITEMS">
+                      <SQLFragment parameterNb="4">
+                          select catid, a.productid, name, a.itemid, b.image, b.descn, attr1, 
+                                  attr2, attr3, attr4, attr5, listprice, unitcost 
+                              from (((item a join item_details b on a.itemid=b.itemid)
+                                  join product_details c on a.productid=c.productid)
+                                  join product d on d.productid=c.productid and b.locale = c.locale)
+                              where b.locale = ? and ((lower(name) like ? or lower(catid) like ? or lower(b.descn) like ?)
+                      </SQLFragment>
+                      <SQLFragment parameterNb="3" occurrence="VARIABLE">
+                          or (lower(name) like ? or lower(catid) like ? or lower(b.descn) like ?)  
+                      </SQLFragment>
+                      <SQLFragment parameterNb="0">
+                          )
+                      </SQLFragment>
+                  </SQLStatement>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/search.jsp
+        line_start: 74
+        line_end: 93
+        excerpt: |
+          <c:set value="en_US" target="${catalog}" property="locale"/>
+          <c:set value="${param.keywords}" target="${catalog}" property="searchQuery"/>
+          <c:set value="${catalog.searchItems}" var="pageResults" />
+
+          <c:choose>
+           <c:when test="${param.keywords == '' || pageResults.size == 0}">
+            <p class="petstore_title">
+              No results were found for your search.
+            </p>
+           </c:when>
+           <c:otherwise>
+            <p class="petstore_title">
+             Search Results:
+            </p>
+            <p class="petstore">
+             Items matching any of: <b><c:out value="${param.keywords}" /></b>
+            </p>
+            <table border="0"
+                          width="100%"
+                cellpadding="1"
+    stack_metadata:
+      jsp.page: search.jsp
+      db.object: SEARCH_ITEMS
+  - record_key: catalog-browsing-SCREEN-0002
+    kind: screen
+    capability_key: catalog-browsing
+    requirement: The system SHALL show on the home page a picture map linking to the Birds, Fish, Dogs,
+      Reptiles and Cats categories.
+    confidence: medium
+    confidence_basis: Single presentation source, unambiguous.
+    risk_class: presentational
+    basis: main.jsp image map areas.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/main.jsp
+        line_start: 44
+        line_end: 70
+        excerpt: |
+          <map name="petmap">
+          <area href="category.screen?category_id=BIRDS" 
+                alt="Birds" 
+                coords="72,2,280,250">
+          <area href="category.screen?category_id=FISH" 
+                alt="Fish" 
+                coords="2,180,72,250">
+          <area href="category.screen?category_id=DOGS" 
+                alt="Dogs" 
+                coords="60,250,130,320">
+          <area href="category.screen?category_id=REPTILES" 
+                alt="Reptiles" 
+                coords="140,270,210,340">
+          <area href="category.screen?category_id=CATS" 
+                alt="Cats" 
+                coords="225,240,295,310">
+          <area href="category.screen?category_id=BIRDS" 
+                alt="Birds" 
+                coords="280,180,350,250">
+          </map>
+
+          <img src="images/splash.gif" 
+               alt="Pet Selection Map"
+               usemap="#petmap" 
+               width="350" 
+               height="355" 
+               border="0">
+    stack_metadata:
+      jsp.page: main.jsp
+  - record_key: catalog-browsing-REQ-0005
+    kind: requirement
+    capability_key: catalog-browsing
+    requirement: The system SHALL load the store's catalog and demo account data automatically the first
+      time the store is entered when that data is not already present, and SHALL offer a forced
+      reload that deletes and re-creates the catalog data regardless.
+    confidence: medium
+    confidence_basis: Clear in code and linked from the start page; but this is a demo-setup utility and
+      it is unclear whether it is a product requirement at all. Filed under catalog-browsing because
+      no listed capability covers data setup.
+    risk_class: operational
+    basis: PopulateServlet checks catalog/customer/user tables unless forcefully=true, then
+      drops/creates catalog tables and loads Populate-UTF8.xml; index.jsp links both modes. No
+      capability in capabilities.csv covers data provisioning; catalog-browsing is the closest home.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/tools/populate/PopulateServlet.java
+        line_start: 135
+        line_end: 177
+        excerpt: |2
+            private boolean populate(boolean forcefully) throws PopulateException {
+              XMLReader reader = null;
+              try {
+                SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+                parserFactory.setValidating(true);
+                parserFactory.setNamespaceAware(true);
+                reader = parserFactory.newSAXParser().getXMLReader();
+              } catch (Exception exception) {
+                throw new PopulateException(exception);
+              }
+              Connection connection = null;
+              boolean alreadyPopulated = false;
+              try {
+                connection = getConnection();
+                CatalogPopulator catalogPopulator = new CatalogPopulator(sqlStatements);
+                CustomerPopulator customerPopulator = new CustomerPopulator();
+                UserPopulator userPopulator = new UserPopulator();
+                if (!forcefully) {
+                  try {
+                    alreadyPopulated = catalogPopulator.check(connection) && customerPopulator.check() && userPopulator.check();
+                  } catch (PopulateException exception) {}
+                  //System.err.println("Already populated: " + alreadyPopulated);
+                }
+                if (forcefully || !alreadyPopulated) {
+                  catalogPopulator.dropTables(connection);
+                  catalogPopulator.createTables(connection);
+                  try {
+                    catalogPopulator.setup(customerPopulator.setup(userPopulator.setup(reader)), connection)
+                      .parse(new InputSource(getResource(populateDataPath)));
+                    //.parse(new InputSource(getServletConfig().getServletContext().getRealPath(populateDataPath)));
+                  } catch (Exception exception) {
+                    throw new PopulateException(exception);
+                  }
+                }
+              } finally {
+                try {
+                  if (connection != null) {
+                    connection.close();
+                  }
+                } catch (Exception exception) {}
+              }
+              return forcefully || !alreadyPopulated;
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/index.jsp
+        line_start: 77
+        line_end: 82
+        excerpt: |
+          <p>To start using the demo, <a href="populating.jsp?forcefully=false">enter the
+          store</a>. <i>If you are using this demo for the very first time, the demo's database will be automatically populated (Be prepared to wait for a while as the database is populated.).</i></p>
+
+          <p>You may also forcefully <a href="populating.jsp?forcefully=true"><b>repopulate
+          the demo's database</b></a>. (Be prepared to wait for a while as the
+          database is populated.)</p>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 119
+        line_end: 138
+        excerpt: |2
+            <!-- PopulateServlet Declaration Start -->
+            <servlet>
+              <servlet-name>PopulateServlet</servlet-name>
+              <display-name>PopulateServlet</display-name>
+              <description>no description</description>
+              <servlet-class>com.sun.j2ee.blueprints.petstore.tools.populate.PopulateServlet</servlet-class>
+              <init-param>
+                <param-name>PopulateSQL</param-name>
+                <param-value>/populate/PopulateSQL.xml</param-value>
+              </init-param>
+              <init-param>
+                <param-name>PopulateData</param-name>
+                <param-value>/populate/Populate-UTF8.xml</param-value>
+              </init-param>
+              <init-param>
+                <param-name>Database</param-name>
+                <param-value>cloudscape</param-value>
+                <!--param-value>oracle</param-value-->
+              </init-param>
+            </servlet>
+    stack_metadata:
+      servlet: PopulateServlet
+      url: /Populate
+  - record_key: customer-account-REQ-0001
+    kind: requirement
+    capability_key: customer-account
+    requirement: The system SHALL let a signed-on customer create (once, at registration) and later
+      update an account consisting of contact information (first name, last name, street address
+      line 1, optional line 2, city, state/province, postal code, country, telephone, optional
+      e-mail), a credit card (number, type, expiry month and year, stored as 'MM/YYYY'), and profile
+      preferences (preferred language, favourite category, My List on/off, pet-tips banners on/off).
+    confidence: medium
+    confidence_basis: Web action (form parsing) and EJB action (persistence) agree on the field set;
+      they are one path, not independent enforcement. The underlying entity schemas are in component
+      modules outside this shard.
+    risk_class: regulated
+    basis: CustomerHTMLAction builds ContactInfo/CreditCard/ProfileInfo for action=create|update;
+      CustomerEJBAction creates the customer on CREATE then copies every field onto the account,
+      contact, address, card and profile.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 94
+        line_end: 106
+        excerpt: |2
+                  if (actionType.equals("create")) {
+                      ContactInfo info = extractContactInfo(request, "_a");
+                      CreditCard creditCard = extractCreditCard(request);
+                      ProfileInfo profileInfo  = extractProfileInfo(request);
+                      event = new CustomerEvent(CustomerEvent.CREATE, info, profileInfo, creditCard);
+                      eventType = CustomerEvent.CREATE;
+                  } else if (actionType.equals("update")) {
+                      ContactInfo info = extractContactInfo(request, "_a");
+                      CreditCard creditCard = extractCreditCard(request);
+                      ProfileInfo profileInfo  = extractProfileInfo(request);
+                      event = new CustomerEvent(CustomerEvent.UPDATE, info, profileInfo, creditCard);
+                  }
+                  return event;
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 175
+        line_end: 178
+        excerpt: |2
+                  String expiryDate = creditCardExpiryMonth + "/" + creditCardExpiryYear;
+                  return new CreditCard(creditCardNumber,
+                                                      creditCardType,
+                                                      expiryDate);
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/CustomerEJBAction.java
+        line_start: 83
+        line_end: 94
+        excerpt: |2
+                  switch (ce.getActionType()) {
+                      case CustomerEvent.CREATE : {
+                        String userId = scf.getUserId();
+                        scf.createCustomer(userId);
+                        updateCustomer(ce);
+                        break;
+                      }
+                      case CustomerEvent.UPDATE : {
+                        updateCustomer(ce);
+                        break;
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/CustomerEJBAction.java
+        line_start: 110
+        line_end: 141
+        excerpt: |2
+                    AccountLocal account = customer.getAccount();
+                    // deep copy of Contact info to Local EJBs
+                    ContactInfoLocal contactInfoLocal = account.getContactInfo();
+
+                    ContactInfo contactInfo = ce.getContactInfo();
+
+                    contactInfoLocal.setFamilyName(contactInfo.getFamilyName());
+                    contactInfoLocal.setGivenName(contactInfo.getGivenName());
+                    contactInfoLocal.setTelephone(contactInfo.getPhone());
+                    contactInfoLocal.setEmail(contactInfo.getEmail());
+                    // deep copy over the address
+                    Address address = contactInfo.getAddress();
+                    AddressLocal addressLocal = contactInfoLocal.getAddress();
+                    addressLocal.setStreetName1(address.getStreetName1());
+                    addressLocal.setStreetName2(address.getStreetName2());
+                    addressLocal.setCity(address.getCity());
+                    addressLocal.setZipCode(address.getZipCode());
+                    addressLocal.setState(address.getState());
+                    addressLocal.setCountry(address.getCountry());
+                    // deep copy the credit card
+                    CreditCard creditCard = ce.getCreditCard();
+                    CreditCardLocal creditCardLocal = account.getCreditCard();
+                    creditCardLocal.setCardNumber(creditCard.getCardNumber());
+                    creditCardLocal.setCardType(creditCard.getCardType());
+                    creditCardLocal.setExpiryDate(creditCard.getExpiryDate());
+                    // deep copy the profile
+                    ProfileInfo profileInfo = ce.getProfileInfo();
+                    ProfileLocal profileLocal = customer.getProfile();
+                    profileLocal.setPreferredLanguage(profileInfo.getPreferredLanguage());
+                    profileLocal.setFavoriteCategory(profileInfo.getFavoriteCategory());
+                    profileLocal.setMyListPreference(profileInfo.getMyListPreference());
+                    profileLocal.setBannerPreference(profileInfo.getBannerPreference());
+    stack_metadata:
+      web.action: CustomerHTMLAction
+      ejb.action: CustomerEJBAction
+      url: createcustomer.do, customer.do
+  - record_key: customer-account-BR-0001
+    kind: business-rule
+    capability_key: customer-account
+    requirement: The system SHALL require, for account contact information, a non-blank last name, first
+      name, street address, city, state/province, postal code and telephone number; street address
+      line 2 and e-mail SHALL be optional, and a blank line 2 SHALL be stored as absent.
+    confidence: medium
+    confidence_basis: The required list is explicit in code, but the consequence of a missing field is
+      broken (the error is stored and processing continues with no contact info; see findings), so
+      what the user actually experiences is not established.
+    risk_class: operational
+    basis: extractContactInfo adds each blank required field to missingFields and returns null with a
+      MissingFormDataException request attribute.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 182
+        line_end: 253
+        excerpt: |2
+              private ContactInfo extractContactInfo(HttpServletRequest request, String suffix)
+                  throws HTMLActionException {
+                  ArrayList missingFields = null;
+                  String familyName =  request.getParameter("family_name" +suffix).trim();
+                  if (familyName.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Last Name");
+                  }
+                  String givenName =  request.getParameter("given_name" +suffix).trim();
+                  if (givenName.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("First Name");
+                  }
+                  String address1 = request.getParameter("address_1" +suffix).trim();
+                  if (address1.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Street Address");
+                  }
+                  String address2 = request.getParameter("address_2" +suffix).trim();
+                  if (address2.equals("")) {
+                    address2 = null;
+                  }
+                  String city =   request.getParameter("city"  +suffix).trim();
+                  if (city.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("City");
+                  }
+                  String stateOrProvince = request.getParameter("state_or_province" +suffix).trim();
+                  if (stateOrProvince.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("State or Province" +suffix);
+                  }
+                  String postalCode = request.getParameter("postal_code" +suffix).trim();
+                  if (postalCode.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Postal Code");
+                  }
+
+                  String country = request.getParameter("country" + suffix).trim();
+                  String telephone = request.getParameter("telephone_number" +suffix).trim();
+                  if (telephone.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Telephone Number");
+                  }
+
+                  String email = null;
+                  if (request.getParameter("email"  +suffix) != null) {
+                      email = request.getParameter("email" +suffix).trim();
+                  }
+                  if (missingFields != null) {
+                      MissingFormDataException ex = new MissingFormDataException("Missing Address Data", missingFields);
+                      request.setAttribute(PetstoreKeys.MISSING_FORM_DATA_EXCEPTION_KEY, ex);
+                      return null;
+                  }
+
+                  Address address = new Address(address1, address2, city, stateOrProvince, postalCode, country);
+                  return new ContactInfo(familyName, givenName, address, email, telephone);
+              }
+    stack_metadata:
+      web.action: CustomerHTMLAction
+      exception: MissingFormDataException
+  - record_key: customer-account-BR-0002
+    kind: business-rule
+    capability_key: customer-account
+    requirement: The system SHALL require a preferred language and a favourite category on the profile.
+      GIVEN the My List or banner checkbox is not ticked WHEN the profile is saved THEN that
+      preference SHALL be stored as off.
+    confidence: low
+    confidence_basis: The checkbox default is clearly enforced; the 'required' half is collected into a
+      local list that is never used, so it is not actually enforced anywhere (see findings). Graded
+      low because half the rule is unenforced intent.
+    risk_class: operational
+    basis: extractProfileInfo records Language/Favorite Category as missing but discards the list;
+      absent mylist_on/banners_on parameters set false.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 110
+        line_end: 137
+        excerpt: |2
+              private ProfileInfo extractProfileInfo(HttpServletRequest request) {
+                  ArrayList missingFields = null;
+                  String preferredLanguage =  request.getParameter("language").trim();
+                  if (preferredLanguage.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Language");
+                  }
+                  String defaultFavoriteCategory =  request.getParameter("favorite_category").trim();
+                  if (defaultFavoriteCategory.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Favorite Category");
+                  }
+                  boolean defaultMyListPreference = true;
+                  String defaultMyListPreferenceString =  request.getParameter("mylist_on");
+                  if (defaultMyListPreferenceString == null) defaultMyListPreference=false;
+                  boolean defaultBannerPreference = true;
+                  String defaultBannerPreferenceString =  request.getParameter("banners_on");
+
+                  if (defaultBannerPreferenceString == null) defaultBannerPreference=false;
+                  return new ProfileInfo(preferredLanguage,
+                                                     defaultFavoriteCategory,
+                                                     defaultMyListPreference,
+                                                     defaultBannerPreference);
+              }
+    stack_metadata:
+      web.action: CustomerHTMLAction
+  - record_key: customer-account-REQ-0002
+    kind: requirement
+    capability_key: customer-account
+    requirement: "The system SHALL offer these fixed choices on the account forms: state/province
+      California, New York, Texas; country United States, Canada, Japan, China; card type Java(TM)
+      Card, Duke Express, Meow Club; expiry month 01-12; language English (en_US, default), Japanese
+      (ja_JP), Chinese (zh_CN); favourite category Birds (default), Cats, Dogs, Fish, Reptiles.
+      Expiry year choices are 2001-2004 at registration and 2002-2005 on the edit form."
+    confidence: low
+    confidence_basis: Bare literal option lists in markup with no reference data table; the two forms
+      disagree on expiry years (and checkout disagrees on country values), so no single
+      authoritative list exists.
+    risk_class: operational
+    basis: Option lists in create_customer.jsp and edit_customer.jsp.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/create_customer.jsp
+        line_start: 89
+        line_end: 108
+        excerpt: |
+          <td class="petstore_form" align="right"><b>State/Province</b></td>
+
+          <td class="petstore_form" align="left"><select size="1"
+          name="state_or_province_a"> <option
+          value="California">California</option> <option value="New York">New
+          York</option> <option value="Texas">Texas</option> </select></td>
+
+          <td class="petstore_form"><b>Postal Code</b> <input
+          class="petstore_form" type="text" name="postal_code_a" size="12"
+          maxlength="12" value="10001"></td>
+          </tr>
+
+          <tr>
+          <td class="petstore_form" align="right"><b>Country</b></td>
+
+          <td class="petstore_form" align="left" colspan="2"><select size="1"
+          name="country_a"> <option value="USA">United States</option> <option
+          value="Canada">Canada</option> <option value="Japan">Japan</option>
+          <option value="China">China</option>
+          </select></td>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/create_customer.jsp
+        line_start: 139
+        line_end: 174
+        excerpt: |
+          <tr>
+          <td class="petstore_form" align="right"><b>Card Type</b></td> 
+
+          <td class="petstore_form" align="left" colspan="2">
+          <select size="1" name="credit_card_type">
+           <option value="Java(TM) Card">Java(TM) Card</option>
+           <option value="Duke Express">Duke Express</option>
+           <option value="Meow Club">Meow Card</option>
+          </select>
+          </td>
+          </tr>
+          <tr>
+          <td class="petstore_form" align="right"><b>Expiry Date</b></td> 
+          <td class="petstore_form" align="left" colspan="2">
+          <select size="1" name="credit_card_expiry_month">
+           <option value="01">01</option>
+           <option value="02">02</option>
+           <option value="03">03</option>
+           <option value="04">04</option>
+           <option value="05">05</option>
+           <option value="06">06</option>
+           <option value="07">07</option>
+           <option value="08">08</option>
+           <option value="09">09</option>
+           <option value="10">10</option>
+           <option value="11">11</option>
+           <option value="12">12</option>
+          </select>
+          /
+          <select size="1" name="credit_card_expiry_year">
+           <option value="2001">2001</option>
+           <option value="2002">2002</option>
+           <option value="2003">2003</option>
+           <option value="2004">2004</option>
+          </select>
+          </td>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/create_customer.jsp
+        line_start: 183
+        line_end: 202
+        excerpt: |
+          <td class="petstore_form" colspan="2">I want MyPetStore to be in
+          <select name="language" size="1">
+           <option value="en_US" selected>English</option>
+           <option value="ja_JP">Japanese</option>
+           <option value="zh_CN">Chinese</option>
+          </select>
+          </td>
+          </tr>
+
+          <tr>
+          <td>&nbsp;</td>
+
+          <td class="petstore_form" colspan="2">My favorite category is
+          <select name="favorite_category" size="1">
+           <option value="BIRDS" selected>Birds</option>
+           <option value="CATS">Cats</option>
+           <option value="DOGS">Dogs</option>
+           <option value="FISH">Fish</option>
+           <option value="REPTILES">Reptiles</option>
+          </select>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/edit_customer.jsp
+        line_start: 257
+        line_end: 264
+        excerpt: |2
+              <waf:select size="1"
+                                name="credit_card_expiry_year">
+               <waf:selected><c:out value="${customer.account.creditCard.expiryYear}"/></waf:selected>
+               <waf:option value="2002" />
+               <waf:option value="2003" />
+               <waf:option value="2004" />
+               <waf:option value="2005" />
+              </waf:select>
+    stack_metadata:
+      jsp.page: create_customer.jsp, edit_customer.jsp
+  - record_key: customer-account-SCREEN-0001
+    kind: screen
+    capability_key: customer-account
+    requirement: The system SHALL show a signed-on customer an account page with their contact
+      information, credit card type, card number and expiry month/year, preferred language,
+      favourite category, and Yes/No for the My List and pet-tips banner preferences, with a link to
+      edit the account.
+    confidence: medium
+    confidence_basis: Single presentation source. The card number is displayed in full; whether the
+      rebuild must mask it is a human decision (see findings).
+    risk_class: regulated
+    basis: customer.jsp renders customer.account.* and customer.profile.* and links to
+      update_customer.screen.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/customer.jsp
+        line_start: 120
+        line_end: 143
+        excerpt: |
+          <tr><td colspan="3"><p class="petstore_title">Credit Card
+          Information</p></td></tr>
+
+          <tr>
+          <td class="petstore_form" align="right"><b>Card Type</b></td> 
+          <td class="petstore_form" align="left" colspan="2">
+          <c:out value="${customer.account.creditCard.cardType}"/>
+          </td>
+          </tr>
+          <tr>
+          <td class="petstore_form" align="right"><b>Card Number</b></td> 
+
+          <td class="petstore_form" align="left"
+          colspan="2"><c:out value="${customer.account.creditCard.cardNumber}"/>
+          </td>
+          </tr>
+
+          <tr>
+          <td class="petstore_form" align="right"><b>Card Expiry Date</b></td> 
+
+          <td class="petstore_form" align="left" colspan="2">
+          <c:out value="${customer.account.creditCard.expiryMonth}"/> / <c:out value="${customer.account.creditCard.expiryYear}"/>
+          </td>
+          </tr>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/customer.jsp
+        line_start: 177
+        line_end: 214
+        excerpt: |
+          <tr>
+          <td class="petstore_form" align="right">
+
+          <c:choose>
+            <c:when test="${customer.profile.myListPreference == true}">
+             <font size="+1" color="green">Yes</font>
+            </c:when>
+            <c:otherwise>
+             <font size="+1" color="red">No</font>
+            </c:otherwise>
+          </c:choose>
+          </td>
+          <td class="petstore_form" colspan="2">I want to enable the MyList
+          feature. <i>MyList makes your favorite items and categories more
+          prominent as you shop.</i></td>
+          </tr>
+
+          <tr>
+          <td class="petstore_form" align="right">
+          <c:choose>
+            <c:when test="${customer.profile.bannerPreference == true}">
+             <font size="+1" color="green">Yes</font>
+            </c:when>
+            <c:otherwise>
+             <font size="+1" color="red">No</font>
+            </c:otherwise>
+          </c:choose>
+          </td>
+          <td class="petstore_form" colspan="2">I want to enable the Pet Tips
+          banners.  <i>Java Pet Store will display pet tips as you shop, which
+          are based on your favorite items and categories.</i>
+          </td>
+          </tr></td>
+          </tr>
+          </table>
+
+          <p class="petstore"><a href="update_customer.screen">Edit Your Account
+          Information</a></p>
+    stack_metadata:
+      jsp.page: customer.jsp
+  - record_key: customer-account-REQ-0003
+    kind: requirement
+    capability_key: customer-account
+    requirement: GIVEN a signed-on customer has My List enabled THEN the system SHALL show on each page
+      a 'My List' panel listing up to 10 products of the customer's favourite category, each linking
+      to that product.
+    confidence: medium
+    confidence_basis: Single presentation source; the limit of 10 is explained by an in-page comment as
+      a practical cap rather than a business rule.
+    risk_class: presentational
+    basis: mylist.jsp is gated on myListPreference and sets start=0, count=10,
+      categoryId=favoriteCategory.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/mylist.jsp
+        line_start: 59
+        line_end: 100
+        excerpt: |
+          <c:if test="${customer.profile.myListPreference =='true'}">
+
+           <%--
+            Set the catalog start to 0 and count to 10.
+            This will need to be adjusted if the number of products in any category 
+            is greater than 10
+           --%>
+
+           <c:set value="0" target="${catalog}" property="start"/>
+           <c:set value="10" target="${catalog}" property="count"/>
+           <c:set value="en_US" target="${catalog}" property="locale"/>
+           <c:set value="${customer.profile.favoriteCategory}" target="${catalog}" property="categoryId"/>
+           <c:set value="${catalog.products}" var="pageResults" />
+
+           <table border="0"
+                 width="100%"
+                 cellpadding="1"
+                 cellspacing="0">
+            <tr>
+             <td bgcolor="#336666" class="petstore_title" align="center">
+              <font color="#FFFFFF">My List</font>
+             </td>
+            </tr>
+            <tr>
+             <td bgcolor="#336666">
+              <table border="0" 
+                 width="100%" 
+                 cellpadding="5" 
+                 cellspacing="1">
+               <tr>
+                <td bgcolor="#FFFFFF" class="petstore">
+                 <c:forEach var="item" items="${pageResults.list}" >
+                  <a href="product.screen?product_id=<c:out value="${item.id}" />">
+                  <c:out value="${item.name}" /></a><br>
+                 </c:forEach>
+                </td>
+               </tr>
+              </table>
+             </td>
+            </tr>
+           </table>
+          </c:if>
+    stack_metadata:
+      jsp.page: mylist.jsp
+  - record_key: customer-account-BR-0003
+    kind: business-rule
+    capability_key: customer-account
+    requirement: GIVEN a signed-on customer has pet-tips banners enabled THEN the system SHALL show a
+      banner chosen by favourite category (dogs, cats, reptiles, birds, fish; matched
+      case-insensitively), and SHALL show the dogs banner for any other category.
+    confidence: medium
+    confidence_basis: Gate in the page and mapping in the helper agree; single functional path. The
+      fallback-to-dogs is explicit.
+    risk_class: presentational
+    basis: advice_banner.jsp gated on bannerPreference; BannerHelper lower-cases the category and maps
+      to banner images with dogs as default.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/advice_banner.jsp
+        line_start: 59
+        line_end: 72
+        excerpt: |
+          <c:if test="${customer.profile.bannerPreference =='true'}">
+           <c:set value="${customer.profile.favoriteCategory}" target="${bannerhelper}" property="categoryId"/>
+            <table border="0"
+                 width="100%"
+                 bgcolor="#336666"
+                 cellpadding="1"
+                 cellspacing="0">
+             <tr>
+              <td align="center">
+               <image src="images/<c:out value="${bannerhelper.banner}"/>"/>
+              </td>
+             </tr>
+            </table>
+          </c:if>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/BannerHelper.java
+        line_start: 55
+        line_end: 73
+        excerpt: |2
+              public void setCategoryId(String categoryId) {
+                  this.categoryId = categoryId.toLowerCase();
+              }
+
+              public String getBanner() {
+
+                  if (categoryId.equals("dogs")) {
+                      return "banner_dogs.gif";
+                  } else if (categoryId.equals("cats")) {
+                      return "banner_cats.gif";
+                  } else if (categoryId.equals("reptiles")) {
+                      return "banner_reptiles.gif";
+                  } else if (categoryId.equals("birds")) {
+                      return "banner_birds.gif";
+                  } else if (categoryId.equals("fish")) {
+                      return "banner_fish.gif";
+                  }
+                  return "banner_dogs.gif";
+              }
+    stack_metadata:
+      jsp.page: advice_banner.jsp
+      helper: BannerHelper
+  - record_key: checkout-SCREEN-0001
+    kind: screen
+    capability_key: checkout
+    requirement: The system SHALL show a signed-on customer an order-information form with a Billing
+      Information section and a Shipping Information section, each with first name, last name,
+      street address (2 lines), city, state/province, zip code, country, telephone and e-mail, both
+      pre-filled from the customer's account contact information.
+    confidence: medium
+    confidence_basis: Single presentation source; clear.
+    risk_class: presentational
+    basis: enter_order_information.jsp posts to order.do with *_a (billing) and *_b (shipping) fields
+      defaulted from customer.account.contactInfo.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/enter_order_information.jsp
+        line_start: 48
+        line_end: 66
+        excerpt: |
+          <p class="petstore_title">Billing Information</p>
+
+          <waf:form name="order_ino" method="POST" action="order.do">
+           <table cellpadding="5" cellspacing="0" width="100%" border="0">
+            <tr>
+             <td class="petstore_form" align="right">
+              <b>First Name</b>
+             </td> 
+             <td align="left" colspan="2">
+              <waf:input cssClass="petstore_form"
+                                       type="text"
+                                     name="given_name_a"
+                                        size="30"
+                             maxlength="30"
+                                 validation="validation">
+                <waf:value><c:out value="${customer.account.contactInfo.givenName}"/></waf:value>
+              </waf:input>
+             </td>
+            </tr>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/enter_order_information.jsp
+        line_start: 191
+        line_end: 207
+        excerpt: |2
+           <p class="petstore_title">Shipping Information</p>
+
+           <table cellpadding="5" cellspacing="0" width="100%" border="0">
+            <tr>
+             <td class="petstore_form" align="right">
+              <b>First Name</b>
+             </td> 
+             <td align="left" colspan="2">
+              <waf:input cssClass="petstore_form"
+                                       type="text"
+                                     name="given_name_b"
+                                        size="30"
+                             maxlength="30"
+                                 validation="validation">
+                <waf:value><c:out value="${customer.account.contactInfo.givenName}"/></waf:value>
+              </waf:input>
+             </td>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/enter_order_information.jsp
+        line_start: 331
+        line_end: 332
+        excerpt: |2
+           <input class="petstore_form" type="submit" value="Submit">
+          </waf:form>
+    stack_metadata:
+      jsp.page: enter_order_information.jsp
+      url: order.do
+  - record_key: checkout-BR-0001
+    kind: business-rule
+    capability_key: checkout
+    requirement: The system SHALL require, for both billing and shipping contact, a non-blank last name,
+      first name, street address, city, state/province, postal code and telephone number; street
+      address line 2 and e-mail SHALL be optional.
+    confidence: medium
+    confidence_basis: Same required list as the account form, implemented in a second code path. The
+      consequence of a missing field is broken (null contact passed on, see findings), so the
+      user-visible outcome is unresolved.
+    risk_class: operational
+    basis: OrderHTMLAction.extractContactInfo for suffixes _a and _b.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java
+        line_start: 80
+        line_end: 81
+        excerpt: |2
+                  ContactInfo shipper = extractContactInfo(request, "_a");
+                  ContactInfo receiver = extractContactInfo(request, "_b");
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java
+        line_start: 88
+        line_end: 158
+        excerpt: |2
+              private ContactInfo extractContactInfo(HttpServletRequest request, String suffix)
+                  throws HTMLActionException {
+                  ArrayList missingFields = null;
+                  String familyName =  request.getParameter("family_name" +suffix).trim();
+                  if (familyName.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Last Name");
+                  }
+                  String givenName =  request.getParameter("given_name" +suffix).trim();
+                  if (givenName.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("First Name");
+                  }
+                  String address1 = request.getParameter("address_1" +suffix).trim();
+                  if (address1.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Street Address");
+                  }
+                  String address2 = request.getParameter("address_2" +suffix).trim();
+                  if (address2.equals("")) {
+                    address2 = null;
+                  }
+                  String city =   request.getParameter("city"  +suffix).trim();
+                  if (city.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("City");
+                  }
+                  String stateOrProvince = request.getParameter("state_or_province" +suffix).trim();
+                  if (stateOrProvince.equals("")) {
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("State or Province" +suffix);
+                  }
+                  String postalCode = request.getParameter("postal_code" +suffix).trim();
+                  if (postalCode.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Postal Code");
+                  }
+
+                  String country = request.getParameter("country" + suffix).trim();
+                  String telephone = request.getParameter("telephone_number" +suffix).trim();
+                  if (telephone.equals("")){
+                      if (missingFields == null) {
+                          missingFields = new ArrayList();
+                      }
+                      missingFields.add("Telephone Number");
+                  }
+                  String email = null;
+                  if (request.getParameter("email"  +suffix) != null) {
+                      email = request.getParameter("email" +suffix).trim();
+                  }
+                  if (missingFields != null) {
+                      MissingFormDataException ex = new MissingFormDataException("Missing Address Data", missingFields);
+                      request.setAttribute(PetstoreKeys.MISSING_FORM_DATA_EXCEPTION_KEY, ex);
+                      return null;
+                  }
+
+                  Address address = new Address(address1, address2, city, stateOrProvince, postalCode, country);
+                  return new ContactInfo(familyName, givenName, address, email, telephone);
+              }
+    stack_metadata:
+      web.action: OrderHTMLAction
+  - record_key: checkout-BR-0002
+    kind: business-rule
+    capability_key: checkout
+    requirement: GIVEN the shopping cart is empty WHEN an order is submitted THEN the system SHALL NOT
+      place an order and SHALL show an 'Order Error' page stating the cart is empty, noting that a
+      re-submitted order has already been placed and a confirmation will follow.
+    confidence: high
+    confidence_basis: Enforced in code and declared in the exception-to-screen mapping; the exception's
+      own comment gives the re-submission rationale. Contingent on pass B.
+    risk_class: financial
+    basis: OrderEJBAction throws ShoppingCartEmptyOrderException when cart items size is 0; mappings
+      route it to cart_empty_order_error.screen.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java
+        line_start: 128
+        line_end: 132
+        excerpt: |2
+              Collection items = cart.getItems();
+              // if the cart is empty throw an exception saying so
+              if (items.size() == 0) {
+                throw new ShoppingCartEmptyOrderException("Shopping cart is empty");
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 110
+        line_end: 110
+        excerpt: |2
+              <exception-mapping exception-class="com.sun.j2ee.blueprints.petstore.controller.exceptions.ShoppingCartEmptyOrderException" screen="cart_empty_order_error.screen"/>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/cart_empty_order_error.jsp
+        line_start: 44
+        line_end: 53
+        excerpt: |
+          <font size="+3" color ="red">Order Error</font>
+          <br>
+          <hr>
+          <br>
+          The Shopping Cart is Empty and the order could not be placed.
+          <br>
+          <br>
+          You may have arrived at this page as a result of re-submitting
+          the same order. If this is the case your order has been placed
+          and you should receive conformation of your order shortly.
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/exceptions/ShoppingCartEmptyOrderException.java
+        line_start: 42
+        line_end: 46
+        excerpt: |
+          /**
+           * This exception represents a failure to place an order because there
+           * was nothing in the shopping cart. This error will primarily be generated
+           * when a user his the back button and tries to replace an order.
+           */
+    stack_metadata:
+      ejb.action: OrderEJBAction
+  - record_key: checkout-BR-0003
+    kind: business-rule
+    capability_key: checkout
+    requirement: The system SHALL compute the order total as the sum over cart lines of unit cost
+      multiplied by quantity, and SHALL record each line with its category, product, item, a line
+      number starting at 0 in cart order, quantity and unit cost.
+    confidence: medium
+    confidence_basis: "Explicit in one code path. Rounding is not specified: the sum is accumulated in
+      binary floating point with no rounding step, so the exact cents of the total are an
+      implementation artefact (see findings). Not raised to high because no second source (e.g. a
+      stored total in the order store) is visible here."
+    risk_class: financial
+    basis: "Loop over cart items: totalCost += cost*quantity; LineItem(category, productId, itemId,
+      lineItemCount++, quantity, cost); setTotalPrice(totalCost)."
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java
+        line_start: 122
+        line_end: 146
+        excerpt: |2
+              int lineItemCount = 0;
+              float totalCost = 0;
+              // Add the items from the shopping cart
+              ShoppingCartLocal cart = scf.getShoppingCart();
+              Locale locale = (Locale)machine.getAttribute(PetstoreKeys.LOCALE);
+              purchaseOrder.setLocale(locale);
+              Collection items = cart.getItems();
+              // if the cart is empty throw an exception saying so
+              if (items.size() == 0) {
+                throw new ShoppingCartEmptyOrderException("Shopping cart is empty");
+              }
+              Iterator it = items.iterator();
+              while (it.hasNext()) {
+                CartItem item = (CartItem)it.next();
+
+                float cost = new Float(item.getUnitCost()).floatValue();
+                totalCost += (cost*item.getQuantity());
+                purchaseOrder.addLineItem(new LineItem(item.getCategory(),
+                                                       item.getProductId(),
+                                                       item.getItemId(),
+                                                       (lineItemCount++) + "",
+                                                       item.getQuantity(),
+                                                       cost));
+              }
+              purchaseOrder.setTotalPrice(totalCost);
+    stack_metadata:
+      ejb.action: OrderEJBAction
+      numeric_type: float
+  - record_key: checkout-REQ-0001
+    kind: requirement
+    capability_key: checkout
+    requirement: The system SHALL create each order with a newly generated unique order id, the
+      signed-on user's id, the billing e-mail as the order's contact e-mail, the current date/time
+      as the order date, the billing and shipping contact information, a credit card, and the user's
+      current language/locale.
+    confidence: medium
+    confidence_basis: Explicit in one code path. The order id generator seed '1001' is a bare literal
+      whose meaning lives in the id-generator component outside this shard. The credit card actually
+      attached is a fixed demo value, not the customer's (see checkout-BR-0004).
+    risk_class: financial
+    basis: OrderEJBAction populates PurchaseOrder from uidgen.getUniqueId("1001"), scf.getUserId(),
+      billTo.getEmail(), new Date(), shipTo, billTo, creditCard, locale.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java
+        line_start: 98
+        line_end: 127
+        excerpt: |2
+              // get the UniqueIdGenerator EJB
+              UniqueIdGeneratorLocal uidgen = null;
+              try {
+                ServiceLocator sl = new ServiceLocator();
+                UniqueIdGeneratorLocalHome home =
+                  (UniqueIdGeneratorLocalHome)sl.getLocalHome(JNDINames.UIDG_EJBHOME);
+                uidgen = home.create();
+              } catch (javax.ejb.CreateException cx) {
+                cx.printStackTrace();
+              } catch (ServiceLocatorException slx) {
+                slx.printStackTrace();
+              }
+              orderIdString = uidgen.getUniqueId("1001");
+              // get ther userId
+              ShoppingClientFacadeLocal scf = null;
+              scf = (ShoppingClientFacadeLocal)machine.getAttribute(PetstoreKeys.SHOPPING_CLIENT_FACADE);
+              String userId = scf.getUserId();
+              purchaseOrder.setOrderId(orderIdString);
+              purchaseOrder.setUserId(userId);
+              purchaseOrder.setEmailId(billTo.getEmail());
+              purchaseOrder.setOrderDate(new Date());
+              purchaseOrder.setShippingInfo(shipTo);
+              purchaseOrder.setBillingInfo(billTo);
+              purchaseOrder.setCreditCard(creditCard);
+              int lineItemCount = 0;
+              float totalCost = 0;
+              // Add the items from the shopping cart
+              ShoppingCartLocal cart = scf.getShoppingCart();
+              Locale locale = (Locale)machine.getAttribute(PetstoreKeys.LOCALE);
+              purchaseOrder.setLocale(locale);
+    stack_metadata:
+      ejb.action: OrderEJBAction
+      uidgen.prefix: "1001"
+  - record_key: checkout-BR-0004
+    kind: business-rule
+    capability_key: checkout
+    requirement: "The system SHALL attach a credit card to every order. (Legacy behaviour: the card
+      attached is always the fixed value number '1234-2334', type 'Duke Express', expiry '10/2001';
+      neither the customer's card on file nor any card entered at checkout is used.)"
+    confidence: low
+    confidence_basis: "The code is explicit, but a source comment ('XXXX this needs to be part of the
+      form') marks it as a placeholder, so the intended rule (which card to charge) is not
+      established anywhere in this shard. Disputed: intent and code disagree."
+    risk_class: regulated
+    basis: OrderHTMLAction constructs a literal CreditCard and passes it into the order event; the
+      checkout form has no card fields.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java
+        line_start: 78
+        line_end: 84
+        excerpt: |2
+                  // Extract attributes we will need
+                  // XXXX this needs to be part of the form
+                  ContactInfo shipper = extractContactInfo(request, "_a");
+                  ContactInfo receiver = extractContactInfo(request, "_b");
+                  CreditCard creditCard = new CreditCard( "1234-2334", "Duke Express", "10/2001") ;
+                  return new OrderEvent(shipper,receiver,creditCard);
+              }
+    stack_metadata:
+      web.action: OrderHTMLAction
+      status: disputed
+  - record_key: checkout-INT-0001
+    kind: integration
+    capability_key: checkout
+    requirement: "WHEN an order is placed THEN the system SHALL send it asynchronously, as an XML
+      purchase-order document, to the order-processing back end, then empty the customer's cart.
+      (Legacy behaviour: if the message cannot be built or sent, the failure is only logged and the
+      cart is still emptied and the order confirmed to the customer.)"
+    confidence: medium
+    confidence_basis: Explicit in one code path. The swallowed-failure half is clearly visible but is
+      almost certainly not intended behaviour, so it is flagged rather than asserted. The document
+      format is defined outside this shard.
+    risk_class: financial
+    basis: AsyncSender.sendAMessage(purchaseOrder.toXML()) with ServiceLocator/XMLDocument/Create
+      exceptions caught and printed; cart.empty() follows unconditionally. Filed under checkout
+      (order hand-off); document format belongs to b2b-document-exchange.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java
+        line_start: 147
+        line_end: 168
+        excerpt: |2
+              try {
+                ServiceLocator sl = new ServiceLocator();
+                AsyncSenderLocalHome home = (AsyncSenderLocalHome)
+                  sl.getLocalHome(JNDINames.ASYNCSENDER_LOCAL_EJB_HOME);
+
+                AsyncSender  sender= home.create();
+                sender.sendAMessage(purchaseOrder.toXML());
+
+              } catch (ServiceLocatorException sle) {
+                sle.printStackTrace();
+                // throw new AdminBDException(sle.getMessage());
+              } catch (XMLDocumentException xde) {
+                xde.printStackTrace();
+                System.err.println(xde.getRootCause().getMessage());
+                // throw new EventResponse    or whatever
+              }  catch (CreateException ce) {
+                //throw new AdminBDException(ce.getMessage());
+              }
+
+              // empty the shopping cart
+              cart.empty();
+              return new OrderEventResponse(billTo.getEmail(), orderIdString);
+    stack_metadata:
+      ejb.action: OrderEJBAction
+      jms.queue: via AsyncSender (JNDI ASYNCSENDER_LOCAL_EJB_HOME)
+  - record_key: checkout-SCREEN-0002
+    kind: screen
+    capability_key: checkout
+    requirement: WHEN an order has been placed THEN the system SHALL show 'Your Order is Complete' with
+      the order id and a statement that a confirmation e-mail will be sent to the order's e-mail
+      address.
+    confidence: medium
+    confidence_basis: Mapping, response object and screen agree; single functional path.
+    risk_class: presentational
+    basis: order.do maps to order_complete.screen; OrderHTMLAction.doEnd puts the OrderEventResponse
+      (email, orderId) in the request; order_completed.jsp renders it.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 78
+        line_end: 80
+        excerpt: |2
+              <url-mapping url="order.do" screen="order_complete.screen" >
+                  <web-action-class>com.sun.j2ee.blueprints.petstore.controller.web.actions.OrderHTMLAction</web-action-class>
+             </url-mapping>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java
+        line_start: 160
+        line_end: 163
+        excerpt: |2
+                  // put the customer response in the request so it can be accessed by the order page
+              public void doEnd(HttpServletRequest request, EventResponse eventResponse) {
+                  request.setAttribute(PetstoreKeys.ORDER_RESPONSE, eventResponse);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/order_completed.jsp
+        line_start: 45
+        line_end: 55
+        excerpt: |
+          <p class="petstore">Your Order is Complete</p>
+          <br>
+          <hr>
+          <br>
+          Your order Id is <c:out value="${orderresponse.orderId}"/>
+          <br>
+          <br>
+          You should receive a confirmation e-mail soon at <c:out value="${orderresponse.email}"/>
+          <br>
+          <br>
+          Thank you for shopping with the Java Pet Store Demo.
+    stack_metadata:
+      jsp.page: order_completed.jsp
+      url: order.do
+  - record_key: localization-REQ-0001
+    kind: requirement
+    capability_key: localization
+    requirement: The system SHALL support English (en_US), Japanese (ja_JP) and Chinese (zh_CN), with
+      English as the default, and SHALL provide each screen in each supported language.
+    confidence: high
+    confidence_basis: Declared in two independent places (front controller/template configuration and a
+      per-locale screen-definition file set), and the three language links in the header match.
+      Contingent on pass B.
+    risk_class: operational
+    basis: web.xml locales en_US,ja_JP,zh_CN and default_locale en_US;
+      screendefinitions_{en_US,ja_JP,zh_CN}.xml exist and point ja/zh screens at ja/ and zh/ pages.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 96
+        line_end: 99
+        excerpt: |2
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 108
+        line_end: 115
+        excerpt: |2
+              <init-param>
+                <param-name>locales</param-name>
+                <param-value>en_US,ja_JP,zh_CN</param-value>
+              </init-param>
+              <init-param>
+                <param-name>default_locale</param-name>
+                <param-value>en_US</param-value>
+              </init-param>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/screendefinitions_ja_JP.xml
+        line_start: 59
+        line_end: 59
+        excerpt: |2
+              <parameter key="body" value="/ja/cart.jsp" />
+    stack_metadata:
+      servlet: MainServlet, TemplateServlet
+  - record_key: localization-REQ-0002
+    kind: requirement
+    capability_key: localization
+    requirement: The system SHALL let any visitor switch the display language from every page (English,
+      Japanese, Chinese flag links); the change SHALL apply to the session and to the shopping
+      cart's language, and the visitor SHALL stay on the page they were viewing.
+    confidence: medium
+    confidence_basis: Header links, URL mapping and EJB action agree; the 'return to same page'
+      behaviour is inferred from the client-state flow handler, which lives in the framework outside
+      this shard.
+    risk_class: operational
+    basis: banner.jsp links to changelocale.do with locale param; mapping uses ClientStateFlowHandler;
+      ChangeLocaleEJBAction sets the locale and cart.setLocale.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/banner.jsp
+        line_start: 75
+        line_end: 105
+        excerpt: |2
+                <td>
+                 <waf:client_cache_link   id="petstore"
+                                        targetURL="changelocale.do"
+                                                     alt="Change the Language to English"
+            encodeRequestParameters="true" 
+              encodeRequestAttributes="true"
+                                         imageURL="images/us_flag.gif">
+                  <waf:param name="locale" value="en_US"/>
+                 </waf:client_cache_link>
+                </td>
+                <td>&nbsp;</td>
+                <td align="middle">
+                <waf:client_cache_link   id="petstore"
+                                        targetURL="changelocale.do"
+                                                     alt="Change the Language to Japanese"
+            encodeRequestParameters="true" 
+             encodeRequestAttributes="true"
+                                        imageURL="images/ja_flag.gif">
+                <waf:param name="locale" value="ja_JP"/>
+                </waf:client_cache_link>
+               </td>
+               <td>&nbsp;</td>
+                <td align="right">
+                <waf:client_cache_link   id="petstore"
+                                        targetURL="changelocale.do"
+                                                     alt="Change the Language to Chinese"
+            encodeRequestParameters="true" 
+             encodeRequestAttributes="true"
+                                        imageURL="images/zh_flag.gif">
+                <waf:param name="locale" value="zh_CN"/>
+                </waf:client_cache_link>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+        line_start: 101
+        line_end: 104
+        excerpt: |2
+              <url-mapping url="changelocale.do" useFlowHandler="true" >
+                  <web-action-class>com.sun.j2ee.blueprints.waf.controller.web.action.actions.ChangeLocaleHTMLAction</web-action-class>
+                  <flow-handler class="com.sun.j2ee.blueprints.waf.controller.web.flow.handlers.ClientStateFlowHandler"/>
+             </url-mapping>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/ChangeLocaleEJBAction.java
+        line_start: 59
+        line_end: 68
+        excerpt: |2
+            public EventResponse perform(Event e) throws EventException {
+                ChangeLocaleEvent ce = (ChangeLocaleEvent)e;
+                machine.setAttribute(PetstoreKeys.LOCALE, ce.getLocale());
+                // notify the shopping cart of the locale change
+                ShoppingClientFacadeLocal scf = null;
+                scf = (ShoppingClientFacadeLocal)machine.getAttribute(PetstoreKeys.SHOPPING_CLIENT_FACADE);
+                ShoppingCartLocal cart = scf.getShoppingCart();
+                cart.setLocale(ce.getLocale());
+                return null;
+            }
+    stack_metadata:
+      ejb.action: ChangeLocaleEJBAction
+      url: changelocale.do
+  - record_key: localization-REQ-0003
+    kind: requirement
+    capability_key: localization
+    requirement: WHEN a customer signs on, or saves their account profile, THEN the system SHALL switch
+      the display language (and the cart's language) to the customer's preferred language. GIVEN the
+      user has just created a sign-on account and has no customer profile yet WHEN they sign on THEN
+      the language SHALL remain unchanged until the profile is saved.
+    confidence: high
+    confidence_basis: "Implemented in two independent places: the web-tier sign-on listener sets the
+      session locale and the EJB sign-on action sets the business-tier and cart locale; the
+      profile-save path does the same. Contingent on pass B."
+    risk_class: operational
+    basis: SignOnNotifier sets session LOCALE from profile.getPreferredLanguage(); SignOnEJBAction does
+      so for the state machine and cart, ignoring FinderException for first-time users;
+      CustomerEJBAction sets locale after profile update.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/SignOnNotifier.java
+        line_start: 113
+        line_end: 142
+        excerpt: |2
+                  if (name.equals(SignOnFilter.SIGNED_ON_USER)) {
+                      boolean aSignOn  = ((Boolean)se.getValue()).booleanValue();
+                      if (aSignOn) {
+
+                        String userName = (String)session.getAttribute(SignOnFilter.USER_NAME);
+                        // look up the model manager and webclient controller
+                        PetstoreComponentManager sl = (PetstoreComponentManager)session.getAttribute(PetstoreKeys.COMPONENT_MANAGER);
+                        WebController wc =  sl.getWebController(session);
+                        SignOnEvent soe = new SignOnEvent(userName);
+                        // set the EJBAction on the Event
+                        EventMapping em = getEventMapping(session.getServletContext(), soe);
+                        if (em != null) {
+                            soe.setEJBActionClassName(em.getEJBActionClassName());
+                        }
+
+                        try {
+                            wc.handleEvent(soe, session);
+                        } catch (EventException e) {
+                            System.err.println("SignOnNotifier Error handling event " + e);
+                        }
+                        CustomerLocal customer =  sl.getCustomer(session);
+                        // ensure the customer object is put in the session
+                        if (session.getAttribute(PetstoreKeys.CUSTOMER) == null) {
+                          session.setAttribute(PetstoreKeys.CUSTOMER, customer);
+                        }
+                        // set the language to the preferred language and other preferences
+                        ProfileLocal profile = sl.getCustomer(session).getProfile();
+                        Locale locale = I18nUtil.getLocaleFromString(profile.getPreferredLanguage());
+                        session.setAttribute(PetstoreKeys.LOCALE, locale);
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/SignOnEJBAction.java
+        line_start: 84
+        line_end: 95
+        excerpt: |2
+                   // set the locale here to the user's desired locale
+                   try {
+                       ProfileLocal profile = scf.getCustomer().getProfile();
+                       Locale locale = I18nUtil.getLocaleFromString(profile.getPreferredLanguage());
+                       machine.setAttribute(PetstoreKeys.LOCALE, locale);
+                        // notify the shopping cart of the locale change
+                       ShoppingCartLocal cart = scf.getShoppingCart();
+                       cart.setLocale(locale);
+                   } catch ( FinderException fe) {
+                       // in the process of creating a user for the first time
+                       // so the locale will be se when creating the user
+                   }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/CustomerEJBAction.java
+        line_start: 142
+        line_end: 144
+        excerpt: |2
+                    // set the current locale to the choose locale
+                    Locale locale = I18nUtil.getLocaleFromString(profileInfo.getPreferredLanguage());
+                    machine.setAttribute("locale", locale);
+    stack_metadata:
+      listener: SignOnNotifier
+      ejb.action: SignOnEJBAction, CustomerEJBAction
+  - record_key: localization-BR-0001
+    kind: business-rule
+    capability_key: localization
+    requirement: The system SHALL hold item prices (list price and unit cost), descriptions and names
+      separately per language, and SHALL display prices formatted in the currency convention of the
+      page's language (English pages in US format, Japanese pages in Japanese format, Chinese pages
+      in Chinese format) without currency conversion.
+    confidence: medium
+    confidence_basis: Per-locale price storage is schema-enforced; the currency-format-per-page
+      behaviour is a hard-coded formatter locale in each language's pages. The two agree, but
+      whether the per-locale price rows are intended as different currencies or translations of one
+      price is not stated anywhere.
+    risk_class: financial
+    basis: item_details primary key (itemid, locale) with listprice/unitcost; cart.jsp sets formatter
+      locale en_US, ja/cart.jsp ja_JP, zh/cart.jsp zh_CN.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml
+        line_start: 146
+        line_end: 158
+        excerpt: |2
+                  create table item_details (
+                    itemid char(10) not null,
+                    listprice decimal(10,2) not null,
+                    unitcost decimal(10,2) not null,
+                    locale char(10) not null,
+                    image char(255) not null,
+                    descn varchar(255) not null,
+                    attr1 varchar(80) null,
+                    attr2 varchar(80) null,
+                    attr3 varchar(80) null,
+                    attr4 varchar(80) null,
+                    attr5 varchar(80) null,
+                    constraint pk_item_details primary key (itemid, locale),
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/cart.jsp
+        line_start: 47
+        line_end: 47
+        excerpt: |2
+            <fmt:setLocale value="en_US" />
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/ja/cart.jsp
+        line_start: 49
+        line_end: 49
+        excerpt: |2
+            <fmt:setLocale value="ja_JP" />
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/zh/cart.jsp
+        line_start: 49
+        line_end: 49
+        excerpt: |2
+            <fmt:setLocale value="zh_CN" />
+    stack_metadata:
+      db.object: item_details
+      jsp.page: cart.jsp, ja/cart.jsp, zh/cart.jsp
+  - record_key: localization-REQ-0004
+    kind: requirement
+    capability_key: localization
+    requirement: The system SHALL accept and return all text as UTF-8 so that Japanese and Chinese input
+      and content are preserved.
+    confidence: medium
+    confidence_basis: Declarative, single source; the filter implementation is outside this shard.
+    risk_class: operational
+    basis: EncodingFilter with encoding=UTF-8 mapped to /*; pages declare charset=UTF-8.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 48
+        line_end: 72
+        excerpt: |2
+            <filter>
+              <filter-name>EncodingFilter</filter-name>
+              <display-name>EncodingFilter</display-name>
+              <description>no description</description>
+              <filter-class>com.sun.j2ee.blueprints.encodingfilter.web.EncodingFilter</filter-class>
+              <init-param>
+                <param-name>encoding</param-name>
+                <param-value>UTF-8</param-value>
+              </init-param>
+            </filter>
+            <!-- Encoding Filter Declaration End -->
+            <!-- Signon Filter Declaration Start -->
+            <filter>
+              <filter-name>SignOnFilter</filter-name>
+              <display-name>SignOnFilter</display-name>
+              <description>no description</description>
+              <filter-class>com.sun.j2ee.blueprints.signon.web.SignOnFilter</filter-class>
+            </filter>
+            <!-- Signon Filter Declaration End -->
+            
+            <!-- Encoding Filter Mapping Start-->
+            <filter-mapping>
+              <filter-name>EncodingFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/template.jsp
+        line_start: 39
+        line_end: 39
+        excerpt: |
+          <%@ page contentType="text/html;charset=UTF-8" %>
+    stack_metadata:
+      filter: EncodingFilter
+findings:
+  - kind: unparseable
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+    description: "Dead mapping: event SignOffEvent -> SignOffEJBAction (mappings.xml lines 53-56) names
+      classes that exist nowhere in legacy-source/. Sign-off is actually handled entirely by the
+      web-tier SignOffHTMLAction, which raises a ChangeLocaleEvent instead. No requirement emitted
+      from the dead mapping; a human should confirm there is no EJB-tier sign-off behaviour (e.g.
+      audit) that was lost."
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/mappings.xml
+    description: Exception mapping for GeneralFailureException (line 112) names package
+      com.sun.j2ee.blueprints.petstore.controller.exceptions, but the class is
+      com.sun.j2ee.blueprints.waf.exceptions.GeneralFailureException, and its target 'error.screen'
+      is not defined in any screen-definitions file (only 'general_error' is). Reachability of the
+      general error page via this mapping is therefore unresolved. Separately general_error.jsp
+      prints the exception message and full stack trace to the user; decide whether the rebuild
+      shows a generic error instead.
+  - kind: unparseable
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/screendefinitions_en_US.xml
+    description: Screen 'signon_create' (lines 178-184) uses body /create_user.jsp, which does not exist
+      in the docroot. Unreachable from any mapping found in this shard; no requirement emitted.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java
+    description: Orders always carry a hard-coded credit card (1234-2334 / Duke Express / 10/2001) with
+      a comment 'XXXX this needs to be part of the form'. The checkout form has no card fields and
+      the customer's card on file is not used. A human must decide which card an order is charged to
+      (card on file, entered at checkout, or none since no payment is taken here). Recorded as
+      checkout-BR-0004 with low confidence.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+    description: "Validation defects: (a) every credit-card field check tests creditCardNumber instead
+      of the field just read, and the expiry-year label is 'Credit Card Expiry Month'; (b) the
+      missingFields lists in extractCreditCard and extractProfileInfo are local and discarded, so
+      blank card data, language and favourite category are never rejected; (c) when contact fields
+      are missing extractContactInfo returns null and processing continues, which will fail with a
+      null reference in CustomerEJBAction (and in OrderEJBAction via billTo.getEmail()) rather than
+      show a missing-fields message; no page in this shard renders MissingFormDataException. The
+      state/province label is also suffixed with '_a'. A human must decide the intended validation
+      and error-display behaviour."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CreateUserHTMLAction.java
+    description: The sign-up form collects 'Password (Repeat)' (j_password_2) and the action reads it,
+      but it is never compared with the password. Decide whether the rebuild must reject mismatched
+      passwords. Password strength/length rules are not visible in this shard.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/edit_customer.jsp
+    description: "Reference data differs between forms: card expiry years are 2001-2004 on registration
+      (create_customer.jsp) but 2002-2005 on edit; country option values are 'USA' on registration
+      but 'United States' on checkout; billing country offers China but shipping country does not
+      (enter_order_information.jsp lines 150-156 vs 292-297). These look like demo literals; a human
+      must supply the real reference lists."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/customer.jsp
+    description: The account page displays the full credit card number (line 133) with no masking.
+      Treated as regulated data; decide the masking/storage rule for the rebuild (legacy stores and
+      shows it in clear).
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/category.jsp
+    description: The category product list is cached application-wide for 300000 ms under the fixed name
+      'page' (line 47), and the English product page under 'product_en_US', neither keyed by
+      category/product id or paging parameters. As written this would serve the first-rendered list
+      to every category/product for 5 minutes. Either the cache tag keys on the URL internally
+      (framework outside this shard) or this is a defect; a human should confirm before assuming
+      lists are per category.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/tools/populate/PopulateServlet.java
+    description: The /Populate endpoint and 'forcefully repopulate' link are reachable without sign-on
+      and drop and re-create the catalog tables. Recorded as catalog-browsing-REQ-0005 because no
+      listed capability covers data provisioning; a human should decide whether this demo setup
+      facility is in scope at all and, if kept, who may trigger it. populating.jsp also redirects
+      with success_page '//supplier/populating.jsp', which looks wrong for this application.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon.jsp
+    description: When no remembered-user cookie exists the sign-in form is pre-filled with a demo user
+      name and password (lines 90-112). Demo convenience or requirement? Almost certainly not to be
+      carried into the rebuild; confirm.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java
+    description: Order total is accumulated in binary float with no rounding step while item prices are
+      stored as decimal(10,2); failures to create/send the purchase-order message are only logged,
+      yet the cart is emptied and the order confirmed; a null id generator (creation failure) is
+      also only logged before use. A human must set the rounding rule and the failure behaviour for
+      order submission.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CartHTMLAction.java
+    description: "Rules that complete this shard's behaviour live in other modules and were not visible:
+      what a cart quantity of 0 does (remove line or keep), how the cart subtotal is computed, and
+      how search keywords are tokenised and wrapped for LIKE matching. Also no
+      legacy-analysis/sources/**/extracted.md documents exist in the repo, so no document traces
+      could be cited."
