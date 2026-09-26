@@ -1,0 +1,147 @@
+records:
+  - record_key: LOCALIZATION-REQUIREMENT-0001
+    kind: requirement
+    capability_key: localization
+    requirement: >
+      The system SHALL decode the parameters and body of every incoming request to the
+      customer storefront as UTF-8 before any request handling reads them, so that
+      customer-entered text in any supported locale (English, Japanese, Chinese) is
+      received without corruption.
+    confidence: medium
+    confidence_basis: >
+      The behaviour is visible in two places that agree: the deployment descriptor
+      declares the filter with encoding UTF-8 mapped to every URL, and the filter code
+      applies the configured encoding to each request. Not high because this is a single
+      pass with no cross-check from pass A, and the link to "supported locales" is my
+      inference from the localization capability, not something the code states.
+    risk_class: operational
+    basis: >
+      EncodingFilter.doFilter calls request.setCharacterEncoding(targetEncoding) on every
+      request before passing it down the chain; targetEncoding is read from the "encoding"
+      init parameter, which the storefront web.xml sets to UTF-8 and maps to the URL
+      pattern /*.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/encodingfilter/src/com/sun/j2ee/blueprints/encodingfilter/web/EncodingFilter.java
+        line_start: 61
+        line_end: 78
+        excerpt: |
+              public void init(FilterConfig config) throws ServletException {
+                  this.config = config;
+                  this.targetEncoding = config.getInitParameter("encoding");
+              }
+
+              public void destroy() {
+                  config = null;
+                  targetEncoding = null;
+              }
+
+               public  void doFilter(ServletRequest srequest, ServletResponse  sresponse, FilterChain chain)
+                  throws IOException, ServletException {
+
+                  HttpServletRequest request = (HttpServletRequest)srequest;
+                  request.setCharacterEncoding(targetEncoding);
+                  // move on to the next
+                 chain.doFilter(srequest,sresponse);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 48
+        line_end: 57
+        excerpt: |
+            <filter>
+              <filter-name>EncodingFilter</filter-name>
+              <display-name>EncodingFilter</display-name>
+              <description>no description</description>
+              <filter-class>com.sun.j2ee.blueprints.encodingfilter.web.EncodingFilter</filter-class>
+              <init-param>
+                <param-name>encoding</param-name>
+                <param-value>UTF-8</param-value>
+              </init-param>
+            </filter>
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 69
+        line_end: 72
+        excerpt: |
+            <filter-mapping>
+              <filter-name>EncodingFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+    stack_metadata:
+      framework: servlet-filter
+      servlet.filter: com.sun.j2ee.blueprints.encodingfilter.web.EncodingFilter
+      servlet.filter.url_pattern: /*
+      servlet.filter.init_param.encoding: UTF-8
+      web_app: petstore
+
+  - record_key: LOCALIZATION-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: localization
+    requirement: >
+      The system SHALL establish the UTF-8 request character encoding before sign-on
+      and access-control checks read request parameters.
+      GIVEN a customer submits the sign-on or account-creation form containing
+      non-ASCII characters
+      WHEN the request is checked for sign-on
+      THEN the submitted values SHALL already be decoded as UTF-8.
+    confidence: low
+    confidence_basis: >
+      The ordering is only implicit: it follows from the encoding filter-mapping being
+      declared before the sign-on filter-mapping in web.xml, and the servlet
+      specification applying filters in mapping order. Nothing states the ordering is
+      intentional, and I did not read the sign-on filter to confirm it reads request
+      parameters (that is outside this shard). Filed under localization rather than
+      sign-on because the rule is about character decoding.
+    risk_class: operational
+    basis: >
+      web.xml maps EncodingFilter to /* (lines 69-72) immediately before SignOnFilter is
+      mapped to /* (lines 75-78). Once a parameter has been read, setting the character
+      encoding has no effect, so this order is what makes UTF-8 decoding apply to
+      sign-on processing.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+        line_start: 68
+        line_end: 79
+        excerpt: |
+            <!-- Encoding Filter Mapping Start-->
+            <filter-mapping>
+              <filter-name>EncodingFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+            <!-- Encoding Filter Mapping End -->
+            <!-- Signon Filter Mapping Start-->
+            <filter-mapping>
+              <filter-name>SignOnFilter</filter-name>
+              <url-pattern>/*</url-pattern>
+            </filter-mapping>
+            <!-- Signon Filter Mapping End -->
+    stack_metadata:
+      framework: servlet-filter
+      servlet.filter_order: EncodingFilter, SignOnFilter
+      web_app: petstore
+
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/encodingfilter/src/com/sun/j2ee/blueprints/encodingfilter/web/EncodingFilter.java
+    description: >
+      Lines 58-59 declare a default of "ASCII" ("// default to ASCII"), but init() at
+      line 63 unconditionally overwrites it with config.getInitParameter("encoding"),
+      which returns null when the parameter is absent. The ASCII default is therefore
+      never effective; without the init-param the filter calls setCharacterEncoding(null),
+      whose behaviour is container-dependent. The only deployment (petstore web.xml)
+      supplies UTF-8, so this does not affect the shipped behaviour. A human should
+      confirm the rebuild needs no fallback encoding rule and that UTF-8 is the sole
+      intended request encoding.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/WEB-INF/web.xml
+    description: >
+      The encoding filter is declared only in the customer storefront web application.
+      A repository search found no reference to it in the admin, supplier or order
+      processing centre web applications. It cannot be determined from this shard
+      whether those applications accept non-ASCII input (e.g. supplier or administrator
+      forms in Japanese or Chinese locales) and relied on container defaults, or whether
+      UTF-8 request decoding should apply system-wide in the rebuild.
+  - kind: ambiguity
+    path: legacy-analysis/sources
+    description: >
+      No legacy-analysis/sources/**/extracted.md documents exist in the tree, so no
+      document trace could be cited for this module. Records rest on source code and
+      deployment descriptor only.
