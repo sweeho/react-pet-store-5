@@ -1,0 +1,865 @@
+records:
+  - record_key: B2B-ENTITY-0001
+    kind: entity
+    capability_key: b2b-document-exchange
+    requirement: "The system SHALL represent a supplier order sent to a supplier as a document containing, in this order: an order id, an order date, a shipping address, and one or more line items. The shipping address SHALL contain first name, last name, street, city, state, country, zip code, email and phone, all required and in that order."
+    confidence: medium
+    confidence_basis: The structure is declared independently in a DTD and an XSD and is built in the same order by the document editor, so three sources agree. Graded medium rather than high only because this is a single pass and cross-pass agreement is not yet known.
+    risk_class: operational
+    basis: TPASupplierOrder.dtd and TPASupplierOrder.xsd both declare the root sequence OrderId, OrderDate, ShippingAddress, LineItems(LineItem+) and the nine-field address; TPASupplierOrderXDE.copyDocument appends children in the same order.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.dtd
+        line_start: 41
+        line_end: 41
+        excerpt: |
+          <!ELEMENT tpaso:SupplierOrder (tpaso:OrderId, tpaso:OrderDate, tpaso:ShippingAddress, tpaso:LineItems)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.dtd
+        line_start: 56
+        line_end: 56
+        excerpt: |
+          <!ELEMENT tpaso:ShippingAddress (tpaso:FirstName, tpaso:LastName, tpaso:Street, tpaso:City, tpaso:State, tpaso:Country, tpaso:ZipCode, tpaso:Email, tpaso:Phone)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.dtd
+        line_start: 106
+        line_end: 106
+        excerpt: |
+          <!ELEMENT tpaso:LineItems (tpali:LineItem+)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.xsd
+        line_start: 11
+        line_end: 44
+        excerpt: |
+          	<xsd:element name="SupplierOrder">
+          		<xsd:complexType>
+          			<xsd:sequence>
+          				<xsd:element name="OrderId" type="xsd:string" />
+          				<xsd:element name="OrderDate" type="xsd:date" />
+          				<xsd:element name="ShippingAddress" type="address" />
+          				<xsd:element name="LineItems">
+          					<xsd:complexType>
+          						<xsd:sequence>
+          					   		<xsd:element ref="tpali:LineItem" minOccurs="1" maxOccurs="unbounded" />
+          						</xsd:sequence>
+          					</xsd:complexType>
+                              <xsd:unique name="itemIdUniqueness">
+                                  <xsd:selector xpath="tpali:LineItem"/>
+                                  <xsd:field xpath="@itemId"/>
+                              </xsd:unique>
+          				</xsd:element>
+          			</xsd:sequence>
+          		</xsd:complexType>
+          	</xsd:element>
+
+          	<xsd:complexType name="address">
+          		<xsd:sequence>
+          			<xsd:element name="FirstName" type="xsd:string" />
+          			<xsd:element name="LastName" type="xsd:string" />
+          			<xsd:element name="Street" type="xsd:string" />
+          			<xsd:element name="City" type="xsd:string" />
+          			<xsd:element name="State" type="xsd:string" />
+          			<xsd:element name="Country" type="xsd:string" />
+          			<xsd:element name="ZipCode" type="xsd:string" />
+          			<xsd:element name="Email" type="xsd:string" />
+          			<xsd:element name="Phone" type="xsd:string" />
+          		</xsd:sequence>
+          	</xsd:complexType>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPASupplierOrderXDE.java
+        line_start: 119
+        line_end: 126
+        excerpt: |2
+            public void copyDocument(Result result) throws XMLDocumentException {
+              Element supplierOrderElement = supplierOrderDocument.createElementNS(XML_NAMESPACE, XML_SUPPLIERORDER);
+              supplierOrderElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + XML_PREFIX, XML_NAMESPACE);
+              supplierOrderElement.appendChild(orderIdElement);
+              supplierOrderElement.appendChild(orderDateElement);
+              supplierOrderElement.appendChild(shippingAddressElement);
+              supplierOrderElement.appendChild(lineItemsElement);
+              supplierOrderDocument.appendChild(supplierOrderElement);
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPASupplierOrderXDE.java
+        line_start: 160
+        line_end: 173
+        excerpt: |2
+            public void setShippingAddress(String firstName, String lastName, String street, String city,
+                                           String state, String country, String zipCode, String email, String phone) {
+              shippingAddressElement = supplierOrderDocument.createElementNS(XML_NAMESPACE, XML_SHIPPINGADDRESS);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_FIRSTNAME, firstName);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_LASTNAME, lastName);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_STREET, street);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_CITY, city);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_STATE, state);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_COUNTRY, country);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_ZIPCODE, zipCode);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_EMAIL, email);
+              XMLDocumentUtils.appendChild(supplierOrderDocument, shippingAddressElement, XML_PHONE, phone);
+              return;
+            }
+    stack_metadata:
+      framework: JAXP DOM
+      db.object: none
+      namespace: http://blueprints.j2ee.sun.com/TPASupplierOrder
+      dtd_public_id: -//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD TPA-SupplierOrder 1.0//EN
+      callers: apps/opc OrderApprovalMDB (import xmldocuments.tpa.TPASupplierOrderXDE)
+  - record_key: B2B-ENTITY-0002
+    kind: entity
+    capability_key: b2b-document-exchange
+    requirement: "The system SHALL represent a supplier invoice as a document containing, in this order: an order id, a user id, an order date, a shipping date, and one or more line items. The invoice SHALL carry a locale that defaults to en_US when not supplied."
+    confidence: medium
+    confidence_basis: Element sequence agrees across DTD, XSD and the builder. The locale default is declared only in the DTD and is absent from the XSD, so that part has a single source (raised as a conflict finding).
+    risk_class: financial
+    basis: TPAInvoice.dtd declares Invoice (OrderId, UserId, OrderDate, ShippingDate, LineItems) with locale CDATA default "en_US"; TPAInvoice.xsd declares the same sequence without a locale attribute; TPAInvoiceXDE.copyDocument appends children in the same order.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.dtd
+        line_start: 41
+        line_end: 45
+        excerpt: |
+          <!ELEMENT tpai:Invoice (tpai:OrderId, tpai:UserId, tpai:OrderDate, tpai:ShippingDate, tpai:LineItems)>
+          <!ATTLIST tpai:Invoice
+                  %nsattribute;
+          	locale CDATA "en_US"
+          >
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.dtd
+        line_start: 67
+        line_end: 67
+        excerpt: |
+          <!ELEMENT tpai:LineItems (tpali:LineItem+)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.xsd
+        line_start: 11
+        line_end: 31
+        excerpt: |
+          	<xsd:element name="Invoice">
+          		<xsd:complexType>
+          			<xsd:sequence>
+          				<xsd:element name="OrderId" type="xsd:string" />
+          				<xsd:element name="UserId" type="xsd:string" />
+          				<xsd:element name="OrderDate" type="xsd:date" />
+          				<xsd:element name="ShippingDate" type="xsd:date" />
+          				<xsd:element name="LineItems">
+          					<xsd:complexType>
+          						<xsd:sequence>
+          					   		<xsd:element ref="tpali:LineItem" minOccurs="1" maxOccurs="unbounded" />
+          						</xsd:sequence>
+          					</xsd:complexType>
+                              <xsd:unique name="itemIdUniqueness">
+                                  <xsd:selector xpath="tpali:LineItem"/>
+                                  <xsd:field xpath="@itemId"/>
+                              </xsd:unique>
+          				</xsd:element>
+          			</xsd:sequence>
+          		</xsd:complexType>
+          	</xsd:element>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPAInvoiceXDE.java
+        line_start: 113
+        line_end: 126
+        excerpt: |2
+            public void copyDocument(Result result) throws XMLDocumentException {
+              Element invoiceElement = invoiceDocument.createElementNS(XML_NAMESPACE, XML_INVOICE);
+              invoiceElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + XML_PREFIX, XML_NAMESPACE);
+              invoiceElement.appendChild(orderIdElement);
+              invoiceElement.appendChild(userIdElement);
+              invoiceElement.appendChild(orderDateElement);
+              invoiceElement.appendChild(shippingDateElement);
+              invoiceElement.appendChild(lineItemsElement);
+              invoiceDocument.appendChild(invoiceElement);
+              XMLDocumentUtils.serialize(XMLDocumentUtils.createTransformer(), invoiceDocument,
+                                         (isSupportingXSD() ? XSD_PUBLIC_ID : DTD_PUBLIC_ID),
+                                         systemId, isSupportingXSD(), XMLDocumentUtils.DEFAULT_ENCODING, result);
+              return;
+            }
+    stack_metadata:
+      framework: JAXP DOM
+      namespace: http://blueprints.j2ee.sun.com/TPAInvoice
+      dtd_public_id: -//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD TPA-Invoice 1.0//EN
+      callers: apps/supplier SupplierOrderMDB, OrderFulfillmentFacadeEJB (import xmldocuments.tpa.TPAInvoiceXDE)
+  - record_key: B2B-ENTITY-0003
+    kind: entity
+    capability_key: b2b-document-exchange
+    requirement: "The system SHALL represent each line item exchanged with a supplier (on supplier orders and invoices) with six required values: category id, product id, item id, line number, quantity and unit price."
+    confidence: medium
+    confidence_basis: 'All six attributes are #REQUIRED in the DTD, use="required" in the XSD, and always written by the shared line-item builder. Single pass, so not high.'
+    risk_class: financial
+    basis: TPALineItem.dtd and TPALineItem.xsd declare the six attributes as required on an empty LineItem element; TPALineItemUtils.addLineItem sets all six.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.dtd
+        line_start: 39
+        line_end: 48
+        excerpt: |
+          <!ELEMENT tpali:LineItem EMPTY>
+          <!ATTLIST tpali:LineItem
+               xmlns:tpali CDATA #FIXED "http://blueprints.j2ee.sun.com/TPALineItem"	
+               categoryId CDATA #REQUIRED
+               productId CDATA #REQUIRED
+               itemId CDATA #REQUIRED
+               lineNo CDATA #REQUIRED
+               quantity CDATA #REQUIRED
+               unitPrice CDATA #REQUIRED
+          >
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.xsd
+        line_start: 10
+        line_end: 17
+        excerpt: |
+          	<xsd:complexType name="lineItem">
+          		<xsd:attribute name="categoryId" type="xsd:string" use="required" />
+          		<xsd:attribute name="productId" type="xsd:string" use="required" />
+          		<xsd:attribute name="itemId" type="xsd:string" use="required" />
+          		<xsd:attribute name="lineNo" type="xsd:nonNegativeInteger" use="required" />
+          		<xsd:attribute name="quantity" type="xsd:positiveInteger" use="required" />
+          		<xsd:attribute name="unitPrice" type="positiveDecimal" use="required" />
+          	</xsd:complexType>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPALineItemUtils.java
+        line_start: 64
+        line_end: 77
+        excerpt: |2
+            public static void addLineItem(Document document, Element lineItemsElement,
+                                           String categoryId, String productId, String itemId, String lineNo,
+                                           int quantity, float unitPrice) {
+              Element lineItemElement = document.createElementNS(XML_NAMESPACE, XML_LINEITEM);
+              lineItemElement.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:" + XML_PREFIX, XML_NAMESPACE);
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_CATEGORYID, categoryId);
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_PRODUCTID, productId);
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_ITEMID, itemId);
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_LINENO, lineNo);
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_QUANTITY, Long.toString(quantity));
+              lineItemElement.setAttributeNS(XML_NAMESPACE, XML_UNITPRICE, Float.toString(unitPrice));
+              lineItemsElement.appendChild(lineItemElement);
+              return;
+            }
+    stack_metadata:
+      namespace: http://blueprints.j2ee.sun.com/TPALineItem
+      dtd_public_id: -//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD TPA-LineItem 1.0//EN
+  - record_key: B2B-RULE-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL require each exchanged line item's quantity to be a positive integer (at least 1), its line number to be a non-negative integer, and its unit price to be a decimal greater than or equal to zero. GIVEN a line item with unit price 0.0 WHEN the document is validated against the schema THEN it SHALL be accepted.
+    confidence: low
+    confidence_basis: Enforced only in the XSD, which is used only when a document is built/validated in XSD mode; the DTD types all six as free text. The zero-price acceptance contradicts the type name positiveDecimal, so intended behaviour is uncertain.
+    risk_class: financial
+    basis: TPALineItem.xsd types lineNo as xsd:nonNegativeInteger, quantity as xsd:positiveInteger and unitPrice as positiveDecimal, a restriction of xsd:decimal with minInclusive 0.0. The builder takes quantity as int and unitPrice as float with no range check.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.xsd
+        line_start: 14
+        line_end: 23
+        excerpt: |
+          		<xsd:attribute name="lineNo" type="xsd:nonNegativeInteger" use="required" />
+          		<xsd:attribute name="quantity" type="xsd:positiveInteger" use="required" />
+          		<xsd:attribute name="unitPrice" type="positiveDecimal" use="required" />
+          	</xsd:complexType>
+
+          	<xsd:simpleType name="positiveDecimal">
+          		<xsd:restriction base="xsd:decimal">
+          			<xsd:minInclusive value="0.0" />
+          		</xsd:restriction>
+          	</xsd:simpleType>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPALineItemUtils.java
+        line_start: 64
+        line_end: 66
+        excerpt: |2
+            public static void addLineItem(Document document, Element lineItemsElement,
+                                           String categoryId, String productId, String itemId, String lineNo,
+                                           int quantity, float unitPrice) {
+    stack_metadata:
+      declarative_validator: XML Schema (TPALineItem.xsd)
+  - record_key: B2B-RULE-0002
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL NOT allow the same item id to appear on more than one line item within a single supplier order or a single supplier invoice. GIVEN two line items with the same item id in one document WHEN it is validated against the schema THEN validation SHALL report an error.
+    confidence: low
+    confidence_basis: Declared only as an xsd:unique constraint in two XSDs; the DTDs cannot express it and no Java code checks it. It is only enforced in XSD validation mode, and validation errors are logged rather than rejected (see B2B-RULE-0006), so its runtime effect is doubtful.
+    risk_class: operational
+    basis: xsd:unique name="itemIdUniqueness" over tpali:LineItem/@itemId inside LineItems in both TPASupplierOrder.xsd and TPAInvoice.xsd.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.xsd
+        line_start: 23
+        line_end: 26
+        excerpt: |2
+                              <xsd:unique name="itemIdUniqueness">
+                                  <xsd:selector xpath="tpali:LineItem"/>
+                                  <xsd:field xpath="@itemId"/>
+                              </xsd:unique>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.xsd
+        line_start: 24
+        line_end: 27
+        excerpt: |2
+                              <xsd:unique name="itemIdUniqueness">
+                                  <xsd:selector xpath="tpali:LineItem"/>
+                                  <xsd:field xpath="@itemId"/>
+                              </xsd:unique>
+    stack_metadata:
+      declarative_validator: XML Schema xsd:unique itemIdUniqueness
+  - record_key: B2B-RULE-0003
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL write order dates and shipping dates in exchanged supplier documents as calendar dates in yyyy-MM-dd form, without a time component.
+    confidence: medium
+    confidence_basis: Code formatter and XSD xsd:date type agree; the DTD leaves dates as free text. Two sources, single pass.
+    risk_class: operational
+    basis: Both TPA editors format dates with SimpleDateFormat("yyyy-MM-dd"); both XSDs type OrderDate/ShippingDate as xsd:date. The formatter uses the server default time zone (implicit).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPASupplierOrderXDE.java
+        line_start: 78
+        line_end: 78
+        excerpt: |2
+            private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPASupplierOrderXDE.java
+        line_start: 154
+        line_end: 158
+        excerpt: |2
+            public void setOrderDate(Date orderDate) {
+              orderDateElement = XMLDocumentUtils.createElement(supplierOrderDocument, XML_NAMESPACE, XML_ORDERDATE,
+                                                                dateFormat.format(orderDate));
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPAInvoiceXDE.java
+        line_start: 70
+        line_end: 70
+        excerpt: |2
+            private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPAInvoiceXDE.java
+        line_start: 154
+        line_end: 164
+        excerpt: |2
+            public void setOrderDate(Date orderDate) {
+              orderDateElement = XMLDocumentUtils.createElement(invoiceDocument, XML_NAMESPACE, XML_ORDERDATE,
+                                                                dateFormat.format(orderDate));
+              return;
+            }
+
+            public void setShippingDate(Date shippingDate) {
+              shippingDateElement = XMLDocumentUtils.createElement(invoiceDocument, XML_NAMESPACE, XML_SHIPPINGDATE,
+                                                                   dateFormat.format(shippingDate));
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.xsd
+        line_start: 16
+        line_end: 17
+        excerpt: |
+          				<xsd:element name="OrderDate" type="xsd:date" />
+          				<xsd:element name="ShippingDate" type="xsd:date" />
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.xsd
+        line_start: 15
+        line_end: 15
+        excerpt: |
+          				<xsd:element name="OrderDate" type="xsd:date" />
+    stack_metadata: {}
+  - record_key: B2B-RULE-0004
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL refuse to build an exchanged document when any element value (order id, user id, address field, etc.) is missing. GIVEN a null value for a document field WHEN the document is built THEN building SHALL fail with an error naming the field.
+    confidence: medium
+    confidence_basis: Explicit guard in the shared element factory used by every setter; single source in code.
+    risk_class: operational
+    basis: XMLDocumentUtils.createElement (both namespaced and non-namespaced variants) throws IllegalArgumentException "value of <name> element can't be null" when the value is null; all TPA editor setters and ChangedOrder.toDOM go through it. An empty string is accepted.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 274
+        line_end: 281
+        excerpt: |2
+            public static Element createElement(Document document, String name, String value) {
+              if (value != null) {
+                Element element = (Element) document.createElement(name);
+                element.appendChild(document.createTextNode(value));
+                return element;
+              }
+              throw new IllegalArgumentException("XMLDocumentUtils.createElement: value of " + name + " element can't be null.");
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 319
+        line_end: 326
+        excerpt: |2
+            public static Element createElement(Document document, String nsURI, String name, String value) {
+              if (value != null) {
+                Element element = (Element) document.createElementNS(nsURI, name);
+                element.appendChild(document.createTextNode(value != null ? value : ""));
+                return element;
+              }
+              throw new IllegalArgumentException("XMLDocumentUtils.createElement: value of " + name + " element can't be null.");
+            }
+    stack_metadata: {}
+  - record_key: B2B-REQ-0001
+    kind: requirement
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL be able to produce each supplier order and supplier invoice document in either of two schema formats (DTD-declared or XML-Schema-declared), selected per document editor. In DTD format the output SHALL declare the document type public identifier; the schema location SHALL be taken from the configured entity catalog when it maps the identifier, and otherwise from the built-in default location.
+    confidence: medium
+    confidence_basis: Identical logic in both TPA editors plus the shared serializer. The XSD branch that would write xsi:schemaLocation is commented out, so XSD-format output carries no schema reference at all; that part is certain from code but its intent is not.
+    risk_class: operational
+    basis: TPA editor constructors take (entityCatalogURL, xsdValidation), resolve systemId via CustomEntityResolver.mapEntityURI of the XSD or DTD public id, falling back to a hard-coded resource path. serialize() sets DOCTYPE_PUBLIC/DOCTYPE_SYSTEM only when !xsdSupport; the schemaLocation branch is commented out.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPASupplierOrderXDE.java
+        line_start: 94
+        line_end: 108
+        excerpt: |2
+            public TPASupplierOrderXDE(URL entityCatalogURL, boolean xsdValidation) throws XMLDocumentException {
+              setEntityCatalogURL(entityCatalogURL);
+              setSupportingXSD(xsdValidation);
+              try {
+                CustomEntityResolver entityResolver = new CustomEntityResolver(entityCatalogURL);
+                String systemId = entityResolver.mapEntityURI(isSupportingXSD() ? XSD_PUBLIC_ID : DTD_PUBLIC_ID);
+                this.systemId = (systemId != null) ? systemId : (isSupportingXSD() ? XSD_SYSTEM_ID : DTD_SYSTEM_ID);
+              } catch (Exception exception) {
+                exception.printStackTrace(System.err);
+                throw new XMLDocumentException(exception);
+              }
+              builder = XMLDocumentUtils.createDocumentBuilder();
+              transformer = XMLDocumentUtils.createTransformer();
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPAInvoiceXDE.java
+        line_start: 87
+        line_end: 101
+        excerpt: |2
+            public TPAInvoiceXDE(URL entityCatalogURL, boolean xsdValidation) throws XMLDocumentException {
+              setEntityCatalogURL(entityCatalogURL);
+              setSupportingXSD(xsdValidation);
+              try {
+                CustomEntityResolver entityResolver = new CustomEntityResolver(entityCatalogURL);
+                String systemId = entityResolver.mapEntityURI(isSupportingXSD() ? XSD_PUBLIC_ID : DTD_PUBLIC_ID);
+                this.systemId = (systemId != null) ? systemId : (isSupportingXSD() ? XSD_SYSTEM_ID : DTD_SYSTEM_ID);
+              } catch (Exception exception) {
+                exception.printStackTrace(System.err);
+                throw new XMLDocumentException(exception);
+              }
+              builder = XMLDocumentUtils.createDocumentBuilder();
+              transformer = XMLDocumentUtils.createTransformer();
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 364
+        line_end: 386
+        excerpt: |2
+            public static void serialize(Transformer transformer, Document document, String dtdPublicId,
+                                         String dtdSystemId, boolean xsdSupport, String encoding, Result result)
+                  throws XMLDocumentException {
+                try {
+                      transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                      if (!xsdSupport) {
+                    if (dtdSystemId != null) {
+                              transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, dtdSystemId);
+                    }
+                    transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, dtdPublicId);
+                      } /*else {
+                      Element root = document.getDocumentElement();
+                      root.setAttributeNS(W3C_XML_SCHEMA_INSTANCE_NS, W3C_XML_SCHEMA_LOCATION_QNAME, dtdPublicId + " " + dtdSystemId);
+                      }*/
+                      transformer.setOutputProperty(OutputKeys.ENCODING, encoding);
+                      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                      transformer.transform(new DOMSource(document), result);
+                } catch (Exception exception) {
+                      exception.printStackTrace(System.err);
+                      throw new XMLDocumentException(exception);
+                }
+                return;
+            }
+    stack_metadata:
+      framework: JAXP Transformer
+  - record_key: B2B-REQ-0002
+    kind: requirement
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL encode all exchanged XML documents as UTF-8 and emit them indented.
+    confidence: medium
+    confidence_basis: Single constant used by every serializer call in the module; single source.
+    risk_class: operational
+    basis: DEFAULT_ENCODING = "UTF-8" passed to every serialize/toXML call; serialize sets OutputKeys.INDENT yes.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 56
+        line_end: 56
+        excerpt: |2
+            public static final String DEFAULT_ENCODING = "UTF-8";
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 378
+        line_end: 379
+        excerpt: |2
+                      transformer.setOutputProperty(OutputKeys.ENCODING, encoding);
+                      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+    stack_metadata: {}
+  - record_key: B2B-REQ-0003
+    kind: requirement
+    capability_key: b2b-document-exchange
+    requirement: "The system SHALL resolve referenced schemas for exchanged documents locally, in this order: a caller-supplied resolver; then the entity catalog mapping of the public identifier (a deployment-supplied catalog overriding the built-in one); then the document's own system location; then a bundled resource at that path. GIVEN none of these resolves WHEN a document is parsed THEN the system SHALL fall back to default resolution rather than fail."
+    confidence: medium
+    confidence_basis: Resolution order is explicit in one class; single source, clearly reachable via every parse path.
+    risk_class: operational
+    basis: CustomEntityResolver.resolveEntity tries parentResolver, then mapEntityURI(entityURI) via the Properties catalog (URL-supplied catalog layered over the bundled EntityCatalog.properties defaults), then entityURL, with resolveEntityFromURL falling back to getResourceAsStream; returns null otherwise.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/CustomEntityResolver.java
+        line_start: 86
+        line_end: 97
+        excerpt: |2
+            public CustomEntityResolver(URL entityCatalogURL, EntityResolver parentResolver) {
+              this(parentResolver);
+              if (entityCatalogURL != null) {
+                entityCatalog = new Properties(entityCatalog);
+                try {
+                  entityCatalog.load(entityCatalogURL.openStream());
+                } catch (IOException exception) {
+                  System.err.println("Can't load from resource: " + entityCatalogURL + ": " + exception);
+                }
+              }
+              return;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/CustomEntityResolver.java
+        line_start: 175
+        line_end: 217
+        excerpt: |2
+            public InputSource resolveEntity(String entityURI, String entityURL) /*throws IOException, SAXException*/ {
+              if (TRACE) {
+                System.err.println("Resolving: " + entityURI + " " + entityURL);
+              }
+              InputSource source = null;
+              try {
+                if (parentResolver != null) {
+                  source = parentResolver.resolveEntity(entityURI, entityURL);
+                  if (source != null) {
+                    if (TRACE) {
+                      System.err.println("Entity resolved by parent resolver: " + entityURI + " " + entityURL + ": " + source);
+                    }
+                    return source;
+                  }
+                }
+              } catch (Exception exception) {
+                if (TRACE) {
+                  System.err.println("Parent resolver failed to resolve: " + entityURI + " " + entityURL + ": " + exception);
+                }
+              }
+              try {
+                // Try first to map its URI using the entity catalog
+                if (entityURI != null) {
+                  String mappedEntityURL = mapEntityURI(entityURI);
+                  if (mappedEntityURL != null) {
+                    source = resolveEntityFromURL(mappedEntityURL);
+                    if (source != null) {
+                      return source;
+                    }
+                  }
+                }
+                // Try then to access the entity using its URL
+                if (entityURL != null) {
+                  source = resolveEntityFromURL(entityURL);
+                  if (source != null) {
+                    return source;
+                  }
+                }
+              } catch (Exception exception) {
+                System.err.println("Cannot resolve " + entityURI + " using: " + entityCatalog + " " + exception);
+              }
+              return null; // Let the default entity resolver take care of it
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/EntityCatalog.properties
+        line_start: 9
+        line_end: 15
+        excerpt: |
+          #New TPA DTDs and XSDs
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ TPA-LineItem\ 1.0//EN: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ TPA-SupplierOrder\ 1.0//EN: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ TPA-Invoice\ 1.0//EN: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.dtd
+          http\://blueprints.j2ee.sun.com/TPALineItem: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.xsd
+          http\://blueprints.j2ee.sun.com/TPAInvoice: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.xsd
+          http\://blueprints.j2ee.sun.com/TPASupplierOrder: /com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPASupplierOrder.xsd
+    stack_metadata:
+      catalog_resource: /com/sun/j2ee/blueprints/xmldocuments/rsrc/EntityCatalog.properties
+  - record_key: B2B-RULE-0005
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: The system SHALL reject an inbound document whose declared document type differs from the expected one. GIVEN validation is enabled and the document declares a document type with a different public identifier WHEN it is parsed THEN it SHALL be rejected with "Document not of type". GIVEN the document declares no document type THEN it SHALL be accepted without this check.
+    confidence: medium
+    confidence_basis: Explicit in code; the accept-when-no-DOCTYPE branch is commented as a workaround ("false; Due to problem of IdentityTransformer"), so it is a deliberate weakening, not an oversight.
+    risk_class: operational
+    basis: fromXML(InputSource) returns the document only if !validating or checkDocumentType passes; checkDocumentType returns true when getDoctype() is null. deserialize() applies the check whenever not in XSD mode.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 438
+        line_end: 458
+        excerpt: |2
+            public static Document deserialize(Transformer transformer, Source source,
+                                               String dtdPublicId, final URL entityCatalogURL, boolean validating, boolean xsdSupport)
+                  throws XMLDocumentException {
+                Node node;
+                if (source instanceof DOMSource) {
+                      node = ((DOMSource) source).getNode();
+                } else {
+                      node = transform(transformer, source, dtdPublicId, entityCatalogURL, validating, xsdSupport);
+                }
+                Document document;
+                if (node != null && node instanceof Document) {
+                      document = (Document) node;
+                } else {
+                      throw new XMLDocumentException("Document node required.");
+                }
+                if (!xsdSupport) {
+                      if (!XMLDocumentUtils.checkDocumentType(document, dtdPublicId)) {
+                    throw new XMLDocumentException("Document not of type: " + dtdPublicId);
+                      }
+                }
+                return document;
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 541
+        line_end: 544
+        excerpt: |2
+                if (!validating || XMLDocumentUtils.checkDocumentType(document, dtdPublicId)) {
+                      return document;
+                }
+                throw new XMLDocumentException("Document not of type: " + dtdPublicId);
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 626
+        line_end: 634
+        excerpt: |2
+            public static boolean checkDocumentType(Document document, String dtdPublicId) {
+                  DocumentType documentType = document.getDoctype();
+                  if (documentType != null) {
+                String publicId = documentType.getPublicId();
+                return publicId != null && publicId.equals(dtdPublicId);
+                  }
+                  // System.err.println("Can't check document type: " + dtdPublicId);
+                  return true; // false; Due to problem of IdentityTransformer not creating the DocType nodes
+            }
+    stack_metadata: {}
+  - record_key: B2B-RULE-0006
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: GIVEN an inbound document is parsed with validation enabled WHEN it is well-formed but violates its schema THEN the system SHALL log the violation and continue processing the document. WHEN it is not well-formed THEN the system SHALL reject it.
+    confidence: medium
+    confidence_basis: Code is unambiguous in both the DOM and SAX parse paths; whether logging-only was the intended business behaviour cannot be determined from source (raised as an ambiguity finding).
+    risk_class: operational
+    basis: The ErrorHandler installed in fromXML and createParser prints warning() and error() to stderr and returns; only fatalError() rethrows. Under JAXP, schema-validity violations are reported through error(), so they do not abort the parse.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 515
+        line_end: 540
+        excerpt: |2
+                      DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                      builderFactory.setValidating(validating);
+                      DocumentBuilder builder = builderFactory.newDocumentBuilder();
+                      builder.setErrorHandler(new ErrorHandler() {
+
+                    public void warning(SAXParseException exception) {
+                                  System.err.println("[Warning]: " + exception.getMessage());
+                                  return;
+                    }
+
+                    public void error(SAXParseException exception) {
+                                  System.err.println("[Error]: " + exception.getMessage());
+                                  return;
+                    }
+
+                    public void fatalError(SAXParseException exception) throws SAXException {
+                                  System.err.println("[Fatal Error]: " + exception.getMessage());
+                                  throw exception;
+                    }
+
+                          });
+                      builder.setEntityResolver(new CustomEntityResolver(entityCatalogURL));
+                      document = builder.parse(source);
+                } catch (Exception exception) {
+                      throw new XMLDocumentException(exception);
+                }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 588
+        line_end: 603
+        excerpt: |2
+                reader.setErrorHandler(new ErrorHandler() {
+                  public void warning(SAXParseException exception) {
+                    System.err.println("[Warning]: " + exception.getMessage());
+                    return;
+                  }
+
+                  public void error(SAXParseException exception) {
+                    System.err.println("[Error]: " + exception.getMessage());
+                    return;
+                  }
+
+                  public void fatalError(SAXParseException exception) throws SAXException {
+                    System.err.println("[Fatal Error]: " + exception.getMessage());
+                    throw exception;
+                  }
+                });
+    stack_metadata:
+      framework: JAXP DocumentBuilder / SAXParser
+  - record_key: APPR-ENTITY-0001
+    kind: entity
+    capability_key: order-approval
+    requirement: The system SHALL represent a batch of order approval decisions as a document containing one or more orders, each with an order id followed by an order status. GIVEN a batch document whose root is not an order-approval batch, or with no orders, or an order missing its id or status WHEN it is read THEN reading SHALL fail.
+    confidence: medium
+    confidence_basis: DTD (Order+, OrderId then OrderStatus) and the reader (non-optional first Order, non-optional OrderId and OrderStatus siblings) agree. Single pass. Allowed status values are not constrained here.
+    risk_class: operational
+    basis: "OrderApproval.dtd: OrderApproval (Order+), Order (OrderId, OrderStatus). OrderApproval.fromDOM checks root tag and requires the first Order child; ChangedOrder.fromDOM requires OrderId then OrderStatus. Parsing validates by default (VALIDATING = true). Used by admin AdminRequestBD and OPC OrderApprovalMDB/PurchaseOrderMDB/MailCompletedOrderMDB."
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/OrderApproval.dtd
+        line_start: 38
+        line_end: 45
+        excerpt: |
+          <!ELEMENT OrderApproval (Order+)>
+
+          <!ELEMENT Order (OrderId, OrderStatus)>
+
+          <!ELEMENT OrderId (#PCDATA)>
+
+          <!-- FIXME should be attribute -->
+          <!ELEMENT OrderStatus (#PCDATA)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/OrderApproval.java
+        line_start: 66
+        line_end: 70
+        excerpt: |
+          public class OrderApproval {
+            public static final String DTD_PUBLIC_ID = "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD Order Approval 1.0//EN";
+            public static final String DTD_SYSTEM_ID = "OrderApproval.dtd";
+            public static final boolean VALIDATING = true;
+            public static final String XML_ORDERAPPROVAL = "OrderApproval";
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/OrderApproval.java
+        line_start: 156
+        line_end: 170
+        excerpt: |2
+            public static OrderApproval fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_ORDERAPPROVAL)) {
+                Element child;
+                OrderApproval orderApproval = new OrderApproval();
+                orderApproval.orderList = new ArrayList();
+                for (child = XMLDocumentUtils.getFirstChild(element, ChangedOrder.XML_ORDER, false);
+                     child != null;
+                     child = XMLDocumentUtils.getNextSibling(child, ChangedOrder.XML_ORDER, true)) {
+                  orderApproval.orderList.add(ChangedOrder.fromDOM(child));
+                }
+                return orderApproval;
+              }
+              throw new XMLDocumentException(XML_ORDERAPPROVAL + " element expected.");
+            }
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/ChangedOrder.java
+        line_start: 80
+        line_end: 90
+        excerpt: |2
+            public static ChangedOrder fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_ORDER)) {
+                Element child;
+                ChangedOrder changedOrder = new ChangedOrder();
+                changedOrder.orderId = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getFirstChild(element, XML_ORDERID, false), false);
+                changedOrder.orderStatus = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_ORDERSTATUS, false), false);
+                return changedOrder;
+              }
+              throw new XMLDocumentException(XML_ORDER + " element expected.");
+            }
+    stack_metadata:
+      dtd_public_id: -//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD Order Approval 1.0//EN
+      jms.queue: carried as JMS text message body (see OrderApprovalMDB)
+  - record_key: LOC-RULE-0001
+    kind: business-rule
+    capability_key: localization
+    requirement: "The system SHALL interpret a stored locale string as follows: \"default\" (any case) SHALL mean the server's default locale; a string of the form language_COUNTRY SHALL mean that language and country; a string with no underscore SHALL yield no locale."
+    confidence: low
+    confidence_basis: Single source; the parser has a defect for three-part strings (see finding), so the full intended grammar (with variant) cannot be established from code.
+    risk_class: operational
+    basis: "XMLDocumentUtils.getLocaleFromString: null -> null; equalsIgnoreCase \"default\" -> Locale.getDefault(); no '_' -> null; otherwise splits language and country. Called from components/purchaseorder PurchaseOrder to interpret the order's locale."
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+        line_start: 644
+        line_end: 678
+        excerpt: |2
+            public static Locale getLocaleFromString(String localeString) {
+                  if (localeString == null) {
+                return null;
+                  }
+                  if (localeString.toLowerCase().equals("default")) {
+                return Locale.getDefault();
+                  }
+                  int languageIndex = localeString.indexOf('_');
+                  if (languageIndex  == -1) {
+                return null;
+                  }
+                  int countryIndex = localeString.indexOf('_', languageIndex +1);
+                  String country = null;
+                  if (countryIndex  == -1) {
+                if (localeString.length() > languageIndex) {
+                          country = localeString.substring(languageIndex +1, localeString.length());
+                } else {
+                          return null;
+                }
+                  }
+                  int variantIndex = -1;
+                  if (countryIndex != -1) {
+                countryIndex = localeString.indexOf('_', countryIndex +1);
+                  }
+                  String language = localeString.substring(0, languageIndex);
+                  String variant = null;
+                  if (variantIndex  != -1) {
+                variant = localeString.substring(variantIndex +1, localeString.length());
+                  }
+                  if (variant != null) {
+                return new Locale(language, country, variant);
+                  } else {
+                return new Locale(language, country);
+                  }
+            }
+    stack_metadata:
+      callers: components/purchaseorder/.../PurchaseOrder.java:140
+  - record_key: B2B-ENTITY-0004
+    kind: entity
+    capability_key: b2b-document-exchange
+    requirement: GIVEN the legacy version-1.0 purchase order, supplier order and invoice formats WHEN a document of that type is exchanged THEN the purchase order SHALL carry order id, user id, email, order date, ship-to and bill-to addresses (first name, last name, street, city, state, country, zip), total price, credit card (number, expiry date, card type), a locale defaulting to en_US, and one or more line items (category, product, item, line number, quantity, unit price).
+    confidence: low
+    confidence_basis: "Reachability unresolved: these DTDs are catalogued but no Java class in the application declares their public identifiers; only the Order Approval and Mail 1.0 identifiers are referenced. Emitted as disputed so the rule is not silently lost."
+    risk_class: financial
+    basis: PurchaseOrder.dtd / LineItem.dtd under the module's rsrc/schemas, mapped under "#Old DTDs" in EntityCatalog.properties; the 1.1 component DTDs in other modules appear to supersede them.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/PurchaseOrder.dtd
+        line_start: 38
+        line_end: 42
+        excerpt: |
+          <!ELEMENT PurchaseOrder (OrderId, UserId, EmailId, OrderDate, ShipAddress, BillAddress, TotalPrice, CreditCard, LineItem+)>
+
+          <!ATTLIST PurchaseOrder
+          	locale CDATA "en_US"
+          >
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/PurchaseOrder.dtd
+        line_start: 52
+        line_end: 52
+        excerpt: |
+          <!ENTITY % Address "FirstName, LastName, Street, City, State, Country, ZipCode">
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/PurchaseOrder.dtd
+        line_start: 74
+        line_end: 74
+        excerpt: |
+          <!ELEMENT CreditCard (CardNumber, ExpiryDate, CardType)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/LineItem.dtd
+        line_start: 38
+        line_end: 38
+        excerpt: |
+          <!ELEMENT LineItem (CategoryId, ProductId, ItemId, LineNum, Quantity, UnitPrice)>
+      - path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/EntityCatalog.properties
+        line_start: 1
+        line_end: 7
+        excerpt: |
+          #Old DTDs
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ Invoice\ 1.0//EN: /schemas/Invoice.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ OPC\ Mail\ 1.0//EN: /com/sun/j2ee/blueprints/mailer/rsrc/schemas/Mail.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ Order\ Approval\ 1.0//EN: /schemas/OrderApproval.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ Purchase\ Order\ 1.0//EN: /schemas/PurchaseOrder.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ Supplier\ Order\ 1.0//EN: /schemas/SupplierOrder.dtd
+          -//Sun\ Microsystems,\ Inc.\ -\ J2EE\ Blueprints\ Group//DTD\ Line\ Item\ 1.0//EN: /schemas/LineItem.dtd
+    stack_metadata:
+      status: disputed
+      reachability: unresolved
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPALineItem.xsd
+    description: The unit-price type is named positiveDecimal but is declared minInclusive 0.0, so a zero unit price is valid. A human must decide whether zero-priced lines are allowed on supplier orders and invoices.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/rsrc/schemas/TPAInvoice.xsd
+    description: TPAInvoice.dtd declares a locale attribute defaulting to en_US on Invoice; TPAInvoice.xsd has no locale attribute. TPAInvoiceXDE never sets a locale. Decide whether invoices carry a locale.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+    description: Validating parsers log schema-validity errors to stderr and continue (only fatal errors abort), so 'validation' does not reject invalid documents, and itemIdUniqueness/type constraints are effectively advisory. Decide whether the rebuild must reject invalid partner documents.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+    description: "getLocaleFromString (lines 644-678) mishandles a language_COUNTRY_VARIANT string: country is only assigned when there is no second underscore and variantIndex is never set, so the call becomes new Locale(language, null), which throws. Intended three-part handling is unknown."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentUtils.java
+    description: In XSD mode the serializer writes no xsi:schemaLocation (the branch is commented out, lines 374-377), so XSD-format supplier documents carry no schema reference. Decide whether receivers need one.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/tpa/TPALineItemUtils.java
+    description: Unit price is passed as a Java float and written with Float.toString (line 74), which can emit binary-float artefacts or exponent notation for money values (and exponent form is not a valid xsd:decimal). Rounding/precision intent is undocumented.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/OrderApproval.dtd
+    description: OrderStatus is free text (DTD comment 'FIXME should be attribute'); the allowed status values are not constrained in this module and must be taken from the order-approval consumers.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/com/sun/j2ee/blueprints/xmldocuments/XMLDocumentEditorFactory.java
+    description: "Dead code candidate: XMLDocumentEditorFactory (schema URI -> editor class via a catalog, 'No mapping for schema' error) has no caller outside this module. Also Invoice.dtd, PurchaseOrder.dtd, SupplierOrder.dtd (1.0) under src/rsrc/schemas are catalogued but no Java class references their public ids. Confirm whether any batch or external partner still uses them."
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/xmldocuments/src/rsrc/schemas/EntityCatalog.properties
+    description: Two EntityCatalog.properties exist; the one under com/.../xmldocuments/rsrc adds the three TPA XSD namespace mappings, the one under src/rsrc/schemas does not. CustomEntityResolver loads only the former; the build copies both into the jar at different paths. No document source (legacy-analysis/sources) exists to clarify intent.
