@@ -1,0 +1,306 @@
+records:
+  - record_key: CUSTOMER-ACCOUNT-ENTITY-0001
+    kind: entity
+    capability_key: customer-account
+    requirement: >
+      The system SHALL store a payment card record made of exactly three attributes:
+      card number, card type and expiry date, each held as free text.
+    confidence: medium
+    confidence_basis: >
+      The same three attributes are declared in two places inside this module (the
+      persistence descriptor and the persistent class), so the attribute set is solid.
+      Held at medium because this is a single pass and the rubric reserves high for
+      two-pass agreement; column types and lengths are not visible (no DDL in the
+      module), so "free text" is inferred from the String types only.
+    risk_class: regulated
+    basis: >
+      The persistence descriptor declares three container-managed fields (expiryDate,
+      cardType, cardNumber) and the entity class exposes String getters/setters for
+      each. The customer and purchase-order modules reference this same entity, so a
+      card is attached both to a customer account and to an order.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/ejb-jar.xml
+        line_start: 56
+        line_end: 68
+        excerpt: |
+                <abstract-schema-name>CreditCard</abstract-schema-name>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>expiryDate</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>cardType</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>cardNumber</field-name>
+                </cmp-field>
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+        line_start: 50
+        line_end: 57
+        excerpt: |
+            public abstract String getCardNumber();
+            public abstract void setCardNumber(String cardNumber);
+
+            public abstract String getCardType();
+            public abstract void setCardType(String cardType);
+
+            public abstract String getExpiryDate();
+            public abstract void setExpiryDate(String expiryDate);
+    stack_metadata:
+      framework: EJB 2.0 CMP
+      ejb.bean: CreditCardEJB
+      ejb.transaction: Required
+      db.object: CreditCard (abstract schema; physical table not in module)
+
+  - record_key: CUSTOMER-ACCOUNT-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      The system SHALL identify each payment card record by a system-generated key and
+      SHALL NOT use the card number as the record's identity, so the same card number
+      may appear on more than one record.
+    confidence: medium
+    confidence_basis: >
+      The identity is declared as an unknown/opaque key and every create path returns
+      null, which is the container-generated-key idiom; that is two consistent signals.
+      Not high: no uniqueness constraint or DDL is visible to confirm card numbers are
+      really non-unique at the database level.
+    risk_class: operational
+    basis: >
+      prim-key-class is java.lang.Object (unknown primary key) and all three create
+      methods return null rather than a key built from the card data.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/ejb-jar.xml
+        line_start: 52
+        line_end: 53
+        excerpt: |
+                <persistence-type>Container</persistence-type>
+                <prim-key-class>java.lang.Object</prim-key-class>
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+        line_start: 62
+        line_end: 68
+        excerpt: |
+            public Object ejbCreate(String cardNumber, String cardType,
+                                    String expiryDate) throws CreateException {
+                                      setCardNumber(cardNumber);
+                                      setCardType(cardType);
+                                      setExpiryDate(expiryDate);
+                                      return null;
+            }
+    stack_metadata:
+      ejb.bean: CreditCardEJB
+      ejb.primkey: java.lang.Object (container-generated)
+
+  - record_key: CUSTOMER-ACCOUNT-BUSINESS-RULE-0002
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      The system SHALL hold a card's expiry as a single "month/year" value, and SHALL
+      derive the expiry month as the text before the first "/" and the expiry year as
+      all text after the first "/".
+    confidence: medium
+    confidence_basis: >
+      The split logic is explicit in the entity, and the writer on the web tier builds
+      the value as month + "/" + year, so producer and consumer agree. Medium because
+      the digit widths (e.g. two-digit month, four-digit year) are only implied by the
+      default values, not enforced anywhere.
+    risk_class: regulated
+    basis: >
+      getExpiryMonth/getExpiryYear split the stored expiryDate on the first slash; the
+      customer web action composes expiryDate as creditCardExpiryMonth + "/" +
+      creditCardExpiryYear. The profile screens display the derived month and year.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+        line_start: 88
+        line_end: 107
+        excerpt: |
+            public String getExpiryMonth() {
+              String dateString = getExpiryDate();
+              if (dateString != null) {
+                // get the slash and return the text before it
+                int slashStart = dateString.indexOf("/");
+                if (slashStart != -1) return dateString.substring(0,slashStart);
+              }
+              return "01";
+            }
+
+            public String getExpiryYear() {
+              String dateString = getExpiryDate();
+              if (dateString != null) {
+                // get the slash and return the text after it
+                int slashStart = dateString.indexOf("/");
+                if (slashStart != -1) return dateString.substring(slashStart +1, dateString.length());
+
+              }
+              return "2010";
+            }
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/CustomerHTMLAction.java
+        line_start: 175
+        line_end: 175
+        excerpt: |
+                  String expiryDate = creditCardExpiryMonth + "/" + creditCardExpiryYear;
+    stack_metadata:
+      ejb.bean: CreditCardEJB
+      ejb.transaction: Required
+
+  - record_key: CUSTOMER-ACCOUNT-BUSINESS-RULE-0003
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      GIVEN a payment card whose stored expiry is absent or contains no "/"
+      WHEN its expiry month and year are read
+      THEN the system SHALL report month "01" and year "2010".
+    confidence: low
+    confidence_basis: >
+      Bare literals with no comment, configuration or test explaining them. Whether
+      this is an intended default or a placeholder is not determinable from source.
+    risk_class: regulated
+    basis: >
+      Fallback return values in getExpiryMonth ("01") and getExpiryYear ("2010"). The
+      edit-profile screen pre-selects the month/year dropdowns from these values, so a
+      card with a malformed expiry would silently show 01/2010.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+        line_start: 95
+        line_end: 95
+        excerpt: |
+              return "01";
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+        line_start: 106
+        line_end: 106
+        excerpt: |
+              return "2010";
+      - path: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/edit_customer.jsp
+        line_start: 242
+        line_end: 242
+        excerpt: |
+               <waf:selected><c:out value="${customer.account.creditCard.expiryMonth}"/></waf:selected>
+    stack_metadata:
+      ejb.bean: CreditCardEJB
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-INTEGRATION-0001
+    kind: integration
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL represent a payment card in exchanged order documents as a
+      "CreditCard" element containing "CardNumber", "CardType" and "ExpiryDate" child
+      elements, in that order, each carrying text content.
+    confidence: medium
+    confidence_basis: >
+      The module's own DTD and its serializer agree on names and order, and the
+      purchase-order document embeds this element. Medium, not high, because a second
+      purchase-order DTD elsewhere declares a different child order (see findings).
+    risk_class: regulated
+    basis: >
+      CreditCard.dtd declares (CardNumber, CardType, ExpiryDate); toDOM writes the
+      children in that order and fromDOM reads them in that order. PurchaseOrder.java
+      calls creditCard.toDOM / CreditCard.fromDOM, so the full card number travels in
+      the order document. Filed under b2b-document-exchange because the element exists
+      to be embedded in the purchase-order XML format.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/rsrc/schemas/CreditCard.dtd
+        line_start: 38
+        line_end: 41
+        excerpt: |
+          <!ELEMENT CreditCard (CardNumber, CardType, ExpiryDate)>
+          <!ELEMENT CardNumber (#PCDATA)>
+          <!ELEMENT CardType (#PCDATA)>
+          <!ELEMENT ExpiryDate (#PCDATA)>
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCard.java
+        line_start: 108
+        line_end: 114
+        excerpt: |
+            public Node toDOM(Document document) {
+              Element root = document.createElement(XML_CREDITCARD);
+              XMLDocumentUtils.appendChild(document, root, XML_CARD_NUMBER, cardNumber);
+              XMLDocumentUtils.appendChild(document, root, XML_CARD_TYPE, cardType);
+              XMLDocumentUtils.appendChild(document, root, XML_EXPIRYDATE, expiryDate);
+              return root;
+            }
+      - path: legacy-source/petstore1.3.2/src/components/purchaseorder/src/com/sun/j2ee/blueprints/purchaseorder/ejb/PurchaseOrder.java
+        line_start: 270
+        line_end: 270
+        excerpt: |
+              root.appendChild(creditCard.toDOM(document));
+    stack_metadata:
+      framework: DOM / DTD
+      dtd.public_id: "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD CreditCard 1.1//EN"
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      GIVEN an incoming document node that is not a "CreditCard" element
+      WHEN the system reads payment card data from it
+      THEN the system SHALL reject it with the error "CreditCard element expected."
+    confidence: medium
+    confidence_basis: >
+      Single explicit code path with a literal message; nothing else in the module
+      restates it. Child elements are read with the not-required flag, so missing
+      children are tolerated, but that tolerance depends on a helper outside this
+      module that I did not read.
+    risk_class: operational
+    basis: >
+      fromDOM checks node type and tag name, otherwise throws XMLDocumentException with
+      the message XML_CREDITCARD + " element expected.".
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCard.java
+        line_start: 116
+        line_end: 130
+        excerpt: |
+            public static CreditCard fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_CREDITCARD)) {
+                Element child;
+                CreditCard creditCard = new CreditCard();
+                child = XMLDocumentUtils.getFirstChild(element, XML_CARD_NUMBER, false);
+                creditCard.cardNumber = XMLDocumentUtils.getContentAsString(child, false);
+                child = XMLDocumentUtils.getNextSibling(child, XML_CARD_TYPE, false);
+                creditCard.cardType = XMLDocumentUtils.getContentAsString(child, false);
+                child = XMLDocumentUtils.getNextSibling(child, XML_EXPIRYDATE, false);
+                creditCard.expiryDate = XMLDocumentUtils.getContentAsString(child, false);
+                return creditCard;
+              }
+              throw new XMLDocumentException(XML_CREDITCARD + " element expected.");
+            }
+    stack_metadata:
+      framework: DOM
+
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCard.java
+    description: >
+      Argument-order mismatch. The value-object constructor is
+      CreditCard(cardNumber, expiryDate, cardType) (CreditCard.java:68), but the
+      customer web action calls new CreditCard(creditCardNumber, creditCardType,
+      expiryDate) (CustomerHTMLAction.java:176-178), and the entity create is
+      (cardNumber, cardType, expiryDate). Taken literally, cards entered through the
+      profile form are saved with type and expiry swapped. A human must confirm
+      whether this defect is live in the deployed application and state the intended
+      field mapping for the rebuild (presumably number/type/expiry as named).
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/rsrc/schemas/CreditCard.dtd
+    description: >
+      Two DTDs disagree on CreditCard child order. This module's CreditCard.dtd (and
+      the serializer) use (CardNumber, CardType, ExpiryDate); the xmldocuments
+      PurchaseOrder.dtd line 74 declares (CardNumber, ExpiryDate, CardType). The
+      purchaseorder module's DTD imports this module's DTD. Decide which order the
+      partner document format mandates.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/creditcard/src/com/sun/j2ee/blueprints/creditcard/ejb/CreditCardEJB.java
+    description: >
+      No validation of card number (length, digits, checksum), card type (allowed
+      values) or expiry (format, not-in-past) exists in this module; all fields are
+      free strings and the no-argument create allows a record with all three empty.
+      Allowed card types appear only as UI options outside this shard. The rebuild
+      needs an explicit decision on validation rules.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/creditcard/src/ejb-jar.xml
+    description: >
+      All methods are declared unchecked (ejb-jar.xml lines 76-82) and the card number
+      is stored and serialized into order documents in clear text with no masking.
+      This is regulated cardholder data; a human must decide the access control,
+      storage protection and masking requirements for the rebuild rather than
+      carrying the legacy behaviour forward.
