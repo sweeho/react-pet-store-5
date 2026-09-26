@@ -1,0 +1,34 @@
+# Pass A over legacy-source/petstore1.3.2/src/components/util/tracer
+# The module is one diagnostic helper class (Debug.java) plus its Ant build file.
+# It carries no business rule, entity, screen, workflow or integration, so no
+# requirement records are emitted: any SHALL statement drawn from it would be an
+# implementation detail of the old stack, not behaviour the rebuild must reproduce.
+# No legacy-analysis/sources/**/extracted.md documents exist in this tree, so there
+# are no document traces to cite. discovery/report.md line 65 already classes
+# util/tracer as low-risk "plumbing".
+records: []
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/util/tracer/src/com/sun/j2ee/blueprints/util/tracer/Debug.java
+    description: >
+      Debug.java is a console-logging helper gated by a compile-time constant
+      `debuggingOn = false` (line 46). Because the constant is final and false, every
+      print/println body (lines 48-79) is dead in the shipped build and the javac
+      compiler may elide it; the class writes diagnostic text to stderr/stdout only
+      when rebuilt with the flag set to true. It is imported by catalog, cart, waf and
+      petstore controller classes, but only to emit debug traces. No capability in
+      legacy-analysis/discovery/capabilities.csv covers diagnostic logging, so no
+      record was filed. A human should confirm that the rebuild needs no functional
+      equivalent (i.e. that logging/observability is a platform concern outside the
+      extracted specification) rather than a requirement to preserve. Note also that
+      exceptions passed to Debug.print are swallowed silently in production because
+      the flag is off: callers that catch and only call Debug.print(e) lose the error,
+      which the owning modules' passes should assess as error-path behaviour.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/util/tracer/src/build.xml
+    description: >
+      The clientjar target (lines 83-91) references ${tracer.buildjardir}, which is
+      never defined in the init target (lines 47-72) or in this file; it resolves only
+      if supplied by ../../../../build.properties or ${user.home}/petstore.properties.
+      Build-only concern with no functional impact on the specification; recorded so
+      it is not mistaken for missed behaviour.
