@@ -1,0 +1,1614 @@
+records:
+  - record_key: SIGN-REQ-0001
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL restrict the administration console entry point (both read and submit requests) to authenticated users holding the administrator role.
+    confidence: high
+    confidence_basis: Declared once in the web deployment descriptor and restated as a declared role at application level; two declarative places agree. Not graded lower because nothing contradicts it for this entry point (the data service is a separate question, see findings).
+    risk_class: regulated
+    basis: A security constraint covers the admin entry point for GET and POST with an auth constraint naming the administrator role; the role is declared in both the web module and the enterprise application descriptor.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml
+        line_start: 75
+        line_end: 88
+        excerpt: |2
+            <security-constraint>
+              <web-resource-collection>
+                <web-resource-name>MySecureBit0</web-resource-name>
+                <url-pattern>/AdminRequestProcessor</url-pattern>
+                <http-method>GET</http-method>
+                <http-method>POST</http-method>
+              </web-resource-collection>
+              <auth-constraint>
+                <role-name>administrator</role-name>
+              </auth-constraint>
+              <user-data-constraint>
+                <transport-guarantee>NONE</transport-guarantee>
+              </user-data-constraint>
+            </security-constraint>
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml
+        line_start: 99
+        line_end: 101
+        excerpt: |2
+            <security-role>
+              <role-name>administrator</role-name>
+            </security-role>
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/application.xml
+        line_start: 55
+        line_end: 57
+        excerpt: |2
+            <security-role>
+              <role-name>administrator</role-name>
+            </security-role>
+    stack_metadata:
+      framework: servlet-2.3
+      web.security_constraint: MySecureBit0
+      web.url_pattern: /AdminRequestProcessor
+  - record_key: SIGN-REQ-0002
+    kind: workflow
+    capability_key: sign-on
+    requirement: The system SHALL authenticate administrators with a user-id and password form; WHEN authentication fails THEN the system SHALL show a login error page stating the credentials could not be authenticated and offer a link back to the sign-in page.
+    confidence: high
+    confidence_basis: Form login declared in the descriptor and implemented by the login and error pages; declarative plus page evidence agree.
+    risk_class: regulated
+    basis: Form-based login config names the login page and error page; the login page posts user id and password to the container security check; the error page text and return link.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml
+        line_start: 90
+        line_end: 97
+        excerpt: |2
+            <login-config>
+              <auth-method>FORM</auth-method>
+              <realm-name>default</realm-name>
+              <form-login-config>
+                <form-login-page>/login.jsp</form-login-page>
+                <form-error-page>/error.jsp</form-error-page>
+              </form-login-config>
+            </login-config>
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/login.jsp
+        line_start: 52
+        line_end: 67
+        excerpt: |2
+                <form action="j_security_check" method=post>
+                <table>
+                <tr>
+                 <td align="center" >
+                 <table border="0">
+                 <tr>
+                  <td><b>User ID:</b></td>
+                  <td>
+                    <input type="text" size="15" name="j_username" value="jps_admin"> 
+                  </td>
+                 </tr>
+                 <tr>
+                  <td><b>Password:</b></td>
+                   <td> 
+                    <input type="password" size="15" name="j_password" value="admin">
+                  </td>
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/error.jsp
+        line_start: 43
+        line_end: 50
+        excerpt: |2
+            <body bgcolor="white">
+              <h2>Login Error</h2>
+              <hr>
+              You could not be authenticated with the information provided. <br>
+              Please check your Username and Password.<br>
+
+              <p><a href="/admin/AdminRequestProcessor">Return to Sign in Page</a></p>
+            </body>
+    stack_metadata:
+      framework: servlet-2.3
+      auth.method: FORM
+      realm: default
+      jsp.page: login.jsp, error.jsp
+  - record_key: SIGN-RULE-0003
+    kind: business-rule
+    capability_key: sign-on
+    requirement: The system SHALL expire an idle administrator session after 54 minutes.
+    confidence: low
+    confidence_basis: Bare literal in configuration with no comment or rationale; the unusual value (54, not 30/60) suggests an arbitrary choice nobody documented.
+    risk_class: operational
+    basis: Session timeout configured in the admin web module descriptor.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml
+        line_start: 67
+        line_end: 69
+        excerpt: |2
+            <session-config>
+              <session-timeout>54</session-timeout>
+            </session-config>
+    stack_metadata:
+      framework: servlet-2.3
+      session.timeout_minutes: 54
+  - record_key: SIGN-REQ-0004
+    kind: requirement
+    capability_key: sign-on
+    requirement: The system SHALL let an administrator log out from the admin landing page; logging out SHALL invalidate the administrator session and return the user to the admin entry page.
+    confidence: medium
+    confidence_basis: Single code path (landing page form -> dispatcher -> logout page); consistent but only one source.
+    risk_class: operational
+    basis: The landing page offers a logout form; the dispatcher forwards currentScreen=logout to the logout page, which invalidates the session and renders the entry page.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/index.jsp
+        line_start: 75
+        line_end: 82
+        excerpt: |2
+              <form action="AdminRequestProcessor" method=post>
+              <p>
+              <p>
+              <p>
+               To logout of Pet Store Admin click here :
+              <input type="hidden" name="currentScreen" value="logout">
+              <input type="submit" value="logout">
+              </form>
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestProcessor.java
+        line_start: 104
+        line_end: 111
+        excerpt: |2
+                  String curScreen = req.getParameter("currentScreen");
+                  if (curScreen == null) {
+                      return;
+                  }
+                  curScreen = curScreen.trim();
+                  if(curScreen.equals("logout")) {
+                      getServletConfig().getServletContext().getRequestDispatcher("/logout.jsp").forward(req, resp);
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/logout.jsp
+        line_start: 42
+        line_end: 46
+        excerpt: |
+          <%
+            request.getSession().invalidate();
+          %>
+
+          <%@include file="index.html" %>
+    stack_metadata:
+      framework: servlet-2.3
+      jsp.page: logout.jsp
+      servlet: AdminRequestProcessor
+  - record_key: SIGN-RULE-0005
+    kind: business-rule
+    capability_key: sign-on
+    requirement: GIVEN a request to the administration data service WHEN the caller has no existing session THEN the system SHALL NOT process the request and SHALL reply with an error stating the session timed out and the administrator must log in again from the login page.
+    confidence: medium
+    confidence_basis: Single programmatic check; the comment says an existing session implies prior form login, but the descriptor does not protect this endpoint, so the guarantee is weaker than stated (see findings).
+    risk_class: regulated
+    basis: The data-service servlet checks for an existing session (without creating one) and returns an XML error when absent.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 88
+        line_end: 99
+        excerpt: |2
+                  HttpSession session = req.getSession(false);
+                  ServletOutputStream out = resp.getOutputStream();
+
+                  // Check session; if null then there is no authentication; send error
+                  // If session is not null then the client has been authorised by
+                  // form based login mechanism
+                  if(session == null) {
+                      out.println(replyHeader +
+                                  "<Error>Session Timed Out; Please exit and " +
+                                  "login as admin from the login page</Error>\n" +
+                                  "</Response>\n");
+                  } else {
+    stack_metadata:
+      framework: servlet-2.3
+      servlet: ApplRequestProcessor
+      web.url_pattern: /ApplRequestProcessor
+  - record_key: SIGN-RULE-0006
+    kind: business-rule
+    capability_key: sign-on
+    requirement: The system SHALL grant the administrator role to the principal jps_admin and to members of the group administrator_group.
+    confidence: medium
+    confidence_basis: Deployment-specific role mapping in a vendor descriptor; a single source, and a rebuild may map roles differently.
+    risk_class: regulated
+    basis: Vendor role mapping for the administrator role.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/sun-j2ee-ri.xml
+        line_start: 45
+        line_end: 56
+        excerpt: |2
+            <rolemapping>
+              <role name="administrator">
+                <principals>
+                  <principal>
+                    <name>jps_admin</name>
+                  </principal>
+                </principals>
+                <groups>
+                  <group name="administrator_group" />
+                </groups>
+              </role>
+            </rolemapping>
+    stack_metadata:
+      framework: j2ee-ri-1.3
+      descriptor: sun-j2ee-ri.xml
+  - record_key: SIGN-INT-0007
+    kind: integration
+    capability_key: sign-on
+    requirement: WHEN an authenticated administrator launches the rich administration client THEN the system SHALL deliver a launch descriptor that carries the server host, port and the administrator's current session identifier, and the client SHALL use that session identifier on every data-service call so that it acts within the administrator's authenticated session.
+    confidence: high
+    confidence_basis: The server builds the descriptor with the session id and the client binds its data-service URL to it; two independent places (server and client) agree.
+    risk_class: operational
+    basis: The admin dispatcher answers currentScreen=manageorders with a generated launch descriptor whose arguments are proxy class, server name, port and session id; the client appends the session id to the data-service URL.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestProcessor.java
+        line_start: 63
+        line_end: 95
+        excerpt: |2
+              protected String buildJNLP(HttpServletRequest req) throws ServletException {
+                  String serverName = req.getServerName();
+                  int serverPort = req.getServerPort();
+                  StringBuffer jnlp = new StringBuffer();
+                  jnlp.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"); // Append xmlHeader
+                  jnlp.append("<jnlp codebase=\"http://").append(serverName).append(":").append(serverPort).append("/admin\">\n"); // Append codebase
+
+                  // append appInfo
+                  jnlp.append("<information>\n").append("<title>Pet Store Admin Rich Client</title>\n");
+                  jnlp.append("<vendor>J2EE BluePrints</vendor>\n");
+                  jnlp.append("<description>Example of Java Web Start Enabled Rich Client For a J2EE application</description>\n");
+                  jnlp.append("<description kind=\"short\"></description>\n");
+                  jnlp.append("</information>\n");
+
+                  // append rsrcInfo
+                  jnlp.append("<resources>\n");
+                  jnlp.append("<j2se version=\"1.4\"/>\n");
+                  jnlp.append("<j2se version=\"1.3\"/>\n");
+                  jnlp.append("<jar href=\"AdminApp.jar\"/>\n");
+                  jnlp.append("<jar href=\"jaxp.jar\"/>\n");
+                  jnlp.append("<jar href=\"crimson.jar\"/>\n");
+                  jnlp.append("</resources>\n");
+
+                  // append appDesc
+                  jnlp.append("<application-desc main-class=\"com.sun.j2ee.blueprints.admin.client.PetStoreAdminClient\">\n");
+                  jnlp.append("<argument>com.sun.j2ee.blueprints.admin.client.HttpPostPetStoreProxy</argument>\n");
+                  jnlp.append("<argument>").append(serverName).append("</argument>\n");
+                  jnlp.append("<argument>").append(serverPort).append("</argument>\n");
+                  jnlp.append("<argument>").append(req.getSession().getId()).append("</argument>\n");
+
+                  jnlp.append("</application-desc>\n</jnlp>\n"); // endOfFile
+                  return(jnlp.toString());
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestProcessor.java
+        line_start: 112
+        line_end: 118
+        excerpt: |2
+                  if(curScreen.equals("manageorders")) {
+                      resp.setContentType("application/x-java-jnlp-file");
+                      ServletOutputStream out = resp.getOutputStream();
+                      out.println(buildJNLP(req));
+                      out.flush();
+                      out.close();
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 74
+        line_end: 78
+        excerpt: |2
+              public void setup(String host, String port, String sessionID) {
+                  // TBD assert host, port
+                  try {
+                      url = new URL("http://" + host + ":" + port
+                          + "/admin/ApplRequestProcessor;jsessionid=" + sessionID);
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreAdminClient.java
+        line_start: 451
+        line_end: 458
+        excerpt: |2
+              public static void main(String args[]) {
+                  if (args.length != 4) {
+                      System.err.println("Usage: java PetStoreAdminClient <class name for petstore proxy> <hostname> " +
+                          "<port> <session id>");
+                      System.exit(1);
+                  }
+                  new PetStoreAdminClient(args[0], args[1], args[2], args[3]);
+              }
+    stack_metadata:
+      framework: java-web-start
+      content_type: application/x-java-jnlp-file
+      main_class: PetStoreAdminClient
+  - record_key: OA-SCREEN-0001
+    kind: screen
+    capability_key: order-approval
+    requirement: "The system SHALL provide an administrator landing page that explains the administrator can view sales, revenue and orders by state and approve or deny pending orders, and that offers two actions: launch the order-management client, and log out."
+    confidence: medium
+    confidence_basis: Single page; content is explicit.
+    risk_class: presentational
+    basis: Landing page text and its two forms.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/index.jsp
+        line_start: 61
+        line_end: 82
+        excerpt: |2
+              In this sample application, we showcase how the Java Pet Store 
+              administrator can have the facility of a rich client to get information of
+              sales, revenue, orders with specified state. The administrator can also 
+              approve / deny pending orders.
+              <br>
+              <br>
+              <form action="AdminRequestProcessor" method=post>
+              <p>
+              <p>
+              <p>
+               To launch the JAVA Web Start based Rich Client click here :
+              <input type="hidden" name="currentScreen" value="manageorders">
+              <input type="submit" value="Launch Rich Client">
+              </form>
+              <form action="AdminRequestProcessor" method=post>
+              <p>
+              <p>
+              <p>
+               To logout of Pet Store Admin click here :
+              <input type="hidden" name="currentScreen" value="logout">
+              <input type="submit" value="logout">
+              </form>
+    stack_metadata:
+      jsp.page: index.jsp
+      servlet: AdminRequestProcessor
+      doGet: forward /index.jsp
+  - record_key: OA-REQ-0002
+    kind: requirement
+    capability_key: order-approval
+    requirement: The system SHALL return, for a requested order status, the list of orders in that status with each order's order id, customer user id, order date, order amount and status, together with the total count.
+    confidence: high
+    confidence_basis: Server response builder and client parser agree on the same five fields and the request/response shape.
+    risk_class: financial
+    basis: GETORDERS handler fetches orders by status from the order-processing admin facade and serialises the five fields plus TotalCount; client parses the same elements.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 166
+        line_end: 197
+        excerpt: |2
+              String getOrders(Element root) {
+                  try {
+                      AdminRequestBD bd = new AdminRequestBD();
+                      NodeList nl = root.getElementsByTagName("Status");
+                      String status = getValue(nl.item(0));
+                      OrdersTO orders = bd.getOrdersByStatus(status);
+                      if (orders == null) {
+                          return null;
+                      }
+
+                      StringBuffer responseBuffer = new StringBuffer(replyHeader);
+                      responseBuffer.append("<Type>GETORDERS</Type>\n");
+                      responseBuffer.append("<Status>" + status + "</Status>\n");
+                      responseBuffer.append("<TotalCount>" + orders.size() +
+                                            "</TotalCount>\n" );
+                      for (Iterator it = orders.iterator(); it.hasNext(); ) {
+                          OrderDetails o = (OrderDetails) it.next();
+                          responseBuffer.append("<Order>\n");
+                          responseBuffer.append("<OrderId>" + o.getOrderId()
+                                                + "</OrderId>\n");
+                          responseBuffer.append("<UserId>" + o.getUserId()
+                                                + "</UserId>\n");
+                          responseBuffer.append("<OrderDate>" + o.getOrderDate()
+                                                + "</OrderDate>\n");
+                          responseBuffer.append("<OrderAmount>" + o.getOrderValue()
+                                                + "</OrderAmount>\n");
+                          responseBuffer.append("<OrderStatus>" + o.getOrderStatus()
+                                                + "</OrderStatus>\n");
+                          responseBuffer.append("</Order>\n");
+                      }
+                      responseBuffer.append("</Response>\n");
+                      return responseBuffer.toString();
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestBD.java
+        line_start: 101
+        line_end: 113
+        excerpt: |2
+              public OrdersTO getOrdersByStatus(String status)
+                  throws AdminBDException {
+
+                  try {
+                      return opcAdminEJB.getOrdersByStatus(status);
+                  } catch (RemoteException re) {
+                      re.printStackTrace();
+                      throw new AdminBDException(re.getMessage());
+                  } catch (OPCAdminFacadeException oafee) {
+                      oafee.printStackTrace();
+                      throw new AdminBDException(oafee.getMessage());
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 284
+        line_end: 332
+        excerpt: |2
+              private PetStoreProxy.Order parseOrder(Node orderNode) {
+                  String id = null;
+                  String userId = null;
+                  Date date = null;
+                  float amount = -1.0f;
+                  String status = null;
+                  NodeList children = orderNode.getChildNodes();
+                  for(int i = 0; i < children.getLength(); i++) {
+                      Node child = children.item(i);
+                      if (child.getNodeType() != Node.ELEMENT_NODE) {
+                          continue;
+                      }
+                      String name = child.getNodeName();
+                      if (name.equals("OrderId")) {
+                          id = getBody(child);
+                      }
+                      else if (name.equals("UserId")) {
+                          userId = getBody(child);
+                      }
+                      else if (name.equals("OrderDate")) {
+                          date = getDate(child);
+                      }
+                      else if (name.equals("OrderAmount")) {
+                          amount = getFloat(child);
+                      }
+                      else if (name.equals("OrderStatus")) {
+                          status = parseOrderStatus(getBody(child));
+                      }
+                  }
+                  return new PetStoreProxy.Order(id, userId, date, amount, status);
+              }
+
+
+              public PetStoreProxy.Order[] getOrders(String status) {
+                  StringBuffer sb = new StringBuffer("<Type>GETORDERS</Type>");
+                  sb.append("<Status>");
+                  sb.append(status);
+                  sb.append("</Status>");
+                  Document doc = doHttpPost(genRequest(sb));
+                  NodeList orderNodes = doc.getElementsByTagName("Order");
+                  ArrayList orders = new ArrayList(orderNodes.getLength());
+                  for(int i = 0; i < orderNodes.getLength(); i++) {
+                      PetStoreProxy.Order order = parseOrder(orderNodes.item(i));
+                      if (order != null) {
+                          orders.add(order);
+                      }
+                  }
+                  return (PetStoreProxy.Order[])(orders.toArray(new PetStoreProxy.Order[orders.size()]));
+              }
+    stack_metadata:
+      ejb.bean: OPCAdminFacade (remote)
+      ejb.method: getOrdersByStatus
+      request.type: GETORDERS
+  - record_key: OA-ENT-0003
+    kind: entity
+    capability_key: order-approval
+    requirement: "The system SHALL model an administrator order summary with: order id, customer user id, order date (MM/dd/yyyy), amount (decimal) and status, where status is one of PENDING, APPROVED, DENIED or COMPLETED."
+    confidence: medium
+    confidence_basis: The enumeration is declared as constants and parsed on the client, but the validation method is a no-op, so the set is not enforced (see findings).
+    risk_class: financial
+    basis: Order value object with its status constants; client-side parser maps only these four status strings.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreProxy.java
+        line_start: 46
+        line_end: 65
+        excerpt: |2
+              public static class Order {
+                  public final static String PENDING = "PENDING";
+                  public final static String DENIED = "DENIED";
+                  public final static String APPROVED = "APPROVED";
+                  public final static String COMPLETED = "COMPLETED";
+
+                  private String id;
+                  private String userId;
+                  private Date date;
+                  private float amount;
+                  private String status;
+
+                  public Order(String id, String userId, Date date, float amount, String status) {
+                      checkStatus(status);
+                      this.id = id;
+                      this.userId = userId;
+                      this.date = date;
+                      this.amount = amount;
+                      this.status = status;
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreProxy.java
+        line_start: 82
+        line_end: 89
+        excerpt: |2
+                  void checkStatus(String status) {
+                      if ((status != Order.PENDING) &&
+                          (status != Order.APPROVED) &&
+                          (status != Order.DENIED) &&
+                          (status != Order.COMPLETED)) {
+                          // throw an illegal arg exception
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 266
+        line_end: 282
+        excerpt: |2
+              private String parseOrderStatus(String s) {
+                  if (s.equals("PENDING")) {
+                      return PetStoreProxy.Order.PENDING;
+                  }
+                  else if (s.equals("APPROVED")) {
+                      return PetStoreProxy.Order.APPROVED;
+                  }
+                  else if (s.equals("DENIED")) {
+                      return PetStoreProxy.Order.DENIED;
+                  }
+                  else if (s.equals("COMPLETED")) {
+                      return PetStoreProxy.Order.COMPLETED;
+                  }
+                  else {
+                      return null;
+                  }
+              }
+    stack_metadata:
+      class: PetStoreProxy.Order
+  - record_key: OA-REQ-0004
+    kind: requirement
+    capability_key: order-approval
+    requirement: The system SHALL load into the administration client all orders in the PENDING, APPROVED, DENIED and COMPLETED statuses, on start-up and whenever the administrator refreshes.
+    confidence: medium
+    confidence_basis: Single client-side source; clear.
+    risk_class: operational
+    basis: Client issues four status queries and merges the results; the client forces a refresh on start-up.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 131
+        line_end: 144
+        excerpt: |2
+                  private PetStoreProxy.Order[] getServerOrderData() {
+                      final Vector v = new Vector();
+                      v.addAll(Arrays.asList(
+                      server.getOrders(PetStoreProxy.Order.PENDING)));
+                      v.addAll(Arrays.asList(
+                      server.getOrders(PetStoreProxy.Order.APPROVED)));
+                      v.addAll(Arrays.asList(
+                      server.getOrders(PetStoreProxy.Order.DENIED)));
+                      v.addAll(Arrays.asList(
+                      server.getOrders(PetStoreProxy.Order.COMPLETED)));
+                      PetStoreProxy.Order[] newOrders = new PetStoreProxy.Order[v.size()];
+                      v.toArray(newOrders);
+                      return newOrders;
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreAdminClient.java
+        line_start: 95
+        line_end: 96
+        excerpt: |2
+                  // Force a refresh so we get some initial data.
+                  refreshAction.actionPerformed(null);
+    stack_metadata:
+      class: DataSource.getServerOrderData
+  - record_key: OA-SCREEN-0005
+    kind: screen
+    capability_key: order-approval
+    requirement: The system SHALL provide a read-only "View Non-Pending Orders" view listing orders in APPROVED, COMPLETED or DENIED status with columns ID, User ID, Date, Amount and Status, sortable by column header, with no editing permitted.
+    confidence: high
+    confidence_basis: Behaviour stated in both the model (status filter, non-editable cells) and the panel/label resources.
+    risk_class: presentational
+    basis: View table model filters to the three statuses and forbids cell edits; panel title and column labels from the resource bundle; sorter attached to header.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 291
+        line_end: 305
+        excerpt: |2
+                  /**
+                   * This class is used to view orders with the status of APPROVED, COMPLETED
+                   * and DENIED.  No editing of data is allowed with this model.
+                   */
+                  protected class OrdersViewTableModel extends DefaultTableModel {
+                      protected int[] indexMapping;
+                      protected String[] statusList;
+                      protected SimpleDateFormat dateFormat =
+                      new SimpleDateFormat("MM/dd/yyyy");
+
+                      public OrdersViewTableModel() {
+                          super();
+                          setColumnIdentifiers(columns);
+                          statusList = new String[] {PetStoreProxy.Order.APPROVED, PetStoreProxy.Order.COMPLETED, PetStoreProxy.Order.DENIED};
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 402
+        line_end: 407
+        excerpt: |2
+                      /**
+                       * Do not allow setting of data in view mode.
+                       */
+                      public boolean isCellEditable(int row, int column) {
+                          return false;
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/OrdersViewPanel.java
+        line_start: 69
+        line_end: 77
+        excerpt: |2
+              private JComponent createTable() {
+                  sorter = new TableSorter(tableModel);
+                  orderTable = new JTable(sorter);
+                  sorter.addMouseListenerToHeaderInTable(orderTable);
+                  orderTable.getTableHeader().setReorderingAllowed(false);
+                  orderTable.setRowSelectionAllowed(true);
+                  orderTable.setBorder(BorderFactory.createEtchedBorder());
+                  return new JScrollPane(orderTable);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 26
+        line_end: 28
+        excerpt: |
+          # Strings for the orders panels.
+          OrdersViewPanel.title=View Non-Pending Orders
+          OrdersApprovePanel.title=Process Pending Orders
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 56
+        line_end: 61
+        excerpt: |
+          # Orders column names.
+          OrdersTable.id=ID
+          OrdersTable.userId=User ID
+          OrdersTable.date=Date
+          OrdersTable.amount=Amount
+          OrdersTable.status=Status
+    stack_metadata:
+      class: OrdersViewTableModel, OrdersViewPanel
+  - record_key: OA-SCREEN-0006
+    kind: screen
+    capability_key: order-approval
+    requirement: The system SHALL provide a "Process Pending Orders" view listing only PENDING orders, in which only the Status column is editable and may be set to PENDING, APPROVED or DENIED; the administrator SHALL be able to select several rows and mark them all Approved or all Denied in one action, and SHALL apply the changes only when they press Commit.
+    confidence: high
+    confidence_basis: Model (status filter, editable column) and panel (editor options, bulk buttons, commit) agree.
+    risk_class: financial
+    basis: Approve table model restricts to PENDING and makes column 4 editable; panel populates the status editor with three values and wires Approve/Deny to selected rows and Commit to the model.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 410
+        line_end: 420
+        excerpt: |2
+                  /**
+                   * This class is used to modify orders with the status of PENDING.  The new
+                   * status of the orders can either be APPROVED or DENIED.  These changes
+                   * will then be send back to the server, or cached until a network
+                   * connection is available.
+                   */
+                  protected class OrdersApproveTableModel extends OrdersViewTableModel {
+                      public OrdersApproveTableModel() {
+                          super();
+                          statusList = new String[] { PetStoreProxy.Order.PENDING };
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 500
+        line_end: 519
+        excerpt: |2
+                      public boolean isCellEditable(int row, int column) {
+                          // Only the status column is editable.
+                          boolean result = false;
+                          if (column == 4) {
+                              result = true;
+                          }
+                          return result;
+                      }
+
+                      public void setValueAt(Object value, final int row, int column) {
+                          final PetStoreProxy.Order order = orders[indexMapping[row]];
+                          final String val = (String)value;
+
+                          // Update the order manually since we don't want to refresh
+                          // all the data.
+                          orders[indexMapping[row]] = new PetStoreProxy.Order(
+                          order.getId(), order.getUserId(), order.getDate(),
+                          order.getAmount(), val);
+                          fireTableRowsUpdated(row, row);
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/OrdersApprovePanel.java
+        line_start: 80
+        line_end: 136
+        excerpt: |2
+                  // These are the different status types that the user may select from
+                  // when updating an order.
+                  cellOptions.addItem(PetStoreProxy.Order.PENDING);
+                  cellOptions.addItem(PetStoreProxy.Order.APPROVED);
+                  cellOptions.addItem(PetStoreProxy.Order.DENIED);
+
+                  setLayout(new BorderLayout());
+                  setBorder(new SoftBevelBorder(SoftBevelBorder.LOWERED));
+                  add(createTable(), BorderLayout.CENTER);
+                  add(createButtonPanel(), BorderLayout.SOUTH);
+              }
+
+              private JPanel createButtonPanel() {
+                  // Create a button panel that allows the user to do mass approve/deny
+                  // operations.
+                  JPanel panel = new JPanel(new FlowLayout());
+                  approveButton =
+                      new JButton(PetStoreAdminClient.getString("ApproveButton.label"));
+                  approveButton.setMnemonic(
+                      PetStoreAdminClient.getMnemonic("ApproveButton.mnemonic"));
+                  approveButton.addActionListener(new ActionListener() {
+                      public void actionPerformed(ActionEvent e) {
+                          int[] rows = orderTable.getSelectedRows();
+                          for (int i = 0; i < rows.length; i++) {
+                              sorter.setValueAt(PetStoreProxy.Order.APPROVED,
+                                  rows[i], 4);
+                              orderTable.repaint();
+                          }
+                      }
+                  });
+                  panel.add(approveButton);
+
+                  denyButton =
+                      new JButton(PetStoreAdminClient.getString("DenyButton.label"));
+                  denyButton.setMnemonic(
+                      PetStoreAdminClient.getMnemonic("DenyButton.mnemonic"));
+                  denyButton.addActionListener(new ActionListener() {
+                      public void actionPerformed(ActionEvent e) {
+                          int[] rows = orderTable.getSelectedRows();
+                          for (int i = 0; i < rows.length; i++) {
+                              sorter.setValueAt(PetStoreProxy.Order.DENIED, rows[i], 4);
+                              orderTable.repaint();
+                          }
+                      }
+                  });
+                  panel.add(denyButton);
+
+                  commitButton =
+                      new JButton(PetStoreAdminClient.getString("CommitButton.label"));
+                  commitButton.setMnemonic(
+                      PetStoreAdminClient.getMnemonic("CommitButton.mnemonic"));
+                  commitButton.addActionListener(new ActionListener() {
+                      public void actionPerformed(ActionEvent e) {
+                          tableModel.commit();
+                      }
+                  });
+                  panel.add(commitButton);
+    stack_metadata:
+      class: OrdersApproveTableModel, OrdersApprovePanel
+  - record_key: OA-RULE-0007
+    kind: business-rule
+    capability_key: order-approval
+    requirement: WHEN the administrator commits pending-order changes THEN the system SHALL submit orders marked APPROVED as one approval batch and orders marked DENIED as a separate denial batch, SHALL submit nothing if no order was changed, and SHALL then reload the order lists from the server.
+    confidence: medium
+    confidence_basis: Single client-side source; statement order (approved batch before denied batch) is only implicit in statement sequence.
+    risk_class: financial
+    basis: commit() partitions rows by status, returns early when both sets are empty, calls updateStatus for approved then denied, then re-fetches order data.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 422
+        line_end: 476
+        excerpt: |2
+                      public void commit() {
+                          Vector approvedRows = new Vector();
+                          Vector deniedRows = new Vector();
+                          for (int i = 0; i < getRowCount(); i++) {
+                              if (PetStoreProxy.Order.APPROVED.equals(
+                              (String)getValueAt(i, 4))) {
+                                  approvedRows.add(new Integer(i));
+                              } else if (PetStoreProxy.Order.DENIED.equals(
+                              (String)getValueAt(i, 4))) {
+                                  deniedRows.add(new Integer(i));
+                              }
+                          }
+
+                          // Return if we don't have anything to update.
+                          if (approvedRows.size() == 0 &&
+                          deniedRows.size() == 0) {
+                              return;
+                          }
+
+                          final PetStoreProxy.Order[] approvedOrders =
+                          new PetStoreProxy.Order[approvedRows.size()];
+                          int row;
+                          for (int i = 0; i < approvedRows.size(); i++) {
+                              row = ((Integer)approvedRows.elementAt(i)).intValue();
+                              approvedOrders[i] = orders[indexMapping[row]];
+                          }
+
+                          final PetStoreProxy.Order[] deniedOrders =
+                          new PetStoreProxy.Order[deniedRows.size()];
+                          for (int i = 0; i < deniedRows.size(); i++) {
+                              row = ((Integer)deniedRows.elementAt(i)).intValue();
+                              deniedOrders[i] = orders[indexMapping[row]];
+                          }
+
+                          ServerAction action = new ServerAction() {
+                              public void actionPerformed(final ActionEvent action) {
+                                  // Notify listener to disable actions.
+                                  pcs.firePropertyChange(DISABLE_ACTIONS, null, null);
+
+                                  StatusBar.getInstance().setMessage(
+                                  PetStoreAdminClient.getString("Status.update"));
+                                  super.actionPerformed(action);
+                              }
+
+                              protected Object request(ActionEvent e) {
+                                  if (approvedOrders.length > 0) {
+                                      server.updateStatus(approvedOrders,
+                                      PetStoreProxy.Order.APPROVED);
+                                  }
+                                  if (deniedOrders.length > 0) {
+                                      server.updateStatus(deniedOrders,
+                                      PetStoreProxy.Order.DENIED);
+                                  }
+                                  return getServerOrderData();
+                              }
+    stack_metadata:
+      class: OrdersApproveTableModel.commit
+  - record_key: OA-INT-0008
+    kind: integration
+    capability_key: order-approval
+    requirement: The system SHALL deliver administrator approve/deny decisions to order processing asynchronously as an order-approval document (a list of order id + new status) placed on the order-approval message queue, and SHALL report success to the administrator once the document is queued, not once the orders are updated.
+    confidence: high
+    confidence_basis: Servlet, business delegate and queue binding all agree on the asynchronous path.
+    risk_class: financial
+    basis: UPDATESTATUS handler builds an OrderApproval of ChangedOrder(id,status) entries; the delegate sends its XML via the async sender; the async sender queue resolves to the OPC order approval queue; SUCCESS is returned immediately after sending.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 205
+        line_end: 237
+        excerpt: |2
+              String updateOrders(Element root) {
+
+                  // a better solution would be using a style sheet to convert from
+                  // one schema to the other
+
+                  OrderApproval oa = new OrderApproval();
+
+                  NodeList nl = root.getElementsByTagName("Order");
+                  for (int i = 0; i < nl.getLength(); i++) {
+                      Element e = (Element) nl.item(i);
+
+                      // Assumes values of OrderStatus are the same for both schemas
+                      String orderId =
+                          getValue((Element) e.getElementsByTagName("OrderId").item(0));
+                      String orderStatus =
+                          getValue((Element) e.getElementsByTagName("OrderStatus").item(0));
+                      if (orderId != null && orderStatus != null) {
+                          oa.addOrder(new ChangedOrder(orderId, orderStatus));
+                      }
+                  }
+
+                  try {
+                      AdminRequestBD bd = new AdminRequestBD();
+                      bd.updateOrders(oa);
+                      return replyHeader + "<Type>UPDATEORDERS</Type>\n"
+                          + "<Status>SUCCESS</Status>\n"
+                          + "</Response>\n";
+                  } catch (AdminBDException e) {
+                      return replyHeader
+                          + "<Error>Exception while processing :  " + e.getMessage()
+                          + ". Please try again</Error>\n</Response>\n";
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/AdminRequestBD.java
+        line_start: 115
+        line_end: 130
+        excerpt: |2
+              public void updateOrders(OrderApproval oa) throws AdminBDException {
+                  try {
+                      AsyncSenderLocalHome home = (AsyncSenderLocalHome)
+                          ServiceLocator.getInstance().getLocalHome(JNDINames.ASYNCSENDER_LOCAL_EJB_HOME);
+                      AsyncSender sender= home.create();
+                      sender.sendAMessage(oa.toXML());
+                  } catch (ServiceLocatorException sle) {
+                      sle.printStackTrace();
+                      throw new AdminBDException(sle.getMessage());
+                  } catch (XMLDocumentException xde) {
+                      xde.printStackTrace();
+                      throw new AdminBDException(xde.getMessage());
+                  }  catch (CreateException ce) {
+                      throw new AdminBDException(ce.getMessage());
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/sun-j2ee-ri.xml
+        line_start: 95
+        line_end: 98
+        excerpt: |2
+                <resource-env-ref>
+                  <resource-env-ref-name>jms/AsyncSenderQueue</resource-env-ref-name>
+                  <jndi-name>jms/opc/OrderApprovalQueue</jndi-name>
+                </resource-env-ref>
+    stack_metadata:
+      ejb.bean: AsyncSenderEJB (local)
+      jms.queue: jms/opc/OrderApprovalQueue
+      request.type: UPDATESTATUS
+      document: OrderApproval/ChangedOrder
+  - record_key: OA-RULE-0009
+    kind: business-rule
+    capability_key: order-approval
+    requirement: GIVEN a status-update request WHEN an order entry lacks an order id or a status THEN the system SHALL omit that entry from the approval document and still process the remaining entries.
+    confidence: medium
+    confidence_basis: Single explicit null check.
+    risk_class: financial
+    basis: Null guard before adding a ChangedOrder.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 212
+        line_end: 224
+        excerpt: |2
+                  NodeList nl = root.getElementsByTagName("Order");
+                  for (int i = 0; i < nl.getLength(); i++) {
+                      Element e = (Element) nl.item(i);
+
+                      // Assumes values of OrderStatus are the same for both schemas
+                      String orderId =
+                          getValue((Element) e.getElementsByTagName("OrderId").item(0));
+                      String orderStatus =
+                          getValue((Element) e.getElementsByTagName("OrderStatus").item(0));
+                      if (orderId != null && orderStatus != null) {
+                          oa.addOrder(new ChangedOrder(orderId, orderStatus));
+                      }
+                  }
+    stack_metadata:
+      servlet: ApplRequestProcessor.updateOrders
+  - record_key: OA-RULE-0010
+    kind: business-rule
+    capability_key: order-approval
+    requirement: GIVEN the pending-orders view contains any order whose status was changed but not committed WHEN the administrator requests a refresh THEN the system SHALL warn "Data is not committed. Are you sure you want to refresh?" and SHALL refresh only if the administrator confirms.
+    confidence: medium
+    confidence_basis: Single client source plus the message text in the resource bundle.
+    risk_class: operational
+    basis: RefreshAction scans the approve model for non-PENDING status values and shows an OK/Cancel warning.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 219
+        line_end: 252
+        excerpt: |2
+                      public void actionPerformed(final ActionEvent action) {
+                          boolean isUncommitted = false;
+
+                          // Check if there is any uncommitted data.
+                          for (int i = 0; i < ordersApproveTableModel.getRowCount(); i++) {
+                              if (!PetStoreProxy.Order.PENDING.equals(
+                              ordersApproveTableModel.getValueAt(i, 4))) {
+                                  isUncommitted = true;
+                                  break;
+                              }
+                          }
+
+                          int result = JOptionPane.OK_OPTION;
+                          // Warn the user if they have any uncommitted data.
+                          if (isUncommitted) {
+                              result = JOptionPane.showConfirmDialog(parent,
+                              PetStoreAdminClient.getString(
+                              "RefreshWarningDialog.message"),
+                              PetStoreAdminClient.getString(
+                              "RefreshWarningDialog.title"),
+                              JOptionPane.OK_CANCEL_OPTION,
+                              JOptionPane.WARNING_MESSAGE);
+                          }
+
+                          if (result == JOptionPane.OK_OPTION) {
+                              // Notify listener to disable actions.
+                              pcs.firePropertyChange(DISABLE_ACTIONS, null, null);
+
+                              StatusBar.getInstance().setMessage(
+                              PetStoreAdminClient.getString("Status.retrieve"));
+
+                              super.actionPerformed(action);
+                          }
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 40
+        line_end: 41
+        excerpt: |
+          RefreshWarningDialog.message=Data is not committed.  Are you sure you want to refresh?
+          RefreshWarningDialog.title=Warning
+    stack_metadata:
+      class: DataSource.RefreshAction
+  - record_key: OA-RULE-0011
+    kind: business-rule
+    capability_key: order-approval
+    requirement: While a request to the server is in progress the system SHALL disable the Approve, Deny, Commit, Refresh, About and Exit actions and show a status message ("Retrieving data from the server..." or "Updating data on the server..."), re-enabling them when the response arrives.
+    confidence: medium
+    confidence_basis: Single client source, consistent across refresh, commit and chart actions.
+    risk_class: presentational
+    basis: DISABLE_ACTIONS/ENABLE_ACTIONS property events around every server action; listeners disable buttons; status texts in bundle.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 243
+        line_end: 251
+        excerpt: |2
+                          if (result == JOptionPane.OK_OPTION) {
+                              // Notify listener to disable actions.
+                              pcs.firePropertyChange(DISABLE_ACTIONS, null, null);
+
+                              StatusBar.getInstance().setMessage(
+                              PetStoreAdminClient.getString("Status.retrieve"));
+
+                              super.actionPerformed(action);
+                          }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/OrdersApprovePanel.java
+        line_start: 191
+        line_end: 199
+        excerpt: |2
+                  } else if (DataSource.DISABLE_ACTIONS.equals(property)) {
+                      approveButton.setEnabled(false);
+                      denyButton.setEnabled(false);
+                      commitButton.setEnabled(false);
+                  } else if (DataSource.ENABLE_ACTIONS.equals(property)) {
+                      approveButton.setEnabled(true);
+                      denyButton.setEnabled(true);
+                      commitButton.setEnabled(true);
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreAdminClient.java
+        line_start: 307
+        line_end: 319
+        excerpt: |2
+              public void propertyChange(PropertyChangeEvent e) {
+                  String property = e.getPropertyName();
+
+                  if (DataSource.DISABLE_ACTIONS.equals(property)) {
+                      refreshAction.setEnabled(false);
+                      aboutAction.setEnabled(false);
+                      exitAction.setEnabled(false);
+                  } else if (DataSource.ENABLE_ACTIONS.equals(property)) {
+                      refreshAction.setEnabled(true);
+                      aboutAction.setEnabled(true);
+                      exitAction.setEnabled(true);
+                  }
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 52
+        line_end: 54
+        excerpt: |
+          # Status bar strings
+          Status.retrieve=Retrieving data from the server...
+          Status.update=Updating data on the server...
+    stack_metadata:
+      class: ServerAction subclasses
+  - record_key: OA-RULE-0012
+    kind: business-rule
+    capability_key: order-approval
+    requirement: WHEN any administration client request to the server fails THEN the system SHALL display a "Fatal Error!" dialog with the error message and SHALL terminate the client.
+    confidence: medium
+    confidence_basis: Single client source; applies to refresh, commit and chart requests.
+    risk_class: operational
+    basis: fatalServerError shows an error dialog and calls System.exit(1); every handleException routes to it.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 156
+        line_end: 165
+        excerpt: |2
+                  /**
+                   * Called when there was an error communicating with the server.  An error
+                   * is displayed to the user and the application will then exit.
+                   */
+                  private void fatalServerError(String message) {
+                      JOptionPane.showMessageDialog(parent, message,
+                      PetStoreAdminClient.getString("ServerErrorDialog.title"),
+                      JOptionPane.ERROR_MESSAGE);
+                      System.exit(1);
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 285
+        line_end: 288
+        excerpt: |2
+                      protected void handleException(Exception e) {
+                          e.printStackTrace();
+                          fatalServerError(e.getMessage());
+                      }
+    stack_metadata:
+      class: DataSource.fatalServerError
+  - record_key: OA-RULE-0013
+    kind: business-rule
+    capability_key: order-approval
+    requirement: "The system SHALL display order status in the pending-orders view with a colour cue: APPROVED green, DENIED red, PENDING yellow."
+    confidence: medium
+    confidence_basis: Single renderer.
+    risk_class: presentational
+    basis: Custom status cell renderer.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/OrdersApprovePanel.java
+        line_start: 153
+        line_end: 171
+        excerpt: |2
+                  // Set the cell renderer for the table.
+                  statusRenderer = new DefaultTableCellRenderer() {
+                      public void setValue(Object value) {
+                          String str = (String)value;
+                          if (PetStoreProxy.Order.APPROVED.equals(str)) {
+                              setBackground(Color.green);
+                              setText(str);
+                          } else if (PetStoreProxy.Order.DENIED.equals(str)) {
+                              setBackground(Color.red);
+                              setText(str);
+                          } else if (PetStoreProxy.Order.PENDING.equals(str)) {
+                              setBackground(Color.yellow);
+                              setText(str);
+                          } else {
+                              super.setValue(str);
+                          }
+                      }
+                  };
+                  statusColumn.setCellRenderer(statusRenderer);
+    stack_metadata:
+      class: OrdersApprovePanel.statusRenderer
+  - record_key: OA-REQ-0014
+    kind: requirement
+    capability_key: order-approval
+    requirement: The system SHALL report sales revenue for a date range, broken down by product category (or, when a category is given, by item within that category), with each group's revenue and the total revenue across groups.
+    confidence: medium
+    confidence_basis: Server and client agree on shape; filed under order-approval because the closed capability list has no sales-reporting capability and this is administrator reporting in the same console. The per-category aggregation itself happens in the order-processing facade outside this shard.
+    risk_class: financial
+    basis: REVENUE branch emits Category/Item elements with float amounts and a summed TotalSales; client parses them into Sales records. Closest listed capability is order-approval (administrator reporting).
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 239
+        line_end: 280
+        excerpt: |2
+              String getChartInfo(Element root, String request) {
+                  try {
+
+                      Map chartInfo = null;
+                      String category = null;
+                      String start = getValue(root.getElementsByTagName("Start").item(0));
+                      String end = getValue(root.getElementsByTagName("End").item(0));
+
+                      AdminRequestBD bd = new AdminRequestBD();
+
+                      category =
+                          getValue(root.getElementsByTagName("ReqCategory").item(0));
+
+                      chartInfo = bd.getChartInfo(request,
+                                                  getProperDate(start),
+                                                  getProperDate(end),
+                                                  category);
+
+                      StringBuffer responseBuffer = new StringBuffer(replyHeader);
+                      String xmlElement = (category == null) ? "Category" : "Item";
+                      responseBuffer.append("<Type>" + request + "</Type>\n");
+                      responseBuffer.append("<Start>" + start + "</Start>\n");
+                      responseBuffer.append("<End>" + end + "</End>\n");
+                      responseBuffer.append(((category == null) ?
+                                             ("<ReqCategory/>\n") :
+                                             ("<ReqCategory>" + category + "</ReqCategory>\n")));
+                      if (request.equals("REVENUE")) {
+                          float totalAmount = 0f;
+                          for (Iterator it = chartInfo.entrySet().iterator();
+                               it.hasNext(); ) {
+                              Map.Entry e = (Map.Entry) it.next();
+                              float amount = ((Float) e.getValue()).floatValue();
+                              totalAmount += amount;
+                              responseBuffer.append("<" + xmlElement + " name=\""
+                                                    + e.getKey() + "\">");
+                              responseBuffer.append(amount);
+                              responseBuffer.append("</" + xmlElement + ">\n");
+                          }
+                          responseBuffer.append("<TotalSales>");
+                          responseBuffer.append(totalAmount);
+                          responseBuffer.append("</TotalSales>\n");
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 369
+        line_end: 384
+        excerpt: |2
+              public PetStoreProxy.Sales[] getRevenue(Date start, Date end, String category) {
+                  String request = genSalesRequest("REVENUE", start, end, category);
+                  Document doc = doHttpPost(request);
+                  String tag = (category == null) ? "Category" : "Item";
+                  NodeList salesNodes = doc.getElementsByTagName(tag);
+                  ArrayList sales = new ArrayList(salesNodes.getLength());
+                  for(int i = 0; i < salesNodes.getLength(); i++) {
+                      Node salesNode = salesNodes.item(i);
+                      String key = getAttribute(salesNode, "name");
+                      float revenue = getFloat(salesNode);
+                      if ((key != null) && (revenue >= 0.0)) {
+                          sales.add(new PetStoreProxy.Sales(key, revenue));
+                      }
+                  }
+                  return (PetStoreProxy.Sales[])(sales.toArray(new PetStoreProxy.Sales[sales.size()]));
+              }
+    stack_metadata:
+      ejb.bean: OPCAdminFacade (remote)
+      ejb.method: getChartInfo
+      request.type: REVENUE
+  - record_key: OA-REQ-0015
+    kind: requirement
+    capability_key: order-approval
+    requirement: The system SHALL report the number of orders for a date range, broken down by product category (or by item within a given category), with each group's count and the total count.
+    confidence: medium
+    confidence_basis: Server and client agree; same capability-fit caveat as the revenue report; aggregation lives outside this shard.
+    risk_class: operational
+    basis: ORDERS branch emits integer quantities per group and a summed total (in an element named TotalSales); client parses integers.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 281
+        line_end: 297
+        excerpt: |2
+                      // ORDERS
+                      else {
+                          int totalQuantity = 0;
+                          for (Iterator it = chartInfo.entrySet().iterator();
+                               it.hasNext(); ) {
+                              Map.Entry e = (Map.Entry) it.next();
+                              int quantity = ((Integer) e.getValue()).intValue();
+                              totalQuantity += quantity;
+                              responseBuffer.append("<" + xmlElement + " name=\""
+                                                    + e.getKey() + "\">");
+                              responseBuffer.append(quantity);
+                              responseBuffer.append("</" + xmlElement + ">\n");
+                          }
+                          responseBuffer.append("<TotalSales>");
+                          responseBuffer.append(totalQuantity);
+                          responseBuffer.append("</TotalSales>\n");
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 386
+        line_end: 401
+        excerpt: |2
+              public PetStoreProxy.Sales[] getOrders(Date start, Date end, String category) {
+                  String request = genSalesRequest("ORDERS", start, end, category);
+                  Document doc = doHttpPost(request);
+                  String tag = (category == null) ? "Category" : "Item";
+                  NodeList salesNodes = doc.getElementsByTagName(tag);
+                  ArrayList sales = new ArrayList(salesNodes.getLength());
+                  for(int i = 0; i < salesNodes.getLength(); i++) {
+                      Node salesNode = salesNodes.item(i);
+                      String key = getAttribute(salesNode, "name");
+                      int nOrders = getInt(salesNode);
+                      if ((key != null) && (nOrders >= 0)) {
+                          sales.add(new PetStoreProxy.Sales(key, nOrders));
+                      }
+                  }
+                  return (PetStoreProxy.Sales[])(sales.toArray(new PetStoreProxy.Sales[sales.size()]));
+              }
+    stack_metadata:
+      ejb.method: getChartInfo
+      request.type: ORDERS
+  - record_key: OA-SCREEN-0016
+    kind: screen
+    capability_key: order-approval
+    requirement: The system SHALL provide a Sales view with a pie chart showing each category's percentage share of revenue and a bar chart showing the number of orders per category, each with editable Start Date and End Date fields and a "Get Data" action that reloads that chart for the entered range.
+    confidence: medium
+    confidence_basis: Labels and rendering logic agree; single client source.
+    risk_class: presentational
+    basis: Pie chart computes revenue/total*100 per key; bar chart scales by order count; resource strings for titles, descriptions, date labels and submit text; date fields call setDates which re-fetches.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PieChartPanel.java
+        line_start: 198
+        line_end: 210
+        excerpt: |2
+                  public void renderChart(Graphics2D g2) {
+                      keys = chartModel.getKeys();
+                      if (keys == null) {
+                          return;
+                      }
+
+                      calculateTotals();
+                      percentages = new float[keys.length];
+
+                      for (int i = 0; i < keys.length; i++) {
+                          percentages[i] =
+                              chartModel.getRevenue(keys[i]) / totalRevenue * 100f;
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PieChartPanel.java
+        line_start: 111
+        line_end: 133
+        excerpt: |2
+              private void updateModelDates() {
+                  Date startDate = null;
+                  Date endDate = null;
+
+                  // Make sure that the dates entered in the text field are valid.  If
+                  // they are not prompt the user to fix them.
+                  try {
+                      startDate =
+                          dateFormat.parse(startDateTxtField.getText());
+                      endDate =
+                          dateFormat.parse(endDateTxtField.getText());
+                  } catch (ParseException e) {
+                      JOptionPane.showMessageDialog(this,
+                          PetStoreAdminClient.getString("DateFormatErrorDialog.message"),
+                          PetStoreAdminClient.getString("DateFormatErrorDialog.title"),
+                          JOptionPane.ERROR_MESSAGE);
+                      return;
+                  }
+
+                  // Setting the dates will automatically retrieve the data from the
+                  // server.
+                  pieChartModel.setDates(startDate, endDate);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 602
+        line_end: 607
+        excerpt: |2
+                      public void setDates(Date startDate, Date endDate) {
+                          this.startDate = startDate;
+                          this.endDate = endDate;
+
+                          new RefreshChartAction(this).actionPerformed(null);
+                      }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 44
+        line_end: 48
+        excerpt: |
+          # Strings for the sales tab.
+          SalesPanelComboBox.pieChart=Pie Chart
+          SalesPanelComboBox.barChart=Bar Chart
+          SalesPanelStartDate.label=Start Date
+          SalesPanelEndDate.label=End Date
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 63
+        line_end: 70
+        excerpt: |
+          # Chart strings.
+          BarChart.title=Bar Chart
+          BarChart.description=Showing total # of sales per category
+          PieChart.title=Pie Chart
+          PieChart.description=Showing total % of sales per category
+          Chart.from=from
+          Chart.to=to
+          SubmitButton.text=Get Data
+    stack_metadata:
+      class: PieChartPanel, BarChartPanel
+  - record_key: OA-RULE-0017
+    kind: business-rule
+    capability_key: order-approval
+    requirement: GIVEN the administrator enters report dates WHEN either date is not in MM/dd/yyyy format THEN the system SHALL reject the input with the message "Dates must be in the format of MM/dd/yyyy" and SHALL NOT request data.
+    confidence: high
+    confidence_basis: Format enforced on the client (parse + error dialog) and assumed by the server parser (month/day/year tokens) and the wire format; independent places agree on the format.
+    risk_class: operational
+    basis: Client SimpleDateFormat parse with error dialog; wire dates formatted MM/dd/yyyy; server tokenises on "/" as month, day, year.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PieChartPanel.java
+        line_start: 115
+        line_end: 128
+        excerpt: |2
+                  // Make sure that the dates entered in the text field are valid.  If
+                  // they are not prompt the user to fix them.
+                  try {
+                      startDate =
+                          dateFormat.parse(startDateTxtField.getText());
+                      endDate =
+                          dateFormat.parse(endDateTxtField.getText());
+                  } catch (ParseException e) {
+                      JOptionPane.showMessageDialog(this,
+                          PetStoreAdminClient.getString("DateFormatErrorDialog.message"),
+                          PetStoreAdminClient.getString("DateFormatErrorDialog.title"),
+                          JOptionPane.ERROR_MESSAGE);
+                      return;
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore.properties
+        line_start: 49
+        line_end: 50
+        excerpt: |
+          DateFormatErrorDialog.message=Dates must be in the format of MM/dd/yyyy
+          DateFormatErrorDialog.title=Error
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 69
+        line_end: 69
+        excerpt: |2
+              private DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 319
+        line_end: 326
+        excerpt: |2
+              Date getProperDate(String inpDate) {
+                  StringTokenizer tokens = new StringTokenizer(inpDate, "/");
+                  Integer month = new Integer((String)tokens.nextElement());
+                  Integer day = new Integer((String)tokens.nextElement());
+                  Integer year = new Integer((String)tokens.nextElement());
+                  return(new Date(year.intValue()-1900, month.intValue()-1,
+                                  day.intValue()));
+              }
+    stack_metadata:
+      date.format: MM/dd/yyyy
+  - record_key: OA-RULE-0018
+    kind: business-rule
+    capability_key: order-approval
+    requirement: The system SHALL default the sales report date range to 1 January 2001 through 31 December 2002.
+    confidence: low
+    confidence_basis: Bare literals; the adjacent comments contradict them (they claim a 1/12/2001 start and a present-day end) and a TODO says the real default should be today.
+    risk_class: presentational
+    basis: ChartModel field initialisers.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+        line_start: 522
+        line_end: 531
+        excerpt: |2
+                  public abstract class ChartModel {
+                      /** The default start date is 1/12/2001 for the demo. TODO In the
+                       * released application this should default to the present day. */
+                      private Date startDate = new Date("1/1/2001");
+
+                      /** The default end date is the present day. */
+                      private Date endDate = new Date("12/31/2002");
+
+                      /** The default view mode is the top level view. */
+                      private String viewMode = null;
+    stack_metadata:
+      class: DataSource.ChartModel
+  - record_key: OA-RULE-0019
+    kind: business-rule
+    capability_key: order-approval
+    requirement: GIVEN a report data response WHEN a group has no name or a negative value THEN the administration client SHALL omit that group from the chart.
+    confidence: low
+    confidence_basis: Client-side filter that looks like defensive parsing (parse failures yield -1) rather than an intended business rule.
+    risk_class: presentational
+    basis: Client keeps entries only if key != null and value >= 0; getFloat/getInt return -1 on parse failure.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 375
+        line_end: 382
+        excerpt: |2
+                  for(int i = 0; i < salesNodes.getLength(); i++) {
+                      Node salesNode = salesNodes.item(i);
+                      String key = getAttribute(salesNode, "name");
+                      float revenue = getFloat(salesNode);
+                      if ((key != null) && (revenue >= 0.0)) {
+                          sales.add(new PetStoreProxy.Sales(key, revenue));
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 392
+        line_end: 399
+        excerpt: |2
+                  for(int i = 0; i < salesNodes.getLength(); i++) {
+                      Node salesNode = salesNodes.item(i);
+                      String key = getAttribute(salesNode, "name");
+                      int nOrders = getInt(salesNode);
+                      if ((key != null) && (nOrders >= 0)) {
+                          sales.add(new PetStoreProxy.Sales(key, nOrders));
+                      }
+                  }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+        line_start: 214
+        line_end: 238
+        excerpt: |2
+              private int getInt(Node node) {
+                  try {
+                      String s = getBody(node);
+                      return Integer.parseInt(s);
+                  }
+                  catch (Exception e) {
+                      e.printStackTrace();
+                      return -1;
+                  }
+              }
+
+              /**
+               * Return the float value of the first child of this node.
+               */
+              private float getFloat(Node node) {
+                  String s = null;
+                  try {
+                      s = getBody(node);
+                      return Float.parseFloat(s);
+                  }
+                  catch (Exception e) {
+                      e.printStackTrace();
+                      return -1.0f;
+                  }
+              }
+    stack_metadata:
+      class: HttpPostPetStoreProxy
+  - record_key: OA-RULE-0020
+    kind: business-rule
+    capability_key: order-approval
+    requirement: WHEN the administration data service receives a request of a type other than order listing, status update, revenue report or order-count report THEN it SHALL reply with an error naming the unknown request type; WHEN the request cannot be parsed THEN it SHALL reply with an error asking the caller to try again.
+    confidence: medium
+    confidence_basis: Single dispatcher; explicit.
+    risk_class: operational
+    basis: processRequest dispatch on Type and catch blocks.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+        line_start: 131
+        line_end: 163
+        excerpt: |2
+                      String reqType = getValue(root.getElementsByTagName("Type")
+                                                .item(0));
+                      if (reqType.equals("GETORDERS")) {
+                          return getOrders(root);
+                      }
+                      else if (reqType.equals("UPDATESTATUS")) {
+                          return updateOrders(root);
+                      }
+                      else if (reqType.equals("REVENUE") || reqType.equals("ORDERS")) {
+                          return getChartInfo(root, reqType);
+                      }
+                      else {
+                          return replyHeader +
+                              "<Error>Unable to process request : " +
+                              "Unknown request type - " + reqType +
+                              "</Error>\n</Response>\n";
+                      }
+                  }
+                  catch (ParserConfigurationException pe) {
+                      return replyHeader +
+                          "<Error>Exception while processing :  " + pe.getMessage() +
+                          ". Please try again</Error>\n</Response>\n";
+                  }
+                  catch (SAXException se) {
+                      return replyHeader +
+                          "<Error>Exception while processing :  " + se.getMessage() +
+                          ". Please try again</Error>\n</Response>\n";
+                  }
+                  catch (IOException ie) {
+                      return replyHeader +
+                          "<Error>Exception while processing :  " + ie.getMessage() +
+                          ". Please try again</Error>\n</Response>\n";
+                  }
+    stack_metadata:
+      servlet: ApplRequestProcessor.processRequest
+      request.types: GETORDERS, UPDATESTATUS, REVENUE, ORDERS
+  - record_key: LOC-REQ-0001
+    kind: requirement
+    capability_key: localization
+    requirement: The administration client SHALL take all user-visible labels, messages, tooltips and mnemonics from a localizable resource bundle, with an English default and a German translation.
+    confidence: medium
+    confidence_basis: Bundle lookup is explicit; German file exists. Locale selection is implicit (JVM default locale) and German is not among the locales in the capability list (see findings).
+    risk_class: presentational
+    basis: getString/getMnemonic read resources.petstore; petstore_de.properties provides German strings.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreAdminClient.java
+        line_start: 254
+        line_end: 287
+        excerpt: |2
+              private static ResourceBundle getResourceBundle() {
+                  if (bundle == null) {
+                      bundle = ResourceBundle.getBundle("resources.petstore");
+                  }
+                  return bundle;
+              }
+
+              /**
+               * Retrieve a localized string from our resource bundle.
+               *
+               * @param key Key for the string we want to retrieve.
+               * @return Localized string.
+               */
+              public static String getString(String key) {
+                  String result = null;
+                  try {
+                      result = getResourceBundle().getString(key);
+                  } catch (MissingResourceException e) {
+                      e.printStackTrace();
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                  }
+                  return result;
+              }
+
+              /**
+               * Retrieve a localized mnemonic character from our resource bundle.
+               *
+               * @param key Key for the mnemonic character we want to retrieve.
+               * @return Localized mnemonic character.
+               */
+              public static char getMnemonic(String key) {
+                  return (getString(key)).charAt(0);
+              }
+      - path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore_de.properties
+        line_start: 1
+        line_end: 5
+        excerpt: |
+          # Strings for the application actions.
+          FileAction.name=Datei
+          FileAction.mnemonic=D
+          ExitAction.name=Beenden
+          ExitAction.mnemonic=B
+    stack_metadata:
+      resource.bundle: resources.petstore
+      locales: default, de
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+    description: The data service that lists orders, applies approve/deny decisions and returns revenue is NOT under the administrator security constraint (web.xml lines 75-88 protect only /AdminRequestProcessor). It only checks that some session exists (lines 88-99). JSPs such as login.jsp create a session before authentication, so an unauthenticated caller holding any session in the admin context could appear authorised. A human must decide whether the rebuild requires the administrator role on every data-service operation (recommended) — the legacy code comment claims this but the descriptor does not enforce it.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml
+    description: Transport guarantee is NONE and the launch descriptor hard-codes an http:// codebase (AdminRequestProcessor.java line 68), so admin credentials, the session id and approval decisions travel unencrypted. Decide whether the rebuild must require TLS.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/login.jsp
+    description: The login form pre-fills user id jps_admin and a password (lines 60, 66). Almost certainly demo convenience; it must not be carried into the rebuild, and no requirement was emitted for it.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java
+    description: updateStatus ignores a non-SUCCESS reply ("// throw an exception" placeholder, lines 415-417), and the server replies SUCCESS as soon as the approval document is queued. Nothing tells the administrator if order processing later rejects or fails to apply a decision. Decide whether the rebuild needs confirmation or failure feedback.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+    description: getOrders and getChartInfo return null on a back-end failure (lines 199-202, 301-304), so the servlet writes the literal "null" rather than an <Error> element. The client then fails to parse the reply and exits through the fatal-error path. The intended error contract for listing and report failures is unstated.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+    description: ChartModel.viewMode is initialised to null and never assigned (lines 530-531, 590-592), so the client never sends a category and the per-item breakdown the server supports (ApplRequestProcessor.java lines 249-264) cannot be reached from this client. Decide whether category-to-item drill-down is a required feature; OA-REQ-0014/0015 record it as server capability only.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+    description: 'The default chart dates conflict with their comments: the comment says the start defaults to 1/12/2001 but the code uses 1/1/2001, and the comment says the end is "the present day" but the code uses 12/31/2002 (lines 522-528). A TODO says the real default should be today. Decide the intended default range.'
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PetStoreProxy.java
+    description: Order.checkStatus is a no-op ("// throw an illegal arg exception", lines 82-89), and parseOrderStatus maps any unknown status to null (HttpPostPetStoreProxy.java lines 266-282), so orders in other statuses silently drop out of both views. Other modules may define more order statuses than these four; reconcile with the order-fulfillment lifecycle.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java
+    description: Revenue is summed in single-precision float (lines 266-279) with no rounding rule, and the order-count total is emitted in an element named TotalSales (lines 294-296). Money precision and rounding for the revenue report are unspecified; the rebuild should use exact decimal arithmetic, but a human must confirm how totals are rounded.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/PieChartPanel.java
+    description: No check that the start date is on or before the end date (lines 111-133). The server date parser uses the deprecated local-time Date constructor (ApplRequestProcessor.java lines 319-326), so whether the end date is inclusive depends on the facade outside this shard. Inclusivity of the range is unresolved.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/resources/petstore_de.properties
+    description: The admin client ships English and German bundles, but the capability list names English, Japanese and Chinese as supported locales, and there is no Japanese or Chinese admin bundle. Decide which locales the admin console must support.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/DataSource.java
+    description: Non-numeric order ids are shown as -1 in the order tables (lines 345-349), which implies order ids are numeric but does not enforce it. The order-id format is owned by another module.
