@@ -1,0 +1,350 @@
+# SX-0001 extract-b — independent second reading of the address component.
+# No legacy-analysis/sources/**/extracted.md documents exist in the tree, so no document traces are emitted.
+records:
+  - record_key: CUSTOMER-ACCOUNT-ENTITY-0001
+    kind: entity
+    capability_key: customer-account
+    requirement: >
+      The system SHALL persist a postal address as a record holding six text
+      attributes: first street line, second street line, city, state or
+      province, postal (zip) code, and country.
+    confidence: medium
+    confidence_basis: >
+      Declared persistent-field list and the programmatic accessors agree on the
+      same six fields (two places in the same component). Not high because no DDL
+      for the backing table is in this shard, so column types, lengths and
+      nullability cannot be seen, and pass A has not been compared.
+    risk_class: operational
+    basis: >
+      The deployment descriptor declares exactly six container-managed fields,
+      and the bean class declares matching abstract getters/setters, all typed
+      String. The address is embedded in contact information (used for customer
+      profile and for billing/shipping on orders); filed under customer-account
+      as the owning capability of the stored record.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/ejb-jar.xml
+        line_start: 56
+        line_end: 80
+        excerpt: |
+          <abstract-schema-name>Address</abstract-schema-name>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>zipCode</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>streetName2</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>state</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>streetName1</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>city</field-name>
+                </cmp-field>
+                <cmp-field>
+                  <description>no description</description>
+                  <field-name>country</field-name>
+                </cmp-field>
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/AddressEJB.java
+        line_start: 53
+        line_end: 69
+        excerpt: |
+          public abstract String getStreetName1();
+          public abstract void setStreetName1(String streetName1);
+
+          public abstract String getStreetName2();
+          public abstract void setStreetName2(String streetName2);
+
+          public abstract String getCity();
+          public abstract void setCity(String city);
+
+          public abstract String getState();
+          public abstract void setState(String state);
+
+          public abstract String getZipCode();
+          public abstract void setZipCode(String zipCode);
+
+          public abstract String getCountry();
+          public abstract void setCountry(String country);
+    stack_metadata:
+      framework: EJB 2.0 CMP
+      ejb.bean: AddressEJB
+      ejb.transaction: Required
+      db.object: Address (abstract schema name; physical table not in shard)
+
+  - record_key: CUSTOMER-ACCOUNT-ENTITY-0002
+    kind: entity
+    capability_key: customer-account
+    requirement: >
+      The system SHALL give each stored address a system-generated identity with
+      no business key, so that two addresses with identical field values are
+      distinct records.
+    confidence: medium
+    confidence_basis: >
+      The descriptor declares an unknown (Object) primary-key class and every
+      create path returns null for the key, which together mean the container
+      generates it. Medium because the physical key column and generator are
+      vendor mapping not present in the shard.
+    risk_class: operational
+    basis: >
+      prim-key-class is java.lang.Object (EJB 2.0 unknown primary key) and none of
+      the three create methods derives a key from the address fields; no finder
+      other than by primary key is declared, so addresses are never looked up by
+      content.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/ejb-jar.xml
+        line_start: 52
+        line_end: 53
+        excerpt: |
+          <persistence-type>Container</persistence-type>
+                <prim-key-class>java.lang.Object</prim-key-class>
+      - path: legacy-source/petstore1.3.2/src/components/address/src/ejb-jar.xml
+        line_start: 233
+        line_end: 240
+        excerpt: |
+          <method>
+                  <ejb-name>AddressEJB</ejb-name>
+                  <method-intf>LocalHome</method-intf>
+                  <method-name>findByPrimaryKey</method-name>
+                  <method-params>
+                    <method-param>java.lang.Object</method-param>
+                  </method-params>
+                </method>
+    stack_metadata:
+      ejb.bean: AddressEJB
+      ejb.primkey: java.lang.Object (unknown primary key)
+
+  - record_key: CUSTOMER-ACCOUNT-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: customer-account
+    requirement: >
+      The system SHALL allow an address to be created either empty, from six
+      individual field values, or by copying another address value, and SHALL
+      NOT itself reject any field as missing or malformed at the point of storage.
+      GIVEN an address is created with a null field WHEN it is stored THEN the
+      store accepts it unchanged.
+    confidence: low
+    confidence_basis: >
+      The absence of validation is visible in the create methods, but required-field
+      checks may live in callers or in the physical schema, neither of which is in
+      this shard. The empty-create path's callers are not established here.
+    risk_class: operational
+    basis: >
+      Three create methods copy arguments straight into fields with no checks;
+      the no-argument create sets nothing. Field-level validation observed outside
+      the shard (the customer web form) is the caller's responsibility, not this
+      component's.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/AddressEJB.java
+        line_start: 73
+        line_end: 82
+        excerpt: |
+          public Object ejbCreate(String streetName1, String streetName2, String city,
+                                  String state, String zipCode, String country) throws CreateException {
+                                    setStreetName1(streetName1);
+                                    setStreetName2(streetName2);
+                                    setCity(city);
+                                    setState(state);
+                                    setZipCode(zipCode);
+                                    setCountry(country);
+                                    return null;
+          }
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/AddressEJB.java
+        line_start: 87
+        line_end: 101
+        excerpt: |
+          public Object ejbCreate(Address address) throws CreateException {
+            setStreetName1(address.getStreetName1());
+            setStreetName2(address.getStreetName2());
+            setCity(address.getCity());
+            setState(address.getState());
+            setZipCode(address.getZipCode());
+            setCountry(address.getCountry());
+            return null;
+          }
+
+          public void ejbPostCreate(Address address) throws CreateException { }
+
+          public Object ejbCreate() throws CreateException {
+            return null;
+          }
+    stack_metadata:
+      ejb.bean: AddressEJB
+      ejb.transaction: Required
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-INTEGRATION-0001
+    kind: integration
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL represent an address in exchanged XML documents as an
+      Address element containing, in order, one StreetName, an optional second
+      StreetName, City, State, ZipCode and Country, identified by the document
+      type "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD Address 1.1//EN".
+    confidence: medium
+    confidence_basis: >
+      The element order is stated in both the declared document type and the
+      writer/reader code. Held at medium because the two disagree on whether
+      Country is optional (see conflict finding), and pass A is not compared.
+    risk_class: operational
+    basis: >
+      The DTD content model and the element-name constants and write order in the
+      Address value class agree on names and sequence. The Address DTD is included
+      by the ContactInfo DTD, so it forms part of the order documents.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/rsrc/schemas/Address.dtd
+        line_start: 38
+        line_end: 43
+        excerpt: |
+          <!ELEMENT Address (StreetName, StreetName?, City, State, ZipCode, Country?)>
+          <!ELEMENT StreetName (#PCDATA)>
+          <!ELEMENT City (#PCDATA)>
+          <!ELEMENT State (#PCDATA)>
+          <!ELEMENT ZipCode (#PCDATA)>
+          <!ELEMENT Country (#PCDATA)>
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/Address.java
+        line_start: 54
+        line_end: 61
+        excerpt: |
+          public static final String DTD_PUBLIC_ID = "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD Address 1.1//EN";
+          public static final String DTD_SYSTEM_ID = "/com/sun/j2ee/blueprints/address/rsrc/schemas/Address.dtd";
+          public static final String XML_ADDRESS = "Address";
+          public static final String XML_STREET_NAME = "StreetName";
+          public static final String XML_CITY = "City";
+          public static final String XML_STATE = "State";
+          public static final String XML_COUNTRY = "Country";
+          public static final String XML_ZIPCODE = "ZipCode";
+    stack_metadata:
+      framework: DOM / DTD
+      xml.dtd: Address.dtd (public id DTD Address 1.1)
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-BUSINESS-RULE-0001
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL write the second street line into an address document only
+      when it is present and non-empty. GIVEN an address whose second street line
+      is null or the empty string WHEN it is written to XML THEN only one StreetName
+      element is produced. All other fields SHALL always be written, as an empty
+      element when their value is null.
+    confidence: medium
+    confidence_basis: >
+      Single programmatic source, directly readable; the null-to-empty behaviour
+      comes from the shared XML helper outside this shard, which was read to
+      confirm it but is not cited as a trace here.
+    risk_class: operational
+    basis: >
+      toDOM appends StreetName (line 1), then conditionally the second StreetName,
+      then City, State, ZipCode, Country unconditionally. The helper appendChild
+      substitutes "" for a null value.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/Address.java
+        line_start: 144
+        line_end: 155
+        excerpt: |
+          public Node toDOM(Document document) {
+            Element root = document.createElement(XML_ADDRESS);
+            XMLDocumentUtils.appendChild(document, root, XML_STREET_NAME, streetName1);
+            if (streetName2 != null && !streetName2.equals("")) {
+              XMLDocumentUtils.appendChild(document, root, XML_STREET_NAME, streetName2);
+            }
+            XMLDocumentUtils.appendChild(document, root, XML_CITY, city);
+            XMLDocumentUtils.appendChild(document, root, XML_STATE, state);
+            XMLDocumentUtils.appendChild(document, root, XML_ZIPCODE, zipCode);
+            XMLDocumentUtils.appendChild(document, root, XML_COUNTRY, country);
+            return root;
+          }
+    stack_metadata:
+      framework: DOM
+
+  - record_key: B2B-DOCUMENT-EXCHANGE-BUSINESS-RULE-0002
+    kind: business-rule
+    capability_key: b2b-document-exchange
+    requirement: >
+      The system SHALL reject an incoming address document unless it contains, in
+      order, a StreetName, an optional second StreetName, City, State, ZipCode and
+      Country, each with non-empty text content. GIVEN an Address element missing
+      Country, or with an empty City WHEN it is read THEN reading fails with an
+      error naming the expected element. GIVEN a second StreetName element that is
+      present but empty WHEN it is read THEN reading fails.
+    confidence: medium
+    confidence_basis: >
+      The reader code states each check explicitly (optional flag false on every
+      element but the second street line, and content-required on all). Medium,
+      not high, because it contradicts the declared DTD for Country, so which
+      layer is authoritative is unresolved.
+    risk_class: operational
+    basis: >
+      fromDOM calls getFirstChild/getNextSibling with optional=false for every
+      element except the second StreetName, and getContentAsString with
+      optional=false for all six, which in the shared helper throws when the text
+      is empty. A non-Address root element also raises "Address element expected.".
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/Address.java
+        line_start: 157
+        line_end: 180
+        excerpt: |
+          public static Address fromDOM(Node node) throws XMLDocumentException {
+            Element element;
+            if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_ADDRESS)) {
+              Element child;
+              Address address = new Address();
+              child = XMLDocumentUtils.getFirstChild(element, XML_STREET_NAME, false);
+              address.streetName1 = XMLDocumentUtils.getContentAsString(child, false);
+              Element optionalChild = XMLDocumentUtils.getNextSibling(child, XML_STREET_NAME, true);
+              if (optionalChild != null) {
+                address.streetName2 = XMLDocumentUtils.getContentAsString(optionalChild, false);
+                child = optionalChild;
+              }
+              child = XMLDocumentUtils.getNextSibling(child, XML_CITY, false);
+              address.city = XMLDocumentUtils.getContentAsString(child, false);
+              child = XMLDocumentUtils.getNextSibling(child, XML_STATE, false);
+              address.state = XMLDocumentUtils.getContentAsString(child, false);
+              child = XMLDocumentUtils.getNextSibling(child, XML_ZIPCODE, false);
+              address.zipCode = XMLDocumentUtils.getContentAsString(child, false);
+              child = XMLDocumentUtils.getNextSibling(child, XML_COUNTRY, false);
+              address.country = XMLDocumentUtils.getContentAsString(child, false);
+              return address;
+            }
+            throw new XMLDocumentException(XML_ADDRESS + " element expected.");
+          }
+    stack_metadata:
+      framework: DOM
+
+findings:
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/rsrc/schemas/Address.dtd
+    description: >
+      The Address DTD (line 38) declares Country optional ("Country?"), but
+      Address.fromDOM (Address.java lines 175-176) requires a Country element with
+      non-empty content and throws otherwise. A DTD-valid document without Country
+      is rejected by the reader. A human must decide whether country is mandatory
+      in exchanged address documents.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/Address.java
+    description: >
+      Write and read are not symmetric: toDOM (lines 144-155) writes null city,
+      state, zip code, country or first street line as empty elements, but fromDOM
+      (lines 157-180) rejects empty content for those same elements. An address
+      stored with a missing field serializes successfully and then fails to parse
+      downstream. Whether storage should enforce non-empty fields (and which ones)
+      is not stated anywhere in this component.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/address/src/ejb-jar.xml
+    description: >
+      All address operations, including create, remove and every setter, are
+      declared with unchecked method permission (lines 88-90) and run with the
+      caller's identity. Access control therefore depends entirely on the calling
+      component. No requirement was emitted; a human should confirm that address
+      access is governed by the owning customer/order records rather than here.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/address/src/com/sun/j2ee/blueprints/address/ejb/AddressEJB.java
+    description: >
+      The no-argument create (lines 99-103) produces an address with all fields
+      null. Its callers could not be established from this shard; it may be dead
+      or used for later field-by-field population. Reachability unresolved.
