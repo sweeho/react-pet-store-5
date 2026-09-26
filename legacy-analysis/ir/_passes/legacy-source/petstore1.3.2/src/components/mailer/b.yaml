@@ -1,0 +1,294 @@
+records:
+  - record_key: customer-notifications-INTEGRATION-0001
+    kind: integration
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL deliver customer emails asynchronously: other components SHALL enqueue a
+      mail request on a dedicated mail queue, and a mail consumer SHALL take each request off
+      that queue and send one email per request.
+    confidence: medium
+    confidence_basis: >
+      The consumer, its queue destination type and the queue binding are all declared and the
+      code path is short and fully visible. Not high because the producers of mail requests live
+      outside this shard and I could not confirm from here which events enqueue mail, and the
+      second pass has not been compared.
+    risk_class: operational
+    basis: >
+      ejb-jar.xml declares a message-driven consumer on a javax.jms.Queue; the OPC deployment
+      descriptor binds it to jms/opc/MailQueue; onMessage reads the text payload, parses it into a
+      Mail and sends it.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/ejb-jar.xml
+        line_start: 48
+        line_end: 56
+        excerpt: |
+              <message-driven>
+                <description>opc node to process PurchaseOrders from the Java Pet Store</description>
+                <display-name>MailerMDB</display-name>
+                <ejb-name>MailerMDB</ejb-name>
+                <ejb-class>com.sun.j2ee.blueprints.mailer.ejb.MailerMDB</ejb-class>
+                <transaction-type>Container</transaction-type>
+                <message-driven-destination>
+                  <destination-type>javax.jms.Queue</destination-type>
+                </message-driven-destination>
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailerMDB.java
+        line_start: 74
+        line_end: 82
+        excerpt: |
+            public void onMessage(Message recvMsg) {
+              TextMessage textMessage = null;
+              String xmlMailMessage = null;
+              Mail recMail = null;
+              try {
+                textMessage = (TextMessage)recvMsg;
+                xmlMailMessage = textMessage.getText();
+                recMail = Mail.fromXML(xmlMailMessage);
+                sendMail(recMail.getAddress(), recMail.getSubject(), recMail.getContent(),  Locale.getDefault());
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml
+        line_start: 377
+        line_end: 378
+        excerpt: |
+                <ejb-name>MailerMDB</ejb-name>
+                <jndi-name>jms/opc/MailQueue</jndi-name>
+    stack_metadata:
+      framework: J2EE 1.3 EJB 2.0
+      ejb.bean: MailerMDB (message-driven)
+      ejb.transaction: Required
+      jms.queue: jms/opc/MailQueue
+
+  - record_key: customer-notifications-ENTITY-0001
+    kind: entity
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL represent a mail request as a document with exactly three text fields, in
+      this order: recipient Address, Subject and Content. All three SHALL be present.
+    confidence: medium
+    confidence_basis: >
+      Enforced in two places inside this module (DTD content model and the ordered DOM reader),
+      which would justify high, but the pass-agreement condition of the rubric cannot be checked
+      by this pass, so medium.
+    risk_class: operational
+    basis: >
+      Mail.dtd declares Mail (Address, Subject, Content) with each element #PCDATA; Mail.fromDOM
+      reads Address as first child then Subject and Content as successive siblings and rejects
+      any root other than Mail.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/rsrc/schemas/Mail.dtd
+        line_start: 38
+        line_end: 41
+        excerpt: |
+          <!ELEMENT Mail (Address, Subject, Content)>
+          <!ELEMENT Address (#PCDATA)>
+          <!ELEMENT Subject (#PCDATA)>
+          <!ELEMENT Content (#PCDATA)>
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/Mail.java
+        line_start: 154
+        line_end: 164
+        excerpt: |
+            private static Mail fromDOM(Node node) throws XMLDocumentException {
+              Element element;
+              if (node.getNodeType() == Node.ELEMENT_NODE && (element = ((Element) node)).getTagName().equals(XML_MAIL)) {
+                Element child;
+                Mail mail = new Mail();
+                mail.address = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getFirstChild(element, XML_ADDRESS, false), false);
+                mail.subject = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_SUBJECT, false), false);
+                mail.content = XMLDocumentUtils.getContentAsString(child = XMLDocumentUtils.getNextSibling(child, XML_CONTENT, false), false);
+                return mail;
+              }
+              throw new XMLDocumentException(XML_MAIL + " element expected.");
+            }
+    stack_metadata:
+      db.object: none (transient message payload)
+      xml.dtd_public_id: "-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD OPC Mail 1.0//EN"
+
+  - record_key: customer-notifications-RULE-0001
+    kind: business-rule
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL validate every incoming mail request against the mail document schema
+      before sending. GIVEN a mail request that is not well-formed or does not match the schema
+      WHEN it is consumed THEN no email SHALL be sent and the consumption SHALL fail so that the
+      request is rolled back to the queue rather than acknowledged.
+    confidence: medium
+    confidence_basis: >
+      Validation is on by a hard-coded constant and the failure path throws out of a
+      transaction-Required listener, both visible. The redelivery consequence depends on
+      container/queue settings not in this shard (retry count, dead-letter), so the exact
+      after-effect is inferred, not seen.
+    risk_class: operational
+    basis: >
+      VALIDATING = true is passed by fromXML(String); XMLDocumentException is rethrown as
+      EJBException in onMessage; onMessage runs with trans-attribute Required.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/Mail.java
+        line_start: 54
+        line_end: 54
+        excerpt: |
+            public static final boolean VALIDATING = true;
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailerMDB.java
+        line_start: 86
+        line_end: 90
+        excerpt: |
+              } catch (XMLDocumentException xde) {
+                throw new EJBException("MailerMDB.onMessage" + xde);
+              } catch(JMSException je) {
+                throw new EJBException("MailerMDB.onMessage" + je);
+              }
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/ejb-jar.xml
+        line_start: 71
+        line_end: 80
+        excerpt: |
+              <container-transaction>
+                <method>
+                  <ejb-name>MailerMDB</ejb-name>
+                  <method-name>onMessage</method-name>
+                  <method-params>
+                    <method-param>javax.jms.Message</method-param>
+                  </method-params>
+                </method>
+                <trans-attribute>Required</trans-attribute>
+              </container-transaction>
+    stack_metadata:
+      ejb.transaction: Required
+      declarative_validator: Mail.dtd (DTD validation)
+
+  - record_key: customer-notifications-RULE-0002
+    kind: business-rule
+    capability_key: customer-notifications
+    requirement: >
+      GIVEN a valid mail request WHEN sending the email fails for any reason (mail session
+      unavailable, unparseable recipient address, transport error) THEN the system SHALL log the
+      failure and discard the request without retrying and without surfacing an error to the
+      customer or the order process.
+    confidence: medium
+    confidence_basis: >
+      The swallow is explicit in code, and every exception in the send path is collapsed into
+      one checked exception, so the behaviour is certain. Graded medium rather than high because
+      the commented-out rethrow and its comment suggest this is a demo convenience, not intended
+      production behaviour (see finding).
+    risk_class: operational
+    basis: >
+      MailHelper catches Exception, prints to stderr and throws MailerAppException("Failure while
+      sending mail"); MailerMDB catches MailerAppException and does nothing, so the transaction
+      commits and the queue message is consumed.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailHelper.java
+        line_start: 86
+        line_end: 89
+        excerpt: |
+                } catch (Exception e) {
+                    System.err.print("createAndSendMail exception : " + e);
+                    throw new MailerAppException("Failure while sending mail");
+                }
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailerMDB.java
+        line_start: 83
+        line_end: 85
+        excerpt: |
+              } catch (MailerAppException me) {
+                //throw new EJBException("MailerMDB.onMessage" + me);
+                //ignore since user probably forgot to set up mail server
+    stack_metadata:
+      ejb.bean: MailerMDB
+
+  - record_key: customer-notifications-REQ-0001
+    kind: requirement
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL send each customer email to the recipient address(es) given in the
+      request, with the request's subject, with the request's content as an HTML body, and
+      stamped with the time of sending.
+    confidence: medium
+    confidence_basis: >
+      Single source (MailHelper), fully visible. The HTML content type is a bare literal with no
+      configuration, but its effect is unambiguous.
+    risk_class: presentational
+    basis: >
+      MailHelper sets TO recipients from InternetAddress.parse(emailAddress, false) (a
+      comma-separated list, non-strict parsing), sets the subject, sets content type
+      "text/html", adds X-Mailer header and sets the sent date to now.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailHelper.java
+        line_start: 76
+        line_end: 85
+        excerpt: |
+                  msg.setRecipients(Message.RecipientType.TO,
+                           InternetAddress.parse(emailAddress, false));
+                  msg.setSubject(subject);
+                  String contentType = "text/html";
+                      StringBuffer sb = new StringBuffer(mailContent);
+                    msg.setDataHandler(new DataHandler(
+                                        new ByteArrayDataSource(sb.toString(), contentType)));
+                  msg.setHeader("X-Mailer", "JavaMailer");
+                  msg.setSentDate(new Date());
+                  Transport.send(msg);
+    stack_metadata:
+      framework: JavaMail
+      mail.header.x_mailer: JavaMailer
+
+  - record_key: customer-notifications-RULE-0003
+    kind: business-rule
+    capability_key: customer-notifications
+    requirement: >
+      The system SHALL send all customer emails from a single configured sender address (the
+      customer-service mailbox), not from an address supplied in the mail request.
+    confidence: low
+    confidence_basis: >
+      The code only calls setFrom() with no argument, which takes the sender from the mail
+      session configuration; the actual address comes from a deployment descriptor outside this
+      shard and is an environment-specific demo value. Low because the value is a bare
+      configuration literal with no other source.
+    risk_class: presentational
+    basis: >
+      msg.setFrom() with no argument uses the session's mail.from; the OPC deployment binds the
+      mail session with mail-from customerservice@javapetstoredemo.com. The Mail document has no
+      From field.
+    traces:
+      - path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailHelper.java
+        line_start: 72
+        line_end: 75
+        excerpt: |2
+                  InitialContext ic = new InitialContext();
+                  Session session = (Session) ic.lookup(JNDINames.MAIL_SESSION);
+              Message msg = new MimeMessage(session);
+                  msg.setFrom();
+      - path: legacy-source/petstore1.3.2/src/apps/opc/src/sun-j2ee-ri.xml
+        line_start: 400
+        line_end: 404
+        excerpt: |
+                  <res-ref-name>mail/MailSession</res-ref-name>
+                  <jndi-name>mail/opc/MailSession</jndi-name>
+                  <mail-configuration>
+                    <name>yourname</name>
+                    <mail-from>customerservice@javapetstoredemo.com</mail-from>
+    stack_metadata:
+      jndi: java:comp/env/mail/MailSession -> mail/opc/MailSession
+
+findings:
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailerMDB.java
+    description: >
+      Lines 83-85: the rethrow on mail-send failure is commented out with "ignore since user
+      probably forgot to set up mail server". Failed customer emails are therefore silently lost
+      (logged to stderr only, no retry, no dead-letter). A human must decide whether the rebuild
+      keeps fire-and-forget or requires retry / failure tracking for customer notifications.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/MailerMDB.java
+    description: >
+      Line 82 passes Locale.getDefault() (the server's locale, not the customer's) to sendMail,
+      and MailHelper.createAndSendMail ignores the locale parameter entirely. Any localization of
+      the email must therefore happen upstream when the Content is built. Whether the rebuild
+      needs per-customer locale in the mailer (e.g. charset for Japanese/Chinese content — the
+      HTML body is sent with no explicit charset) needs a decision.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/mailer/src/ejb-jar.xml
+    description: >
+      Line 49 describes the mailer as "opc node to process PurchaseOrders from the Java Pet
+      Store", which does not match what the bean does (send email). Treated as a copy-paste
+      description; flagged in case it signals a different intended role.
+  - kind: ambiguity
+    path: legacy-source/petstore1.3.2/src/components/mailer/src/com/sun/j2ee/blueprints/mailer/ejb/Mail.java
+    description: >
+      Mail.main (lines 167-184) is a developer command-line round-trip utility with no caller in
+      this module; treated as dead/test code and no requirement emitted from it. The toXML
+      serializers are only used by producers outside this shard. No legacy-analysis/sources
+      documents (extracted.md) exist in the tree, so no document traces could be cited.
