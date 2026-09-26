@@ -1,28 +1,37 @@
-# Pass B, module legacy-source/petstore1.3.2/src/components/util/tracer
-# The module holds one diagnostic-logging utility class plus its Ant build file.
-# It encodes no business rule, entity, screen, workflow or integration that maps to any
-# capability_key in legacy-analysis/discovery/capabilities.csv, so no records are emitted.
-# No legacy-analysis/sources/**/extracted.md documents exist in the tree to cite.
+# Pass B — legacy-source/petstore1.3.2/src/components/util/tracer
+# The module is a single diagnostic-logging helper (Debug.java) plus its Ant
+# build file. It carries no business rule, entity, screen, workflow or
+# integration, so no records are emitted. No legacy-analysis/sources/**/extracted.md
+# documents exist in the tree, so no document traces were available.
 records: []
 findings:
   - kind: ambiguity
     path: legacy-source/petstore1.3.2/src/components/util/tracer/src/com/sun/j2ee/blueprints/util/tracer/Debug.java
     description: >
-      Debug.java (lines 44-80) is a cross-cutting diagnostic helper used by 14 source files
-      elsewhere in the application. Every output method is guarded by the compile-time
-      constant `public static final boolean debuggingOn = false;` (line 46), so all
-      print/println calls are unreachable in the shipped build and write nothing. No
-      capability in the closed list covers diagnostics or logging, so nothing was emitted.
-      A human should confirm that the rebuild needs no functional equivalent. The
-      assumption here is that it is a non-functional concern (structured logging) for
-      ARCHITECTURE.md, not a spec requirement. If a requirement is wanted anyway, it would
-      have to be filed under an unrelated capability, which this pass declined to do.
-  - kind: ambiguity
+      Lines 44-80: Debug is a static diagnostic tracer used by 14 files across the
+      application. Its switch `debuggingOn` (line 46) is a compile-time
+      `static final boolean` fixed at `false`, so every print/println body is
+      unreachable in the shipped build and no diagnostic output is ever produced.
+      No capability in capabilities.csv covers diagnostic logging, and the class
+      implements no business behaviour, so no requirement was emitted. A human
+      should decide whether the rebuild needs an operational logging requirement
+      (it is a non-functional concern, not a legacy business rule) and, if so,
+      which capability, if any, should own it.
+  - kind: conflict
+    path: legacy-source/petstore1.3.2/src/components/util/tracer/src/com/sun/j2ee/blueprints/util/tracer/Debug.java
+    description: >
+      Lines 48-57 write message output to standard error (System.err), while lines
+      68-75 write throwable output to standard out (System.out) and the stack trace
+      to standard error (printStackTrace). The two streams are inconsistent. The
+      conflict has no runtime effect because debuggingOn is false (line 46), but a
+      rebuild should not copy the split. Recorded for completeness only.
+  - kind: unparseable
     path: legacy-source/petstore1.3.2/src/components/util/tracer/src/build.xml
     description: >
-      The `clientjar` target (lines 83-91) uses property `${tracer.buildjardir}`, but the
-      `init` target (lines 47-72) never defines it, and it is not found in this module.
-      It may come from `${user.home}/petstore.properties` or `../../../../build.properties`,
-      which this shard did not check. If it is not defined in either file, Ant takes the
-      literal directory name and the jar is still produced. This is build-only, with no
-      effect on the specification, and is recorded for completeness.
+      Lines 83-91: the `clientjar` target references `${tracer.buildjardir}`, but no
+      such property is defined in the `init` target (lines 47-72) or anywhere else in
+      this module. Ant leaves an undefined property as the literal string, so the
+      target creates, copies into and then deletes a directory literally named
+      `${tracer.buildjardir}`. This is a build-script defect, not a business rule;
+      whether the parent build.properties supplies it was not checked because that
+      file is outside this shard.
