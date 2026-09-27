@@ -110,6 +110,7 @@ capabilities:
       userStories:
         - As a supplier partner, I want to receive orders and send invoices in the document formats I already use, so that I can keep trading without changing my systems.
         - As the order centre, I want every inbound document validated against its declared schema, so that malformed partner documents are caught at intake.
+        - As the order centre, I want supplier-order and invoice validation switchable per deployment, with an invalid supplier order refused when it is on, so that no order built from a bad document is persisted.
       acceptanceCriteria:
         - "Purchase order document structure — Purchase order written with two line items: the root `PurchaseOrder` element contains `OrderId`, `UserId`, `EmailId`, `OrderDate`, `ShippingInfo`, `BillingInfo`, `TotalPrice`, `CreditCard` and two `LineItem` elements, in that order"
         - "Purchase order document root check — Wrong root element: reading fails with `PurchaseOrder element expected.` and no order is produced"
@@ -134,6 +135,8 @@ capabilities:
         - "Configurable document validation — Invoice validation switched off: only the purchase order is validated against its document type"
         - "Document type check — Mismatched document type: it is rejected with `Document not of type`"
         - "Malformed and invalid document handling — Malformed document: parsing fails and the document is not processed"
+        - "Supplier order document validation — Invalid supplier order with validation enabled: the order is not persisted"
+        - "Supplier order document validation — Validation disabled by deployment: the supplier-order document is processed without being validated against its schema"
         - "Schema resolution — Deployment catalog overrides bundled mapping: the schema is loaded from the deployment catalog's location"
         - "Asynchronous partner exchange — Approval yields supplier messages: two separate supplier purchase order messages are delivered to the supplier inbox"
         - "Supplier order intake is atomic — Invoice publication fails: no supplier order is recorded and the message is redelivered"
