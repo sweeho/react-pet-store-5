@@ -1,0 +1,86 @@
+sections:
+  - section: Summary
+    from:
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#summary
+      - build/manifest.yaml
+      - ARCHITECTURE.md#stack
+  - section: Context
+    from:
+      - legacy-analysis/discovery/report.md#1-system-shape
+      - design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#about-this-manual
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#system-scope
+      - legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/OrderStatusNames.java#L45-L65
+      - architecture/rebuild-guidance.md
+      - design/prd/divergences.yaml
+  - section: Goals
+    from:
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#goals
+      - openspec/changes/sx-order-approval/specs/order-approval/spec.md
+      - openspec/changes/sx-order-fulfillment/specs/order-fulfillment/spec.md
+      - openspec/changes/sx-customer-notifications/specs/customer-notifications/spec.md
+      - openspec/changes/sx-localization/specs/localization/spec.md
+  - section: Non-goals
+    from:
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#non-goals
+      - build/manifest.yaml
+      - openspec/changes/sx-order-fulfillment/proposal.md
+  - section: Users
+    from:
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#users-and-roles
+      - openspec/changes/sx-sign-on/specs/sign-on/spec.md
+      - openspec/changes/sx-customer-account/specs/customer-account/spec.md
+  - section: User journeys
+    from:
+      - design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#reference
+      - design/sources/html/java-pet-store-screen-mockups/extracted.md
+      - openspec/changes/sx-sign-on/specs/sign-on/spec.md
+      - openspec/changes/sx-checkout/specs/checkout/spec.md
+      - openspec/changes/sx-order-approval/specs/order-approval/spec.md
+      - openspec/changes/sx-supplier-inventory/specs/supplier-inventory/spec.md
+      - legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signoff.jsp#L45-L50
+  - section: Capability map
+    from:
+      - build/manifest.yaml
+      - openspec/changes/sx-localization/specs/localization/spec.md
+      - openspec/changes/sx-b2b-document-exchange/specs/b2b-document-exchange/spec.md
+      - openspec/changes/sx-sign-on/specs/sign-on/spec.md
+      - openspec/changes/sx-catalog-browsing/specs/catalog-browsing/spec.md
+      - openspec/changes/sx-customer-account/specs/customer-account/spec.md
+      - openspec/changes/sx-shopping-cart/specs/shopping-cart/spec.md
+      - openspec/changes/sx-checkout/specs/checkout/spec.md
+      - openspec/changes/sx-order-approval/specs/order-approval/spec.md
+      - openspec/changes/sx-order-fulfillment/specs/order-fulfillment/spec.md
+      - openspec/changes/sx-supplier-inventory/specs/supplier-inventory/spec.md
+      - openspec/changes/sx-customer-notifications/specs/customer-notifications/spec.md
+  - section: Screens
+    from:
+      - design/sources/html/java-pet-store-screen-mockups/extracted.md
+      - build/manifest.yaml
+      - design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#storefront-screens
+      - openspec/changes/sx-catalog-browsing/specs/catalog-browsing/spec.md
+      - openspec/changes/sx-shopping-cart/specs/shopping-cart/spec.md
+      - openspec/changes/sx-checkout/specs/checkout/spec.md
+      - openspec/changes/sx-sign-on/specs/sign-on/spec.md
+      - openspec/changes/sx-customer-account/specs/customer-account/spec.md
+      - openspec/changes/sx-order-approval/specs/order-approval/spec.md
+      - openspec/changes/sx-supplier-inventory/specs/supplier-inventory/spec.md
+      - openspec/changes/sx-customer-notifications/specs/customer-notifications/spec.md
+  - section: Constraints and assumptions
+    from:
+      - ARCHITECTURE.md#stack
+      - architecture/rebuild-guidance.md
+      - design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#assumptions-and-constraints
+      - legacy-source/petstore1.3.2/src/apps/opc/src/ejb-jar.xml#L403-L418
+      - legacy-analysis/discovery/report.md#4-discovery-findings-for-later-stages
+  - section: Open questions
+    from:
+      - design/prd/divergences.yaml
+      - openspec/changes/sx-order-approval/specs/order-approval/spec.md#L299-L320
+      - openspec/changes/sx-checkout/design.md
+      - openspec/changes/sx-order-approval/design.md
+      - architecture/rebuild-guidance.md
+      - build/manifest.yaml
+  - section: Sources
+    from:
+      - design/prd/sources.yaml
+      - design/prd/divergences.yaml

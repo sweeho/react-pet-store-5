@@ -1,0 +1,249 @@
+divergences:
+  - claim: |
+      Orders under $500 are approved automatically, in every locale, and the $50,000 figure has no behaviour.
+    code_says: |
+      PurchaseOrderMDB.canIApprove(): "if (locale.equals(Locale.US)) { if (purchaseOrder.getTotalPrice() < 500) return true; } else if (locale.equals(Locale.JAPAN)) { if (purchaseOrder.getTotalPrice() < 50000) return true; } return false;"
+      So en_US orders under 500 and ja_JP orders under 50000 (yen) auto-approve, and zh_CN orders are never auto-approved whatever their total. The method comment calls it "Just a stub for converting currency".
+    document_says: |
+      PRD OP-1.2: "An order with a total below $500 is approved automatically, with no human involvement".
+      PRD: "A second threshold at $50,000 exists in the code but has no behaviour attached beyond the first, so all review effectively happens at one level."
+      User manual: "Orders under $500 are approved without anyone touching them."
+    code_ref: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/ejb/PurchaseOrderMDB.java#L178-L191
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L202-L218
+    capability: order-approval
+    severity: major
+    notes: |
+      The order-approval spec follows the code. Decide whether zh_CN orders should ever auto-approve and whether thresholds become configuration.
+
+  - claim: |
+      An order has exactly four statuses: Pending, Approved, Denied, Completed.
+    code_says: |
+      OrderStatusNames defines five: PENDING, APPROVED, DENIED, SHIPPED_PART ("for orders that have been partially completed") and COMPLETED, with the lifecycle "pending->approved->shippedPart(shipped part of order)->completed(whole order shipped) or pending->denied".
+    document_says: |
+      PRD OP-1.5: "Every order carries exactly one of four statuses: Pending, Approved, Denied, Completed".
+      User manual, "The four statuses": Pending, Approved, Denied, Completed.
+    code_ref: legacy-source/petstore1.3.2/src/components/processmanager/src/com/sun/j2ee/blueprints/processmanager/ejb/OrderStatusNames.java#L45-L65
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L205
+    capability: order-fulfillment
+    severity: major
+    notes: |
+      The order-fulfillment spec keeps SHIPPED_PART. The PRD's open question about a distinct back-order status interacts with this.
+
+  - claim: |
+      Adding an item already in the cart increments its quantity.
+    code_says: |
+      CartEJBAction handles ADD_ITEM with "cart.addItem(ce.getItemId());" and ShoppingCartLocalEJB.addItem is "cart.put(itemID, new Integer(1));", so re-adding an item resets that line's quantity to 1.
+    document_says: |
+      User manual: "Adding an item you already have raises its quantity instead of creating a second line."
+      PRD SF-4.1: "Adding an item already in the cart increments its quantity rather than adding a second line".
+    code_ref: legacy-source/petstore1.3.2/src/components/cart/src/com/sun/j2ee/blueprints/cart/ejb/ShoppingCartLocalEJB.java#L111-L113
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L145
+    capability: shopping-cart
+    severity: major
+    notes: |
+      The shopping-cart spec states the reset-to-1 behaviour (spec requirement "Add item to cart").
+
+  - claim: |
+      The cart and the order are priced at the item's "Your Price".
+    code_says: |
+      ShoppingCartLocalEJB.getItems() builds each CartItem with "item.getListCost()" as its unit cost, getSubTotal() sums "i.getUnitCost() * i.getQuantity()", and OrderEJBAction prices each order line from "item.getUnitCost()" of that CartItem. The cart, the subtotal and the placed order all use the catalog LIST price, not the unit cost shown as "Your Price".
+    document_says: |
+      Screen mockups, Item detail: "List price $22.00 Your price $18.50".
+      Screen mockups, Shopping cart: "Male Adult Bulldog Remove Qty @ $18.50 $18.50 ... Total $62.50".
+    code_ref: legacy-source/petstore1.3.2/src/components/cart/src/com/sun/j2ee/blueprints/cart/ejb/ShoppingCartLocalEJB.java#L95-L103
+    document_ref: design/sources/html/java-pet-store-screen-mockups/extracted.md#board-shopping-cart
+    capability: shopping-cart
+    severity: major
+    notes: |
+      Order line pricing is at legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/ejb/actions/OrderEJBAction.java#L135-L146. The shopping-cart spec says the subtotal uses the list price; the checkout spec says "unit cost" of the cart line, which is the same list price.
+
+  - claim: |
+      The order is paid with the card on the customer's account.
+    code_says: |
+      OrderHTMLAction.perform(): "// XXXX this needs to be part of the form" then "CreditCard creditCard = new CreditCard( "1234-2334", "Duke Express", "10/2001") ;". Every order carries this literal card; the account card is never read at checkout.
+    document_says: |
+      User manual: "The card saved on your account is the one that will be charged; change it on your account page before checking out if you want a different one."
+      PRD SF-5.4: "Payment details are taken from the stored account card and not re-entered at checkout".
+      Screen mockups, Checkout: "Paying with Java Card ending 0001 Change the card on your account page before checking out."
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java#L75-L83
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L183
+    capability: checkout
+    severity: major
+    notes: |
+      checkout design.md OQ-1 raises the same point. The PRD states the documented intent (account card) as current.
+
+  - claim: |
+      A checkout with a missing required field comes back with the problem marked.
+    code_says: |
+      extractContactInfo() records a MissingFormDataException on the request and "return null;". perform() still builds "new OrderEvent(shipper,receiver,creditCard)" with the null contact, and OrderEJBAction then calls "billTo.getEmail()", so the customer gets a server error instead of a field message.
+    document_says: |
+      User manual: "Every field except the second address line must have something in it. If you clear one and submit, the page comes back with the problem marked rather than placing the order."
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java#L79-L152
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L181
+    capability: checkout
+    severity: major
+
+  - claim: |
+      Every checkout field except the second address line is required.
+    code_says: |
+      extractContactInfo() checks last name, first name, street line 1, city, state, postal code and telephone. Country is read without a check, and e-mail is read only "if (request.getParameter("email" +suffix) != null)" with no empty check, so e-mail is optional.
+    document_says: |
+      PRD SF-5.3: "All fields except the second address line are validated as non-empty before submission".
+      Screen mockups, Checkout: "Every field except address line 2 is required."
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/com/sun/j2ee/blueprints/petstore/controller/web/actions/OrderHTMLAction.java#L138-L149
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L161
+    capability: checkout
+    severity: minor
+    notes: |
+      The order's contact e-mail is the billing e-mail, so an empty billing e-mail yields an order with nowhere to send notifications.
+
+  - claim: |
+      The order keeps its own copies of the billing and shipping addresses.
+    code_says: |
+      PurchaseOrderEJB.getData(): "purchaseOrder.setBillingInfo(getContactInfo().getData());" then "purchaseOrder.setShippingInfo(purchaseOrder.getBillingInfo()); // XXX". Only one contact is stored per order, and on read-back it is reported as both billing and shipping.
+    document_says: |
+      PRD data model: "The order carries its own copy of the addresses and card rather than pointing at the customer record."
+      PRD SF-5.1: "The checkout form captures billing and shipping addresses separately".
+    code_ref: legacy-source/petstore1.3.2/src/components/purchaseorder/src/com/sun/j2ee/blueprints/purchaseorder/ejb/PurchaseOrderEJB.java#L259-L270
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L337
+    capability: order-fulfillment
+    severity: major
+    notes: |
+      The order-fulfillment spec states the single-contact behaviour; the checkout spec says the stored contact is the shipping one.
+
+  - claim: |
+      The supplier receives no customer information, only line items.
+    code_says: |
+      OrderApprovalMDB.getXmlPO() sends the supplier "supplierOrderXDE.setShippingAddress(cinfo.getGivenName(), cinfo.getFamilyName(), addr.getStreetName1(), addr.getCity(), addr.getState(), addr.getCountry(), addr.getZipCode(), cinfo.getEmail(), cinfo.getTelephone());" with every supplier order.
+    document_says: |
+      PRD SP-1.9: "The supplier receives no customer information, only line items".
+      PRD: "The supplier never sees customer data. It receives line items to fill, not people to ship to."
+    code_ref: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/ejb/OrderApprovalMDB.java#L248-L268
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L265
+    capability: b2b-document-exchange
+    severity: major
+    notes: |
+      The b2b-document-exchange and order-fulfillment specs both require the ship-to block (name, street, city, state, country, zip, e-mail, phone).
+
+  - claim: |
+      A supplier stock update notifies the OPC, which re-examines waiting orders.
+    code_says: |
+      RcvrRequestProcessor, on "updateinventory", runs updateInventory(req), then "Collection invoices = procPO.processPendingPO();" and "sendInvoices(invoices);" in one user transaction. The supplier re-fulfils its own pending supplier orders and publishes an invoice for each that shipped; no stock-change message reaches the OPC.
+    document_says: |
+      PRD SP-1.7: "Every committed change notifies the OPC", and "it is the event that makes the OPC re-examine orders it could not previously fill".
+      User manual: "Every time you submit, the supplier tells the Order Processing Centre what changed. The OPC looks again at approved orders it could not fill before".
+    code_ref: legacy-source/petstore1.3.2/src/apps/supplier/src/com/sun/j2ee/blueprints/supplier/inventory/web/RcvrRequestProcessor.java#L178-L189
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L263-L269
+    capability: supplier-inventory
+    severity: minor
+    notes: |
+      The customer-visible outcome is similar (orders complete after restock); what differs is which side decides and what the OPC learns.
+
+  - claim: |
+      Every item has one price that serves all locales, formatted but never converted.
+    code_says: |
+      item_details has "listprice decimal(10,2) not null, unitcost decimal(10,2) not null, locale char(10) not null" with "primary key (itemid, locale)", and the seed data gives EST-1 a ListPrice of 16.50 (en-US), 1951 (ja-JP) and 142 (zh-CN). Each locale carries its own price row.
+    document_says: |
+      PRD: "Category, product and item names and descriptions vary by locale. Prices do not — one price serves all three locales, formatted per locale but never converted."
+      PRD assumption 2: "Every item has a single price in a single currency regardless of the customer's locale."
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/PopulateSQL.xml#L146-L160
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L308
+    capability: localization
+    severity: major
+    notes: |
+      Seed prices are at legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/populate/Populate-UTF8.xml#L552-L573. The localization spec states per-locale prices. This also explains the ja_JP 50000 threshold.
+
+  - claim: |
+      The sales bar chart counts orders per category.
+    code_says: |
+      OPCAdminFacadeEJB.getChartInfo() for any request other than REVENUE adds "loc.getQuantity()" per line item into the category's total, so the "order count" is the sum of line quantities, not a count of orders.
+    document_says: |
+      User manual: "The Bar Chart shows the number of sales per category".
+      Screen mockups, Admin sales: "Orders placed in the selected period, counted by pet category" and "Bar chart — orders per category".
+    code_ref: legacy-source/petstore1.3.2/src/apps/opc/src/com/sun/j2ee/blueprints/opc/admin/ejb/OPCAdminFacadeEJB.java#L218-L242
+    document_ref: design/sources/html/java-pet-store-screen-mockups/extracted.md#board-admin-sales-reporting
+    capability: order-approval
+    severity: minor
+
+  - claim: |
+      Denied orders drop out of the sales figures.
+    code_says: |
+      getChartInfo() reads orders with "pohome.findPOBetweenDates(start.getTime(), end.getTime())", whose query is "SELECT OBJECT(a) From PurchaseOrder a WHERE a.poDate BETWEEN ?1 AND ?2". No status filter: denied and pending orders are counted.
+    document_says: |
+      User manual: "Sales figures count orders, so a run of large denials will show up as a drop in a category even though customers tried to buy."
+    code_ref: legacy-source/petstore1.3.2/src/components/purchaseorder/src/ejb-jar.xml#L120-L127
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L310
+    capability: order-approval
+    severity: minor
+
+  - claim: |
+      Report dates are entered in the administrator's locale format.
+    code_says: |
+      The admin client parses with "new SimpleDateFormat("MM/dd/yyyy")" and its error text is "Dates must be in the format of MM/dd/yyyy", whatever the locale.
+    document_says: |
+      User manual: "Dates must be typed in the format the client expects for your locale."
+      Screen mockups, Admin sales: "Dates must match your locale format."
+    code_ref: legacy-source/petstore1.3.2/src/apps/admin/src/client/com/sun/j2ee/blueprints/admin/client/HttpPostPetStoreProxy.java#L69
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L306
+    capability: order-approval
+    severity: minor
+
+  - claim: |
+      The admin application requires authentication on every screen.
+    code_says: |
+      web.xml maps both "/AdminRequestProcessor" and "/ApplRequestProcessor", but the only security-constraint url-pattern is "/AdminRequestProcessor" (role administrator). ApplRequestProcessor, the order-data service, only checks "req.getSession(false)" for null, not a role.
+    document_says: |
+      PRD NF-1.1: "Admin and supplier applications require authentication on every screen".
+    code_ref: legacy-source/petstore1.3.2/src/apps/admin/src/docroot/WEB-INF/web.xml#L58-L89
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L345
+    capability: sign-on
+    severity: major
+    notes: |
+      Session check is at legacy-source/petstore1.3.2/src/apps/admin/src/admin/com/sun/j2ee/blueprints/admin/web/ApplRequestProcessor.java#L87-L98. The sign-on spec requires only an existing session for the data service.
+
+  - claim: |
+      The password is never pre-filled at sign-in.
+    code_says: |
+      signon.jsp, when no remembered-user-name cookie exists, renders j_username with value="j2ee" and j_password with value="j2ee".
+    document_says: |
+      PRD SF-1.5: "A returning user name is remembered in a cookie and pre-filled at sign-in; the password never is".
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signon.jsp#L89-L111
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-product-requirements-document/extracted.md#L118
+    capability: sign-on
+    severity: minor
+    notes: |
+      The user manual acknowledges the j2ee pre-fill as demo behaviour; the PRD requirement contradicts it.
+
+  - claim: |
+      Signing out returns the shopper to the home page.
+    code_says: |
+      SignOffHTMLAction invalidates the session, keeps the locale and starts a new session; signoff.do renders signoff.jsp: "You are signed out." "Thank you for shopping." "You may sign in again."
+    document_says: |
+      User manual: "Click Sign out at the top right. Your cart is emptied and you are returned to the home page as an anonymous visitor."
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/signoff.jsp#L45-L50
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L88
+    capability: sign-on
+    severity: minor
+
+  - claim: |
+      Search matches keywords against item names and descriptions.
+    code_says: |
+      SEARCH_ITEMS matches each keyword with "lower(name) like ? or lower(catid) like ? or lower(b.descn) like ?", where name is the localized PRODUCT name, catid the category id and descn the item description. Matching is case-insensitive substring.
+    document_says: |
+      User manual: "Search looks at item names and descriptions and returns individual items".
+      PRD SF-3.2: "Search matches any of the supplied keywords against item names and descriptions".
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/CatalogDAOSQL.xml#L112-L123
+    document_ref: design/sources/markdown/java-pet-store-1-3-2-user-manual/extracted.md#L133
+    capability: catalog-browsing
+    severity: minor
+
+  - claim: |
+      The checkout country list is United States, Canada and Japan.
+    code_says: |
+      enter_order_information.jsp offers country options "United States", "Canada", "Japan" and "China" in both the billing and shipping sections.
+    document_says: |
+      Screen mockups, Checkout: "Country United States Canada Japan" (no China), while the Create account mockup offers "United States Canada Japan China".
+    code_ref: legacy-source/petstore1.3.2/src/apps/petstore/src/docroot/enter_order_information.jsp#L150-L156
+    document_ref: design/sources/html/java-pet-store-screen-mockups/extracted.md#board-checkout
+    capability: checkout
+    severity: minor
