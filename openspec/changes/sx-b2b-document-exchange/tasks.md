@@ -45,10 +45,11 @@
 - [ ] 5.3 Implement the invoice channel with independent delivery to order fulfilment and customer notification
 - [ ] 5.4 Make supplier order intake atomic, with no persisted order and redelivery on any failure
 - [ ] 5.5 Publish one invoice per shipment for immediate shipments and stock-update shipments
+- [ ] 5.6 Reject supplier-order intake without persisting when validation is enabled and the document fails it
 
 ## 6. Open decisions
 
-- [ ] 6.1 Obtain rulings on the address Country requirement, schema-violation rejection and version 1.0 support
+- [ ] 6.1 Obtain rulings on the address Country requirement, schema-violation rejection for non-supplier-order documents and version 1.0 support
 - [ ] 6.2 Implement version 1.0 purchase order format intake if retained
 
 ## 7. Tests
@@ -59,3 +60,4 @@
 - [ ] 7.4 Validation switch, document type check and malformed-input tests
 - [ ] 7.5 Entity resolution order tests with bundled and deployment catalogs
 - [ ] 7.6 Channel tests for invoice fan-out, one-message-per-order and intake rollback with redelivery
+- [ ] 7.7 Supplier-order validation tests: invalid document not persisted when enabled, unvalidated when disabled

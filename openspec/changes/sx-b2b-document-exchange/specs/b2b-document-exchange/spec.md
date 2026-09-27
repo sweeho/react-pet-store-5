@@ -330,7 +330,7 @@ When validation is enabled, the system MUST reject an inbound document that decl
 
 ### Requirement: Malformed and invalid document handling
 
-The system MUST reject an inbound document that is not well-formed XML. When validation is enabled and a well-formed document violates its schema, the system SHALL log the violation and continue processing the document.
+The system MUST reject an inbound document that is not well-formed XML. When validation is enabled and a well-formed document violates its schema, the system SHALL log the violation and continue processing the document, except where the Supplier order document validation requirement mandates rejection.
 
 #### Scenario: Malformed document
 
@@ -343,6 +343,22 @@ The system MUST reject an inbound document that is not well-formed XML. When val
 - **GIVEN** validation is enabled and a well-formed purchase order missing its `TotalPrice` element
 - **WHEN** it is parsed
 - **THEN** the violation is logged and parsing continues
+
+### Requirement: Supplier order document validation
+
+The system SHALL make validation of inbound supplier-order documents and outbound invoice documents configurable per deployment. When validation is enabled and a document fails it, the order SHALL NOT be persisted.
+
+#### Scenario: Invalid supplier order with validation enabled
+
+- **GIVEN** supplier-order validation is enabled and an inbound supplier-order document that fails validation
+- **WHEN** the order is received
+- **THEN** the order is not persisted
+
+#### Scenario: Validation disabled by deployment
+
+- **GIVEN** a deployment with supplier-order and invoice validation disabled
+- **WHEN** a well-formed supplier-order document is received
+- **THEN** it is processed without being validated against its schema
 
 ### Requirement: Schema resolution
 

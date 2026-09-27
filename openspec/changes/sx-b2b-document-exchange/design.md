@@ -80,7 +80,7 @@ Legacy stack metadata (for reference only): JMS `jms/supplier/PurchaseOrderQueue
 Disputed and low-confidence items, for a human to rule on. The spec states observed legacy behaviour in each case. Changing it is a product decision, not an extraction fix.
 
 - **R1. Address `Country` optional or required (disputed).** `Address.dtd:38` declares `Country?`. `Address.fromDOM` reads it with `optional=false`, so a DTD-valid address without a country is rejected in code. The spec follows the code, which is the stricter path. Pass A flagged ENTITY-0001 and BUSINESS-RULE-0002 as disputed.
-- **R2. Schema violations do not reject (disputed).** The parser error handler logs `error()` and returns; only `fatalError()` (malformed XML) aborts. So "validation enabled" does not by itself stop an invalid document. Supplier record B2BDOC-RULE-0002 claims a document failing validation is not persisted. That holds only for malformed documents or for structural errors the programmatic `fromDOM` readers also catch. Verified in `XMLDocumentUtils.java:588-603`. The spec states the logging behaviour. The rebuild may choose to reject, but that must be a recorded decision.
+- **R2. Schema violations and supplier order intake (SME ruling).** The legacy parser error handler logs `error()` and returns; only `fatalError()` (malformed XML) aborts (`XMLDocumentUtils.java:588-603`). An SME has ruled on B2BDOC-RULE-0002: validation of inbound supplier-order and outbound invoice documents is configurable per deployment, and when enabled a supplier-order document that fails validation SHALL NOT be persisted. The spec states this as the "Supplier order document validation" requirement, so the rebuild must treat schema errors on this path as rejecting, not merely logged. Other document types keep the legacy log-and-continue behaviour.
 - **R3. Date fallback (low, disputed).** Both `PurchaseOrder` and `SupplierOrder` replace a missing or unparseable `OrderDate` with "now". `SupplierOrder` marks this with a `FIX ME` comment. The time of day is always lost in transit, and the formatter uses the server's default time zone implicitly.
 - **R4. Document type check bypass.** A document with no DOCTYPE passes the type check (the legacy comment blames the identity transformer for dropping DOCTYPE nodes). This is a weak point for partner input.
 - **R5. Invoice `locale`.** `TPAInvoice.dtd` declares `locale` defaulting to `en_US`, but `TPAInvoice.xsd` has no locale attribute. In XSD mode an invoice carries no locale.
@@ -94,5 +94,5 @@ Disputed and low-confidence items, for a human to rule on. The spec states obser
 ## Open Questions
 
 - Q1. Does any partner still send version 1.0 documents (R10)?
-- Q2. Should schema-invalid documents be rejected in the rebuild (R2)?
+- Q2. Should schema-invalid documents other than supplier orders be rejected in the rebuild (R2)? Supplier-order intake is resolved by SME ruling: reject without persisting.
 - Q3. Is `Country` required on inbound addresses (R1)?
