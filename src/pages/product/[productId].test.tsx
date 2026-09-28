@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -119,5 +120,22 @@ describe("ProductPage", () => {
 
     expect(await screen.findByText("未找到商品")).toBeInTheDocument();
     expect(screen.queryByText("Poodle")).not.toBeInTheDocument();
+  });
+
+  it("posts the item id to /api/cart/items and shows a confirmation when Add to Cart is activated", async () => {
+    const user = userEvent.setup();
+    renderProduct("/product/BULLDOG", "en_US");
+
+    const addButton = await screen.findByRole("button", { name: "Add to Cart" });
+    await user.click(addButton);
+
+    const fetchMock = vi.mocked(fetch);
+    const cartCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes("/api/cart/items"),
+    );
+    expect(cartCalls).toHaveLength(1);
+    const [, init] = cartCalls[0];
+    expect(JSON.parse(String(init?.body))).toEqual({ itemId: "EST-6" });
+    expect(await screen.findByText("Added to cart")).toBeInTheDocument();
   });
 });

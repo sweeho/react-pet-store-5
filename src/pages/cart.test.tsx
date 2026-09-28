@@ -1,37 +1,85 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LocaleProvider } from "@/i18n/LocaleProvider";
 
-import CartPlaceholder from "./cart";
+import CartPage from "./cart";
 
-function renderCart(initialPath: string) {
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function renderCart(initialPath = "/cart") {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <LocaleProvider fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}>
-        <CartPlaceholder />
+        <CartPage />
       </LocaleProvider>
     </MemoryRouter>,
   );
 }
 
+const BULLDOG_LINE = {
+  itemId: "EST-6",
+  quantity: 2,
+  item: {
+    itemId: "EST-6",
+    productId: "BULLDOG",
+    name: "Male Adult Bulldog",
+    description: "Friendly dog from England",
+    image: "bulldog.gif",
+    listPrice: 1850,
+    unitCost: 1850,
+    locale: "en_US",
+  },
+};
+
 /**
  * UI / PAGE TEST
  *
- * [AC-1] every page renders content authored for the requested locale
- * (SWHR-R-0005.01), exercised here through `?locale=` (P3, SD-10).
+ * The cart seam (design.md P9): GET /api/cart lines with item details and
+ * quantities, through AsyncContent. `global.fetch` is stubbed the same way
+ * ProductPage's test is — the page calls it directly, no injectable prop.
  */
-describe("CartPlaceholder", () => {
-  it("renders the en_US screen content by default", () => {
-    renderCart("/cart");
-    expect(screen.getByRole("heading", { level: 1, name: "Cart" })).toBeInTheDocument();
-    expect(screen.getByText("Your cart is coming soon.")).toBeInTheDocument();
+describe("CartPage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
-  it("[AC-1] renders the Japanese screen content for ?locale=ja_JP", () => {
+  it("lists each cart line's item name, quantity and formatted price", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse({ lines: [BULLDOG_LINE] }))),
+    );
+    renderCart();
+
+    expect(await screen.findByText("Male Adult Bulldog")).toBeInTheDocument();
+    expect(screen.getByText("Quantity: 2")).toBeInTheDocument();
+    expect(screen.getByText("$18.50")).toBeInTheDocument();
+  });
+
+  it("shows the empty state when the cart has no lines", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse({ lines: [] }))),
+    );
+    renderCart();
+
+    expect(await screen.findByText("Your cart is empty")).toBeInTheDocument();
+  });
+
+  it("renders the Japanese screen content for ?locale=ja_JP", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse({ lines: [] }))),
+    );
     renderCart("/cart?locale=ja_JP");
+
     expect(screen.getByRole("heading", { level: 1, name: "カート" })).toBeInTheDocument();
-    expect(screen.getByText("カート機能は近日公開予定です。")).toBeInTheDocument();
+    expect(await screen.findByText("カートは空です")).toBeInTheDocument();
   });
 });
