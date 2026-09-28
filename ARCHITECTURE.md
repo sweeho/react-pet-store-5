@@ -9,7 +9,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 - **Frontend routing**: `vite-plugin-pages` (file-based) + `react-router` 8
 - **Backend routing**: Nitro 3 / H3 2 (file-based)
 - **Database**: SQLite via Bun's built-in `bun:sqlite` + Drizzle ORM — schema/client in `db/`, migrations in `drizzle/`. Requires the Bun runtime (dev, test, and production — see Deployment below)
-- **Styling**: Tailwind CSS v4 (CSS-first, no `tailwind.config.ts`) + `tw-animate-css`
+- **Styling**: Tailwind CSS v4 (CSS-first, no `tailwind.config.ts`) + `tw-animate-css`; Preline tokens — see [DESIGN.md](./DESIGN.md#tokens)
 - **UI primitives**: shadcn/ui-style — Radix Slot, `class-variance-authority`, `cn()`
 - **Icons**: `lucide-react`, `@heroicons/react`
 - **Auto-imports**: `unplugin-auto-import` — `react` + `react-router` need no import
@@ -23,7 +23,10 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 .
 ├── src/
 │   ├── components/ui/   # shadcn/ui-style primitives (+ *.test.tsx)
+│   ├── components/layout/ # the site shell: header, Global navigation, footer
+│   ├── components/state/  # shared empty / error / loading frames, AsyncContent
 │   ├── pages/            # Frontend routes, file-based (+ *.test.tsx)
+│   ├── constants/navigation.ts # the one list of primary areas and pet categories
 │   ├── hooks/, utils/, types/, constants/, data/, store/
 │   ├── test/              # Vitest setup
 │   ├── index.css           # Tailwind v4 + design tokens
@@ -44,6 +47,8 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 ## Routing
 
 **Frontend**: `src/pages/**/*.tsx` → routes (`about.tsx` → `/about`, `[id].tsx` → `/:id`, `[...all].tsx` → catch-all). `*.test.tsx` excluded via `Pages({ exclude })` in `vite.config.ts`.
+
+**Site shell**: `src/main.tsx` mounts every routed page inside one layout (header, the `Global` navigation, `main`, footer) with a shared loading fallback and error boundary. Pages render content only. Primary-area routes are `/category/:categoryId`, `/search`, `/cart`, `/checkout`, `/account`, `/signin`, `/admin`, `/supplier`, listed once in `src/constants/navigation.ts`; an area whose capability has not shipped is a placeholder page until it does.
 
 **Backend**: `routes/api/*.ts` → `/api/*`, `middleware/*.ts` runs first and can set `event.context`. Requires `nitro({ serverDir: "./" })` in `vite.config.ts` — default is `false` (no scanning). `*.test.ts` excluded via `nitro({ ignore })`.
 
@@ -68,3 +73,9 @@ Four tiers, one worked example each. Commands and how to extend: [README.md](./R
 
 - `ecosystem.config.js` (PM2) runs the real build: `.output/server/index.mjs`, under Bun (`interpreter: "bun"`) — required by `db/client.ts`'s `bun:sqlite` import. `nitro.service` (systemd) is the non-PM2 equivalent, same requirement.
 - `Dockerfile`/`docker-compose.yml` build a static `dist/` served by nginx — don't rely on them for the Nitro/DB-backed API without fixing first (they never run `.output/server/index.mjs`)
+
+## Key Decisions
+
+- **One shell, one navigation list.** Every page renders inside the shared layout and draws no chrome of its own; primary areas are added to `src/constants/navigation.ts`, never as a second menu. Keeps eleven capabilities looking like one shop. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.
+- **Shared state frames.** Pages show empty, error and loading states only through `src/components/state/` (`AsyncContent` for fetched data). One look and one retry behaviour across capabilities. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.
+- **Preline is the token source.** `design/tokens.theme.css` feeds `src/index.css`; shadcn names are aliases. The mockups are drawn on it and the only other guide's token files are not in the repository. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.

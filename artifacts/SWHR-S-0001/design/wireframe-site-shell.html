@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#fff;color:#27272a;font-size:12px;width:720px}
+.hdr{height:52px;border-bottom:1px solid #d4d4d8;display:flex;align-items:center;gap:10px;padding:0 14px}
+.logo{width:92px;height:26px;background:#d4d4d8;border:1px solid #a1a1aa;display:flex;align-items:center;justify-content:center;font-size:10px}
+.search{flex:1;display:flex;gap:4px}.search .in{flex:1;height:30px;border:1px solid #a1a1aa;border-radius:6px;padding:7px;color:#71717a}
+.btn{height:30px;border:1px solid #71717a;border-radius:6px;padding:0 10px;display:flex;align-items:center;white-space:nowrap}
+.flags{display:flex;gap:3px}.flag{width:26px;height:18px;background:#e4e4e7;border:1px solid #a1a1aa;font-size:8px;display:flex;align-items:center;justify-content:center}
+.flag.on{border:2px solid #27272a}
+.lnk{padding:0 4px;text-decoration:underline}
+.body{display:flex;min-height:470px}
+.side{width:180px;border-right:1px solid #d4d4d8;background:#fafafa;padding:8px}
+.grp{font-size:9px;text-transform:uppercase;color:#71717a;margin:9px 4px 3px;letter-spacing:.05em}
+.nav{padding:4px 6px;border-radius:5px}.nav.on{background:#e4e4e7;font-weight:600}
+.main{flex:1;padding:14px;display:flex;flex-direction:column;gap:10px}
+.crumb{color:#71717a;font-size:10px}
+.bar{background:#a1a1aa;height:18px;border-radius:3px;width:40%}
+.content{flex:1;border:2px dashed #a1a1aa;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#71717a;background:#fafafa;text-align:center}
+.ftr{border-top:1px solid #d4d4d8;padding:10px 14px;display:flex;justify-content:space-between;color:#52525b;font-size:10px}
+.tag{font-size:9px;color:#71717a}
+</style></head><body>
+<div class="hdr"><div class="logo">Logo → Home</div>
+<div class="search"><div class="in">Search pets…</div><div class="btn">Search</div></div>
+<div class="flags"><div class="flag on">US</div><div class="flag">JP</div><div class="flag">CN</div></div>
+<span class="lnk">Account</span><span class="lnk">Cart (2)</span><div class="btn">Sign out</div></div>
+<div class="body">
+<div class="side">
+<div class="grp">Pets</div><div class="nav">Birds</div><div class="nav">Cats</div><div class="nav">Dogs</div><div class="nav">Fish</div><div class="nav">Reptiles</div>
+<div class="grp">Storefront</div>
+<div class="nav">Home</div>
+<div class="nav on">Catalog browsing and search</div><div class="nav">Shopping cart</div><div class="nav">Checkout and order placement</div><div class="nav">Customer account and profile</div><div class="nav">Sign-on and access control</div><div class="nav">Localization</div><div class="nav">Customer notifications</div>
+<div class="grp">Back office <span class="tag">(admin)</span></div>
+<div class="nav">Order approval</div><div class="nav">Order fulfillment</div><div class="nav">Partner document exchange</div>
+<div class="grp">Supplier <span class="tag">(staff)</span></div>
+<div class="nav">Supplier inventory</div>
+</div>
+<div class="main">
+<div class="crumb">Home › Area › Page</div>
+<div class="bar"></div>
+<div class="content">CONTENT AREA<br>Each capability draws its screens here</div>
+</div></div>
+<div class="ftr"><span>React Pet Store</span><span>Home · Administration · Supplier · English | 日本語 | 中文</span></div>
+</body></html>
