@@ -55,6 +55,6 @@
 
 ## 8. Locale selection screen
 
-- [ ] 8.1 Build the locale selection screen with the locale choice list and Change Locale control (SWHR-T-0020)
-- [ ] 8.2 Build the confirmation screen that displays the locale now in effect (SWHR-T-0020)
-- [ ] 8.3 UI-test display, successful submission and a rejected submission leaving the locale unchanged (SWHR-T-0020)
+- [x] 8.1 Build the locale selection screen with the locale choice list and Change Locale control (SWHR-T-0020)
+- [x] 8.2 Build the confirmation screen that displays the locale now in effect (SWHR-T-0020)
+- [x] 8.3 UI-test display, successful submission and a rejected submission leaving the locale unchanged (SWHR-T-0020)
