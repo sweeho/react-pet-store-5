@@ -15,10 +15,10 @@
 
 ## 3. Preferred language
 
-- [ ] 3.1 Store the customer preferred language as a locale identifier defaulting to en_US (SWHR-T-0017)
-- [ ] 3.2 Apply the preferred language to session and cart on sign-on, tolerating a missing profile (SWHR-T-0017)
-- [ ] 3.3 Apply the preferred language to session and cart on profile save (SWHR-T-0017)
-- [ ] 3.4 Integration-test sign-on with a profile, sign-on without a profile and profile save (SWHR-T-0017)
+- [x] 3.1 Store the customer preferred language as a locale identifier defaulting to en_US (SWHR-T-0017)
+- [x] 3.2 Apply the preferred language to session and cart on sign-on, tolerating a missing profile (SWHR-T-0017)
+- [x] 3.3 Apply the preferred language to session and cart on profile save (SWHR-T-0017)
+- [x] 3.4 Integration-test sign-on with a profile, sign-on without a profile and profile save (SWHR-T-0017)
 
 ## 4. Page localization
 
