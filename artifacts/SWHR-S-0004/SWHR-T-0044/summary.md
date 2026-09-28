@@ -86,6 +86,13 @@ reproduced on the unmodified base branch against the pre-existing `/api/locale` 
 follow-up (see below). Verification instead relies on the real-`H3Event` integration tests above,
 which exercise the actual middleware and route handlers exactly as Nitro invokes them.
 
+CI (which does have Chromium) caught a real regression this local `verify` gate could not see: the
+pre-existing `e2e/language-switch.spec.ts › [SWHR-R-0013.01]` navigated anonymously to
+`/account?locale=zh_CN` expecting the Account page's own heading — now impossible, since `/account`
+is deliberately gated by this ticket (AC-3/AC-4, SWHR-R-0064/0065). Fixed by repointing that case at
+`/cart` (still open, same locale-override behaviour under test), commit `2b61c19`. CI is green on the
+branch after that fix.
+
 ## Notes
 
 - Minor deviation from PLAN.md step 6's wording ("`GET /api/cart` lists lines with item details"):
