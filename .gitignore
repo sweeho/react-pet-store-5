@@ -45,6 +45,7 @@ coverage
 test-results
 playwright-report
 blob-report
+.vortex-results
 
 # SQLite dev/prod db — generated at runtime by db/client.ts, seeded via
 # migrations in ./drizzle (which ARE committed)
