@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TPA-SupplierOrder 1.0 (design.md P9, SWHR-R-0035, SWHR-R-0040). Imports
+  TPALineItem.xsd for the LineItem element and constrains item id to be
+  unique within the document (xs:unique — SD-2/R9: this is a schema-only
+  constraint, matching the legacy behaviour).
+-->
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:li="http://blueprints.j2ee.sun.com/TPALineItem"
+  targetNamespace="http://blueprints.j2ee.sun.com/TPASupplierOrder"
+  elementFormDefault="qualified"
+>
+  <xs:import
+    namespace="http://blueprints.j2ee.sun.com/TPALineItem"
+    schemaLocation="TPALineItem.xsd"
+  />
+
+  <xs:element name="SupplierOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderId" type="xs:string" />
+        <xs:element name="OrderDate" type="xs:string" />
+        <xs:element name="ShippingAddress">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="FirstName" type="xs:string" />
+              <xs:element name="LastName" type="xs:string" />
+              <xs:element name="Street" type="xs:string" />
+              <xs:element name="City" type="xs:string" />
+              <xs:element name="State" type="xs:string" />
+              <xs:element name="Country" type="xs:string" />
+              <xs:element name="ZipCode" type="xs:string" />
+              <xs:element name="Email" type="xs:string" />
+              <xs:element name="Phone" type="xs:string" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element ref="li:LineItem" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="TPASupplierOrderUniqueItemId">
+      <xs:selector xpath="li:LineItem" />
+      <xs:field xpath="@itemId" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>

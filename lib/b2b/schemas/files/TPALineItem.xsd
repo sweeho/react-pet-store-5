@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TPA-LineItem 1.0 (design.md P9, SWHR-R-0039). Value ranges: lineNo is a
+  non-negative integer, quantity is a positive integer (>= 1, so 0 is
+  rejected), unitPrice is a decimal >= 0.0 (R7 — the name says "positive"
+  but the range admits zero, matched here). Imported by
+  TPASupplierOrder.xsd and TPAInvoice.xsd for their item-id uniqueness
+  constraint (SWHR-R-0040).
+-->
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:tpa="http://blueprints.j2ee.sun.com/TPALineItem"
+  targetNamespace="http://blueprints.j2ee.sun.com/TPALineItem"
+  elementFormDefault="qualified"
+>
+  <xs:simpleType name="nonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0.0" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="LineItem">
+    <xs:complexType>
+      <xs:attribute name="categoryId" type="xs:string" use="required" />
+      <xs:attribute name="productId" type="xs:string" use="required" />
+      <xs:attribute name="itemId" type="xs:string" use="required" />
+      <xs:attribute name="lineNo" type="xs:nonNegativeInteger" use="required" />
+      <xs:attribute name="quantity" type="xs:positiveInteger" use="required" />
+      <xs:attribute name="unitPrice" type="tpa:nonNegativeDecimal" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

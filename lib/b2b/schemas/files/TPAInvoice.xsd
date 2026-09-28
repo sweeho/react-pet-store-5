@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TPA-Invoice 1.0 (design.md P9, SWHR-R-0037, SWHR-R-0040). No `locale`
+  attribute in this XSD-declared form (R5 — that only exists in the
+  DTD-declared form). Imports TPALineItem.xsd and constrains item id to be
+  unique within the document.
+-->
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:li="http://blueprints.j2ee.sun.com/TPALineItem"
+  targetNamespace="http://blueprints.j2ee.sun.com/TPAInvoice"
+  elementFormDefault="qualified"
+>
+  <xs:import
+    namespace="http://blueprints.j2ee.sun.com/TPALineItem"
+    schemaLocation="TPALineItem.xsd"
+  />
+
+  <xs:element name="Invoice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderId" type="xs:string" />
+        <xs:element name="UserId" type="xs:string" />
+        <xs:element name="OrderDate" type="xs:string" />
+        <xs:element name="ShippingDate" type="xs:string" />
+        <xs:element ref="li:LineItem" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+    <xs:unique name="TPAInvoiceUniqueItemId">
+      <xs:selector xpath="li:LineItem" />
+      <xs:field xpath="@itemId" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>

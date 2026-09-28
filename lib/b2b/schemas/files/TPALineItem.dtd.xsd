@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for TPALineItem.dtd (design.md P1/SD-2): a DTD ATTLIST
+  cannot express value ranges, so this schema carries the same
+  SWHR-R-0039 constraints as TPALineItem.xsd and is what a DTD-form
+  TPASupplierOrder/TPAInvoice document is actually validated against.
+-->
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:tpa="http://blueprints.j2ee.sun.com/TPALineItem"
+  targetNamespace="http://blueprints.j2ee.sun.com/TPALineItem"
+  elementFormDefault="qualified"
+>
+  <xs:simpleType name="nonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0.0" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="LineItem">
+    <xs:complexType>
+      <xs:attribute name="categoryId" type="xs:string" use="required" />
+      <xs:attribute name="productId" type="xs:string" use="required" />
+      <xs:attribute name="itemId" type="xs:string" use="required" />
+      <xs:attribute name="lineNo" type="xs:nonNegativeInteger" use="required" />
+      <xs:attribute name="quantity" type="xs:positiveInteger" use="required" />
+      <xs:attribute name="unitPrice" type="tpa:nonNegativeDecimal" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

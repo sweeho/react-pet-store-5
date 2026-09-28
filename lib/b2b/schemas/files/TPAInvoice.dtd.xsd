@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for TPAInvoice.dtd (design.md P1/SD-2) — a DTD-form
+  document declaring the TPA-Invoice 1.0 public identifier is validated
+  against this file, so (unlike TPAInvoice.xsd) it declares the optional
+  `locale` attribute the DTD-declared form writes, defaulting "en_US" to
+  match the DTD's ATTLIST default (R5). Structurally identical to
+  TPAInvoice.xsd otherwise.
+-->
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:li="http://blueprints.j2ee.sun.com/TPALineItem"
+  targetNamespace="http://blueprints.j2ee.sun.com/TPAInvoice"
+  elementFormDefault="qualified"
+>
+  <xs:import
+    namespace="http://blueprints.j2ee.sun.com/TPALineItem"
+    schemaLocation="TPALineItem.dtd.xsd"
+  />
+
+  <xs:element name="Invoice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderId" type="xs:string" />
+        <xs:element name="UserId" type="xs:string" />
+        <xs:element name="OrderDate" type="xs:string" />
+        <xs:element name="ShippingDate" type="xs:string" />
+        <xs:element ref="li:LineItem" minOccurs="1" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute name="locale" type="xs:string" default="en_US" />
+    </xs:complexType>
+    <xs:unique name="TPAInvoiceDtdUniqueItemId">
+      <xs:selector xpath="li:LineItem" />
+      <xs:field xpath="@itemId" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>
