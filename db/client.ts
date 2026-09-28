@@ -4,7 +4,7 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
-import { users } from "./schema";
+import { profiles, users } from "./schema";
 
 // Vitest sets VITEST=true in every worker; an in-memory db keeps route
 // integration tests isolated from the file-backed dev/prod db and from
@@ -17,7 +17,7 @@ const sqlite = new Database(
   process.env.VITEST ? ":memory:" : path.join(process.cwd(), "sqlite.db"),
 );
 
-export const db = drizzle(sqlite, { schema: { users } });
+export const db = drizzle(sqlite, { schema: { users, profiles } });
 
 migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
 
