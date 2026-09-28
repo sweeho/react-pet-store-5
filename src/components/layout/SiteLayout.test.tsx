@@ -1,13 +1,44 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PET_CATEGORIES, PRIMARY_AREAS } from "@/constants/navigation";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
 import Home from "@/pages/index";
 
 import SiteLayout from "./SiteLayout";
+
+interface SessionState {
+  signedOn: boolean;
+  userId: string | null;
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+// SiteLayout hardwires SignOnSessionProvider (no injectable prop — pages and
+// the shell are rendered with no props of their own, same reasoning as
+// ProductPage's test), so the seam under test is `fetch`, stubbed per test.
+function stubSignOnFetch(session: SessionState = { signedOn: false, userId: null }) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/api/session")) {
+        return Promise.resolve(jsonResponse(session));
+      }
+      if (url.includes("/api/signoff") && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({ redirect: "/signed-out" }));
+      }
+      return Promise.resolve(jsonResponse({ message: "not found" }, 404));
+    }),
+  );
+}
 
 /**
  * UI / COMPONENT TEST
@@ -18,7 +49,8 @@ import SiteLayout from "./SiteLayout";
  * renders synchronously in en_US without a real network round trip
  * (SiteHeader/GlobalNav/SiteFooter all read their copy via useScreen()).
  */
-function renderShell(initialPath: string) {
+function renderShell(initialPath: string, session?: SessionState) {
+  stubSignOnFetch(session);
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <LocaleProvider
@@ -37,6 +69,10 @@ function renderShell(initialPath: string) {
 }
 
 describe("SiteLayout", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("[SWHR-C-0007] renders header, Global nav and footer exactly once, with the page content inside main, in that DOM order", () => {
     renderShell("/cart");
 
@@ -77,12 +113,44 @@ describe("SiteLayout", () => {
       .map((link) => link.getAttribute("href"));
 
     expect(hrefs).toContain("/");
-    for (const area of PRIMARY_AREAS) {
+    // SIGNIN is excluded: SD-6 gives the header's Sign in link a
+    // session-dependent target (/signon-welcome, not PRIMARY_AREAS'
+    // /signin) and a Sign out state with no href at all — covered below.
+    for (const area of PRIMARY_AREAS.filter((a) => a.id !== "SIGNIN")) {
       expect(hrefs).toContain(area.href);
     }
     for (const category of PET_CATEGORIES) {
       expect(hrefs).toContain(category.href);
     }
+  });
+
+  it("[SWHR-C-0104] anonymous shopper: header shows logo, search, Account, Cart and Sign in (to /signon-welcome, SD-6), no Sign out", async () => {
+    renderShell("/cart", { signedOn: false, userId: null });
+
+    const nav = screen.getByRole("navigation", { name: "Global" });
+    await waitFor(() =>
+      expect(within(nav).getByRole("link", { name: /Sign in/ })).toBeInTheDocument(),
+    );
+
+    expect(within(nav).getByRole("link", { name: "Pet Store home" })).toBeInTheDocument();
+    expect(within(nav).getByRole("searchbox")).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: /Account/ })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: /Cart/ })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: /Sign in/ })).toHaveAttribute(
+      "href",
+      "/signon-welcome",
+    );
+    expect(within(nav).queryByText("Sign out")).not.toBeInTheDocument();
+  });
+
+  it("[SWHR-C-0105] signed-on shopper: header shows Sign out in place of Sign in", async () => {
+    renderShell("/cart", { signedOn: true, userId: "alice" });
+
+    const nav = screen.getByRole("navigation", { name: "Global" });
+    await waitFor(() =>
+      expect(within(nav).getByRole("button", { name: "Sign out" })).toBeInTheDocument(),
+    );
+    expect(within(nav).queryByRole("link", { name: /Sign in/ })).not.toBeInTheDocument();
   });
 
   it("opens the mobile menu panel and closes it again", async () => {

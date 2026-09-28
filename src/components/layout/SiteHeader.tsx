@@ -1,7 +1,8 @@
-import { LogIn, Menu, PawPrint, Search, ShoppingCart, User } from "lucide-react";
+import { LogIn, LogOut, Menu, PawPrint, Search, ShoppingCart, User } from "lucide-react";
 import type { FormEvent } from "react";
 import { Link } from "react-router";
 
+import { useSignOnSession } from "@/hooks/useSignOnSession";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
 import { cn } from "@/utils";
@@ -31,12 +32,23 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
   const [keywords, setKeywords] = useState("");
   const navigate = useNavigate();
   const { locale, changeLocale } = useLocale();
+  const { signedOn, refresh } = useSignOnSession();
   const t = useScreen("shell");
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = keywords.trim();
     navigate(trimmed ? `/search?keywords=${encodeURIComponent(trimmed)}` : "/search");
+  };
+
+  // SWHR-R-0073: ends the storefront session (and its cart lines) server
+  // side, then refreshes the client session so the header flips back to
+  // Sign in before navigating to the page the server names.
+  const handleSignOut = async () => {
+    const response = await fetch("/api/signoff", { method: "POST" });
+    const data = (await response.json()) as { redirect: string };
+    await refresh();
+    navigate(data.redirect);
   };
 
   return (
@@ -145,16 +157,30 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
             <ShoppingCart aria-hidden="true" className="size-4.5" />
             <span className="hidden sm:inline">{t.cart}</span>
           </Link>
-          <Link
-            to="/signin"
-            className={cn(
-              "hover:bg-background-1 hidden h-11 items-center gap-2 rounded-md px-3 text-sm font-medium sm:flex",
-              FOCUS_RING,
-            )}
-          >
-            <LogIn aria-hidden="true" className="size-4.5" />
-            {t.signIn}
-          </Link>
+          {signedOn ? (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className={cn(
+                "hover:bg-background-1 hidden h-11 items-center gap-2 rounded-md px-3 text-sm font-medium sm:flex",
+                FOCUS_RING,
+              )}
+            >
+              <LogOut aria-hidden="true" className="size-4.5" />
+              {t.signOut}
+            </button>
+          ) : (
+            <Link
+              to="/signon-welcome"
+              className={cn(
+                "hover:bg-background-1 hidden h-11 items-center gap-2 rounded-md px-3 text-sm font-medium sm:flex",
+                FOCUS_RING,
+              )}
+            >
+              <LogIn aria-hidden="true" className="size-4.5" />
+              {t.signIn}
+            </Link>
+          )}
         </div>
 
         <button

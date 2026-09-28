@@ -3,6 +3,7 @@ import { Bird, Cat, Dog, Fish, PawPrint, Turtle, X } from "lucide-react";
 import { Link } from "react-router";
 
 import { PET_CATEGORIES, PRIMARY_AREAS, type PetCategoryId } from "@/constants/navigation";
+import { useSignOnSession } from "@/hooks/useSignOnSession";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
 import { cn } from "@/utils";
@@ -28,6 +29,14 @@ const SECONDARY_AREAS = PRIMARY_AREAS.filter(
   (area) => area.id === "SEARCH" || area.id === "CHECKOUT",
 );
 
+// The mobile drawer's storefront section mirrors this same list, minus
+// SIGNIN — SD-6 gives Sign in/Sign out a session-dependent target and label
+// the plain PRIMARY_AREAS entry can't express, so it's rendered separately
+// below, the same way SiteHeader renders it (design.md P8/SD-6).
+const SECONDARY_NAV_AREAS = PRIMARY_AREAS.filter(
+  (area) => !PET_CATEGORIES.some((category) => category.id === area.id) && area.id !== "SIGNIN",
+);
+
 /**
  * The shell's one navigation landmark. Wraps SiteHeader's visual content
  * (header actions) and the pet-category / primary-area links in a single
@@ -38,7 +47,16 @@ const SECONDARY_AREAS = PRIMARY_AREAS.filter(
 export default function GlobalNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { locale, changeLocale } = useLocale();
+  const { signedOn, refresh } = useSignOnSession();
+  const navigate = useNavigate();
   const t = useScreen("shell");
+
+  const handleSignOut = async () => {
+    const response = await fetch("/api/signoff", { method: "POST" });
+    const data = (await response.json()) as { redirect: string };
+    await refresh();
+    navigate(data.redirect);
+  };
 
   return (
     <header className="bg-background border-line-2 border-b">
@@ -171,20 +189,44 @@ export default function GlobalNav() {
             <p className="text-muted-foreground-1 px-2.5 pt-3 text-xs font-semibold tracking-wide uppercase">
               {t.storefront}
             </p>
-            {PRIMARY_AREAS.filter((area) => !PET_CATEGORIES.some((c) => c.id === area.id)).map(
-              (area) => (
-                <Link
-                  key={area.id}
-                  to={area.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "hover:bg-background-1 flex h-11 items-center rounded-md px-2.5 text-sm font-medium",
-                    FOCUS_RING,
-                  )}
-                >
-                  {area.label}
-                </Link>
-              ),
+            {SECONDARY_NAV_AREAS.map((area) => (
+              <Link
+                key={area.id}
+                to={area.href}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "hover:bg-background-1 flex h-11 items-center rounded-md px-2.5 text-sm font-medium",
+                  FOCUS_RING,
+                )}
+              >
+                {area.label}
+              </Link>
+            ))}
+            {signedOn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  void handleSignOut();
+                }}
+                className={cn(
+                  "hover:bg-background-1 flex h-11 items-center rounded-md px-2.5 text-left text-sm font-medium",
+                  FOCUS_RING,
+                )}
+              >
+                {t.signOut}
+              </button>
+            ) : (
+              <Link
+                to="/signon-welcome"
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "hover:bg-background-1 flex h-11 items-center rounded-md px-2.5 text-sm font-medium",
+                  FOCUS_RING,
+                )}
+              >
+                {t.signIn}
+              </Link>
             )}
           </div>
         </DialogPanel>
