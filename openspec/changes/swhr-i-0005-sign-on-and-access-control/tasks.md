@@ -46,8 +46,8 @@
 
 ## 7. Tests
 
-- [ ] 7.1 Unit-test the user id and password validators, including the 25 and 26 character boundaries and the wildcard characters (SWHR-T-0048)
-- [ ] 7.2 Integration-test the sign-on, create-credential and sign-out routes, including duplicate, case-sensitive and unknown-user cases (SWHR-T-0048)
-- [ ] 7.3 Integration-test the gate: exact matching, query strings, signed-on pass-through, idle timeout (SWHR-T-0048)
-- [ ] 7.4 UI-test the sign-in page, the error pages and the header state switch (SWHR-T-0048)
-- [ ] 7.5 Add an E2E spec: anonymous checkout gated, registration, return to checkout, sign out keeps the language and empties the cart (SWHR-T-0048)
+- [x] 7.1 Unit-test the user id and password validators, including the 25 and 26 character boundaries and the wildcard characters (SWHR-T-0048)
+- [x] 7.2 Integration-test the sign-on, create-credential and sign-out routes, including duplicate, case-sensitive and unknown-user cases (SWHR-T-0048)
+- [x] 7.3 Integration-test the gate: exact matching, query strings, signed-on pass-through, idle timeout (SWHR-T-0048)
+- [x] 7.4 UI-test the sign-in page, the error pages and the header state switch (SWHR-T-0048)
+- [x] 7.5 Add an E2E spec: anonymous checkout gated, registration, return to checkout, sign out keeps the language and empties the cart (SWHR-T-0048)
