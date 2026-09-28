@@ -46,7 +46,7 @@ Visit http://localhost:5000 — you should see the template's placeholder homepa
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `package.json` (`name`, `description`, `repository`) | Rename from `react-ts-starter` to your project.                                                                           |
 | `src/pages/index.tsx`                                | Replace the placeholder hero copy and links with your real homepage.                                                      |
-| `routes/api/users/*`                                 | Already backed by a real SQLite db via Drizzle (see [Database](#database)) — replace `db/schema.ts` with your own tables. |
+| `routes/api/catalog/*`                               | Already backed by a real SQLite db via Drizzle (see [Database](#database)) — replace `db/schema.ts` with your own tables. |
 | `middleware/auth.ts`                                 | This is a **stub** that attaches a hardcoded user to every request — swap in real auth before shipping.                   |
 | `src/helpers/demo.ts`                                | Example-only helper (also uses a Next.js-style env var, not Vite's `import.meta.env.VITE_*`) — delete or rewrite.         |
 | `src/App.md`                                         | Leftover scaffolding notes, not used by the app — delete.                                                                 |
@@ -430,7 +430,7 @@ export default defineHandler(() => {
 });
 ```
 
-See `routes/api/users/index.get.ts` and `routes/api/users/[id].ts` for the full read examples (list + lookup-by-id with a 404).
+See `routes/api/catalog/products/[productId].get.ts` for a full read example (lookup by id with a real 404 via `createError`).
 
 ### Migrations
 
@@ -476,14 +476,13 @@ remove a test file.
 
 **Vitest — `bun run test`** (6 files, 19 tests)
 
-| File                                 | Tier           | Covers                                                                                                                                                  |
-| ------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/utils/cn.test.ts`               | Unit           | `cn()` classname merging: plain strings, falsy values, object/array syntax, conflicting Tailwind utilities, variant-override pattern.                   |
-| `routes/api/hello.test.ts`           | Integration    | `middleware/auth.ts` + `GET /api/hello` composed on one event; and that the route throws if the middleware didn't run first.                            |
-| `routes/api/users/index.get.test.ts` | Integration    | `GET /api/users` returns the mock user list.                                                                                                            |
-| `routes/api/users/[id].test.ts`      | Integration    | `GET /api/users/:id` returns a matching user; throws a real 404 (`createError`) for an unknown id.                                                      |
-| `src/components/ui/button.test.tsx`  | UI / component | `Button`: default/variant/size classes, `onClick` fires, disabled suppresses `onClick`, `asChild` renders as the child element instead of a `<button>`. |
-| `src/pages/index.test.tsx`           | UI / page      | Home hero heading + CTA render, tech-stack list renders, mobile nav dialog opens and lists links, dialog closes.                                        |
+| File                                              | Tier           | Covers                                                                                                                                                  |
+| ------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/utils/cn.test.ts`                            | Unit           | `cn()` classname merging: plain strings, falsy values, object/array syntax, conflicting Tailwind utilities, variant-override pattern.                   |
+| `routes/api/hello.test.ts`                        | Integration    | `middleware/auth.ts` + `GET /api/hello` composed on one event; and that the route throws if the middleware didn't run first.                            |
+| `routes/api/catalog/products/[productId].test.ts` | Integration    | `GET /api/catalog/products/:productId` returns a matching product; throws a real 404 (`createError`) for an unknown id.                                 |
+| `src/components/ui/button.test.tsx`               | UI / component | `Button`: default/variant/size classes, `onClick` fires, disabled suppresses `onClick`, `asChild` renders as the child element instead of a `<button>`. |
+| `src/pages/index.test.tsx`                        | UI / page      | Home hero heading + CTA render, tech-stack list renders, mobile nav dialog opens and lists links, dialog closes.                                        |
 
 **Playwright — `bun run test:e2e`** (2 files, 5 tests, + 1 setup file)
 
