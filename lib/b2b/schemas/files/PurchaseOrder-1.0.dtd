@@ -1,0 +1,32 @@
+<!--
+  PurchaseOrder 1.0 (SWHR-R-0052, design.md SD-6). RECONSTRUCTION: the
+  legacy 1.0 element names are not recoverable from this repository — no
+  1.0 DTD exists here to copy from. This schema is authored from the field
+  list SWHR-R-0052 states, not a recovered legacy source (confidence: low;
+  whether this format is retained at all awaits ruling Q1 in SWHR-T-0035).
+  ShipToAddress and BillToAddress use TPA-style FirstName/LastName/Street/
+  City/State/Country/ZipCode children; CreditCard and LineItem reuse their
+  1.1 shapes unchanged. At least one LineItem is required. The root
+  carries a locale attribute defaulting to en_US.
+-->
+<!ENTITY % CreditCard SYSTEM "CreditCard.dtd">
+%CreditCard;
+<!ENTITY % LineItem SYSTEM "LineItem.dtd">
+%LineItem;
+
+<!ELEMENT PurchaseOrder (OrderId, UserId, EmailId, OrderDate, ShipToAddress, BillToAddress, TotalPrice, CreditCard, LineItem+)>
+<!ATTLIST PurchaseOrder locale CDATA "en_US">
+<!ELEMENT OrderId (#PCDATA)>
+<!ELEMENT UserId (#PCDATA)>
+<!ELEMENT EmailId (#PCDATA)>
+<!ELEMENT OrderDate (#PCDATA)>
+<!ELEMENT ShipToAddress (FirstName, LastName, Street, City, State, Country, ZipCode)>
+<!ELEMENT BillToAddress (FirstName, LastName, Street, City, State, Country, ZipCode)>
+<!ELEMENT FirstName (#PCDATA)>
+<!ELEMENT LastName (#PCDATA)>
+<!ELEMENT Street (#PCDATA)>
+<!ELEMENT City (#PCDATA)>
+<!ELEMENT State (#PCDATA)>
+<!ELEMENT Country (#PCDATA)>
+<!ELEMENT ZipCode (#PCDATA)>
+<!ELEMENT TotalPrice (#PCDATA)>
