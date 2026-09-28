@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for PurchaseOrder.dtd (design.md P1/SD-2). Requires at
+  least one LineItem (SWHR-R-0024.03 — zero LineItem elements is reported
+  invalid); `locale` is optional with no schema-level default enforcement,
+  matching the DTD's ATTLIST default (the reader supplies "en_US" when
+  absent, SWHR-R-0024.02).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:include schemaLocation="ContactInfo.dtd.xsd"/>
+  <xs:include schemaLocation="CreditCard.dtd.xsd"/>
+  <xs:include schemaLocation="LineItem.dtd.xsd"/>
+
+  <xs:element name="PurchaseOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderId" type="xs:string"/>
+        <xs:element name="UserId" type="xs:string"/>
+        <xs:element name="EmailId" type="xs:string"/>
+        <xs:element name="OrderDate" type="xs:string"/>
+        <xs:element name="ShippingInfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="ContactInfo"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="BillingInfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element ref="ContactInfo"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="TotalPrice" type="xs:string"/>
+        <xs:element ref="CreditCard"/>
+        <xs:element ref="LineItem" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="locale" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
