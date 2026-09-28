@@ -17,27 +17,15 @@ downstream: [artifacts/SWHR-S-0002/sprint-summary.md]
 
 # QA test report — SWHR-S-0002
 
-**Note on section count:** this report's structure follows SWHR-T-0021's acceptance criteria, which
-require EXACTLY these 7 `##` sections (no `## Design fidelity` section). The `artifact-qa-test-report`
-skill's canonical structure names 8 including `## Design fidelity`; the ticket AC is more specific to
-this run and is followed literally. Design-fidelity findings are folded into `## Code Review` below
-instead of a standalone section.
+**Note on section count:** this report's structure follows SWHR-T-0021's acceptance criteria, which require EXACTLY these 7 `##` sections (no `## Design fidelity` section). The `artifact-qa-test-report` skill's canonical structure names 8 sections including `## Design fidelity`; the ticket AC is more specific to this run and is followed literally. Design-fidelity findings are folded into `## Code Review` below instead of a standalone section.
 
 ## Executive Summary
 
-**Verdict: PASS.** All 8 tickets of SWHR-I-0003 (Locale model, Session locale, Orders/emails,
-Forms/encoding/admin strings, Preferred language, Page localization, Catalog and prices, Locale
-selection screen) are merged into the sprint branch and `openspec/changes/swhr-i-0003-localization/tasks.md`
-is fully checked off. Verified all 23 requirements / 35 scenarios in the delta spec
-(`openspec/changes/swhr-i-0003-localization/specs/localization/spec.md`) against the integrated build:
-every scenario passes (see the `SCENARIO-VERDICT:` lines below). The core gate (`bun run verify`:
-lint + typecheck + 151 unit tests) and the full Playwright E2E suite (28/28) both pass on the first
-run. No defects were found; `integration-defects-resolution.md` is empty and `COMPLETE`.
+**Verdict: PASS.** All 8 tickets of SWHR-I-0003 (Locale model, Session locale, Orders/emails, Forms/encoding/admin strings, Preferred language, Page localization, Catalog and prices, Locale selection screen) are merged into the sprint branch and `openspec/changes/swhr-i-0003-localization/tasks.md` is fully checked off. Verified all 23 requirements / 35 scenarios in the delta spec (`openspec/changes/swhr-i-0003-localization/specs/localization/spec.md`) against the integrated build: every scenario passes (see the `SCENARIO-VERDICT:` lines below). The core gate (`bun run verify`: lint + typecheck + 151 unit tests) and the full Playwright E2E suite (28/28) both pass on the first run. No defects were found; `integration-defects-resolution.md` is empty and `COMPLETE`.
 
 ## E2E Test Status
 
-Executed. `28 passed, 0 failed, 0 skipped`. Full command, per-spec table and Playwright's verbatim
-summary are in `artifacts/SWHR-S-0002/integration-test-result.md`.
+Executed. `28 passed, 0 failed, 0 skipped`. Full command, per-spec table and Playwright's verbatim summary are in `artifacts/SWHR-S-0002/integration-test-result.md`.
 
 ## Unit Test Results
 
@@ -56,8 +44,7 @@ Lint and typecheck both exited 0 with no reported issues.
 
 ### Scenario verdicts — `openspec/changes/swhr-i-0003-localization/specs/localization/spec.md`
 
-Each scenario was exercised against the integrated build via its cited automated test (unit,
-integration or E2E — all executed and passing per the runs above and in `integration-test-result.md`).
+Each scenario was exercised against the integrated build via its cited automated test (unit, integration or E2E — all executed and passing per the runs above and in `integration-test-result.md`).
 
 ```
 SCENARIO-VERDICT: Supported storefront locales / Every page exists in every supported locale — pass
@@ -125,39 +112,18 @@ No `SPEC-GAP` findings — every scenario in the delta spec has a covering, pass
 
 ## Code Review
 
-No notable concerns observed. The implementation follows `design.md`'s decisions (D1–D7) closely:
-one shared locale parser (`lib/locale/model.ts`), a server-authoritative session locale
-(`middleware/locale.ts` + `lib/locale/session.ts`), strict per-locale catalog isolation with no
-fallback (`lib/catalog/queries.ts`), and email template selection matching D5/Q2/Q3 exactly
-(`lib/email/render.ts`). Legacy defects (Q3: email generation fails rather than falling back; Q4:
-German offered in the selection screen; SD-9: `zh_CN` e-mail price kept in the dollar pattern) were
-carried forward as specified, not silently "fixed" — matching the design's intent to keep open
-questions explicit rather than making an unreviewed product call.
+No notable concerns observed. The implementation follows `design.md`'s decisions (D1–D7) closely: one shared locale parser (`lib/locale/model.ts`), a server-authoritative session locale (`middleware/locale.ts` + `lib/locale/session.ts`), strict per-locale catalog isolation with no fallback (`lib/catalog/queries.ts`), and email template selection matching D5/Q2/Q3 exactly (`lib/email/render.ts`). Legacy defects (Q3: email generation fails rather than falling back; Q4: German offered in the selection screen; SD-9: `zh_CN` e-mail price kept in the dollar pattern) were carried forward as specified, not silently "fixed" — matching the design's intent to keep open questions explicit rather than making an unreviewed product call.
 
-**Design fidelity (advisory — informs but does not change the verdict):** compared the built locale
-selection screen (`src/pages/locale/index.tsx`) against
-`artifacts/SWHR-S-0002/design/mockup-locale-selection.html`. The four-option radiogroup (US English,
-German, Japanese, Simplified Chinese), the "Currently in effect" locale readout, and the "Change
-Locale" submit control all match the mockup's copy and structure. Screen copy for the title ("Change
-language" / "言語の変更" / "更改语言") and the "Change Locale" control label match the mockup's
-per-locale strings verbatim. No material deviation observed in this spot check; a full pixel-level
-comparison across all 6 mockups was not performed.
+**Design fidelity (advisory — informs but does not change the verdict):** compared the built locale selection screen (`src/pages/locale/index.tsx`) against `artifacts/SWHR-S-0002/design/mockup-locale-selection.html`. The four-option radiogroup (US English, German, Japanese, Simplified Chinese), the "Currently in effect" locale readout, and the "Change Locale" submit control all match the mockup's copy and structure. Screen copy for the title ("Change language" / "言語の変更" / "更改语言") and the "Change Locale" control label match the mockup's per-locale strings verbatim. No material deviation observed in this spot check; a full pixel-level comparison across all 6 mockups was not performed.
 
 ## Coverage Summary
 
-No coverage tool is declared in `package.json` or `vitest.config.ts` (no `coverage` script, no
-`vitest --coverage` configuration) — this is `Not Applicable`, not a gap introduced by this sprint;
-the project has never run one. Verified instead by inspection: every module under `lib/locale/`,
-`lib/catalog/`, `lib/email/`, `lib/orders/` and every locale-facing route/page has a co-located
-`*.test.ts`/`*.test.tsx` file (`lib/**/*.test.ts` run in the Vitest `server` project,
-`src/**/*.test.tsx` in `client`), and all 151 tests pass per `## Unit Test Results`.
+No coverage tool is declared in `package.json` or `vitest.config.ts` (no `coverage` script, no `vitest --coverage` configuration) — this is `Not Applicable`, not a gap introduced by this sprint; the project has never run one. Verified instead by inspection: every module under `lib/locale/`, `lib/catalog/`, `lib/email/`, `lib/orders/` and every locale-facing route/page has a co-located `*.test.ts`/`*.test.tsx` file (`lib/**/*.test.ts` run in the Vitest `server` project, `src/**/*.test.tsx` in `client`), and all 151 tests pass per `## Unit Test Results`.
 
 ## Issues Found
 
-None. `artifacts/SWHR-S-0002/integration-defects-resolution.md` is empty and marked
-`INTEGRATION_DEFECTS_RESOLUTION: COMPLETE`.
+None. `artifacts/SWHR-S-0002/integration-defects-resolution.md` is empty and marked `INTEGRATION_DEFECTS_RESOLUTION: COMPLETE`.
 
 ## Recommendation
 
-**Proceed.** Every acceptance criterion and every spec scenario for SWHR-I-0003 passes on the
-integrated sprint branch, with no defects found. Firing `validation.all_acs_passed`.
+**Proceed.** Every acceptance criterion and every spec scenario for SWHR-I-0003 passes on the integrated sprint branch, with no defects found. Firing `validation.all_acs_passed`.
