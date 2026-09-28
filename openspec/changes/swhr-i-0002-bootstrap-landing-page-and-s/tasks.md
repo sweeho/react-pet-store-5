@@ -17,6 +17,6 @@
 
 ## 4. Shared frames
 
-- [ ] 4.1 Add the shared empty frame (SWHR-T-0007)
-- [ ] 4.2 Add the shared error frame with a retry action (SWHR-T-0007)
-- [ ] 4.3 Add the shared loading frame (SWHR-T-0007)
+- [x] 4.1 Add the shared empty frame (SWHR-T-0007)
+- [x] 4.2 Add the shared error frame with a retry action (SWHR-T-0007)
+- [x] 4.3 Add the shared loading frame (SWHR-T-0007)
