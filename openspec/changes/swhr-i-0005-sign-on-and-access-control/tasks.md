@@ -6,11 +6,11 @@
 
 ## 2. Credential rules
 
-- [ ] 2.1 Implement the user id validator: maximum 25 characters, no `%` or `*` (SWHR-T-0043)
-- [ ] 2.2 Implement the password maximum-length check, blocked on recovering the redacted value (OQ-1) (SWHR-T-0043)
-- [ ] 2.3 Implement credential creation, mapping a primary-key conflict to a duplicate-user-id error (SWHR-T-0043)
-- [ ] 2.4 Implement authentication: exact, case-sensitive match, where an unknown user id returns false without raising (SWHR-T-0043)
-- [ ] 2.5 Implement password hashing and verification, and make sure no password is ever logged (OQ-2) (SWHR-T-0043)
+- [x] 2.1 Implement the user id validator: maximum 25 characters, no `%` or `*` (SWHR-T-0043)
+- [x] 2.2 Implement the password maximum-length check, blocked on recovering the redacted value (OQ-1) (SWHR-T-0043)
+- [x] 2.3 Implement credential creation, mapping a primary-key conflict to a duplicate-user-id error (SWHR-T-0043)
+- [x] 2.4 Implement authentication: exact, case-sensitive match, where an unknown user id returns false without raising (SWHR-T-0043)
+- [x] 2.5 Implement password hashing and verification, and make sure no password is ever logged (OQ-2) (SWHR-T-0043)
 
 ## 3. Sessions and the protected-page gate
 
