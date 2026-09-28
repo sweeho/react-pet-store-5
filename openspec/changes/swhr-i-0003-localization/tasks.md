@@ -1,8 +1,8 @@
 ## 1. Locale model
 
-- [ ] 1.1 Define the supported-locale list (en_US, ja_JP, zh_CN) and the default locale as deployment configuration (SWHR-T-0013)
-- [ ] 1.2 Implement the single locale identifier parser (language_COUNTRY, case-insensitive "default", reject no-underscore and absent input) (SWHR-T-0013)
-- [ ] 1.3 Unit-test the parser, including the three-part identifier case being rejected rather than guessed (SWHR-T-0013)
+- [x] 1.1 Define the supported-locale list (en_US, ja_JP, zh_CN) and the default locale as deployment configuration (SWHR-T-0013)
+- [x] 1.2 Implement the single locale identifier parser (language_COUNTRY, case-insensitive "default", reject no-underscore and absent input) (SWHR-T-0013)
+- [x] 1.3 Unit-test the parser, including the three-part identifier case being rejected rather than guessed (SWHR-T-0013)
 
 ## 2. Session locale
 
