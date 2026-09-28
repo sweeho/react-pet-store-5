@@ -14,8 +14,12 @@ import { expect, type Page, test } from "@playwright/test";
 
 async function signUpAndCompleteRegistration(page: Page, userId: string, password: string) {
   const newAccountForm = page.getByRole("form", { name: "I would like to sign up for an account" });
-  await newAccountForm.getByLabel("User name").fill(userId);
-  await newAccountForm.getByLabel("Password").fill(password);
+  // exact: true throughout this file — getByLabel's default match is a
+  // substring, not the whole label, so "Password" alone also matches
+  // "Repeat password" and "User name" alone also matches the checkbox
+  // labelled "Remember My User Name" (CI caught both).
+  await newAccountForm.getByLabel("User name", { exact: true }).fill(userId);
+  await newAccountForm.getByLabel("Password", { exact: true }).fill(password);
   await newAccountForm.getByLabel("Repeat password").fill(password);
   await newAccountForm.getByRole("button", { name: "Create New Account" }).click();
 
@@ -27,16 +31,15 @@ async function signUpAndCompleteRegistration(page: Page, userId: string, passwor
 // item) rather than a bare `.first()` on every "Add to Cart" button — a
 // product with more than one item (BULLDOG has two) has no ORDER BY on its
 // item list, so which item is DOM-first isn't a contract worth relying on.
-// Doesn't assert on the "Added to cart"/"カートに追加しました" confirmation
-// text itself — its wording is locale-dependent (SWHR-C-0135 calls this
-// after switching to Japanese) and every caller already asserts the actual
-// outcome (the cart page's contents) afterward.
+// The button inside is targeted by role alone, not its "Add to Cart" text —
+// each card has exactly one button, and the text is locale-dependent
+// ("カートに追加" in Japanese; SWHR-C-0135 calls this after switching).
 async function addToCart(page: Page, productId: string, itemName?: string, times = 1) {
   await page.goto(`/product/${productId}`);
   const card = itemName
     ? page.getByRole("listitem").filter({ hasText: itemName })
     : page.getByRole("listitem").first();
-  const addButton = card.getByRole("button", { name: "Add to Cart" });
+  const addButton = card.getByRole("button");
   for (let i = 0; i < times; i++) {
     // Each click fires its own POST /api/cart/items; waiting for the
     // response before the next click keeps repeated adds (SWHR-C-0135's
@@ -55,8 +58,8 @@ test.describe("Sign-on journeys", () => {
   }) => {
     await page.goto("/signin");
     const returningForm = page.getByRole("form", { name: "Are you a returning customer?" });
-    await returningForm.getByLabel("User name").fill("ghost");
-    await returningForm.getByLabel("Password").fill("anything");
+    await returningForm.getByLabel("User name", { exact: true }).fill("ghost");
+    await returningForm.getByLabel("Password", { exact: true }).fill("anything");
     await returningForm.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).toHaveURL("/signin-error");
@@ -99,8 +102,8 @@ test.describe("Sign-on journeys", () => {
     await expect(page).toHaveURL("/signin");
 
     const returningForm = page.getByRole("form", { name: "Are you a returning customer?" });
-    await returningForm.getByLabel("User name").fill("alice");
-    await returningForm.getByLabel("Password").fill("Secret1");
+    await returningForm.getByLabel("User name", { exact: true }).fill("alice");
+    await returningForm.getByLabel("Password", { exact: true }).fill("Secret1");
     await returningForm.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).toHaveURL("/account");
@@ -162,9 +165,11 @@ test.describe("Sign-on journeys", () => {
       .getByRole("button", { name: "日本語" })
       .click();
 
-    await addToCart(page, "BULLDOG", "Male Adult Bulldog", 3);
+    // Japanese item name (catalog seed's EST-6 ja_JP details) — the locale
+    // switch above means the product page renders in Japanese from here on.
+    await addToCart(page, "BULLDOG", "オス成犬ブルドッグ", 3);
     await page.goto("/cart");
-    await expect(page.getByText("Quantity: 3")).toBeVisible();
+    await expect(page.getByText("数量: 3")).toBeVisible();
 
     await page
       .getByRole("navigation", { name: "Global" })
@@ -174,7 +179,7 @@ test.describe("Sign-on journeys", () => {
     await expect(page).toHaveURL("/signed-out");
     await expect(page.getByRole("heading", { name: "サインアウトしました" })).toBeVisible();
     await expect(
-      page.getByRole("navigation", { name: "Global" }).getByRole("button", { name: "サインイン" }),
+      page.getByRole("navigation", { name: "Global" }).getByRole("link", { name: "サインイン" }),
     ).toBeVisible();
 
     await page.goto("/cart");
@@ -188,8 +193,8 @@ test.describe("Sign-on journeys", () => {
     await expect(page).toHaveURL("/admin/signin");
     await expect(page.getByRole("heading", { name: "Administration sign-in" })).toBeVisible();
 
-    await page.getByLabel("User ID").fill("admin_member");
-    await page.getByLabel("Password").fill("admin_member");
+    await page.getByLabel("User ID", { exact: true }).fill("admin_member");
+    await page.getByLabel("Password", { exact: true }).fill("admin_member");
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page).toHaveURL("/admin/console");

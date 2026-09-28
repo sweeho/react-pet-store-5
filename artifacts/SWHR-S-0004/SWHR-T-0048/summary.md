@@ -67,16 +67,19 @@ test's real red→green (8 missing ids → 0).
 - **`e2e/sign-on.spec.ts` could not be run locally.** This container's `/ms-playwright/` has only
   `chromium-1223`; `@playwright/test@~1.50.0` (this project's pin) resolves to `chromium-1155`,
   which is absent. Per AGENTS.md/PLAYBOOK this is the documented genuine-absence fallback — not
-  retried, no browser installed, no version bump. Because this ticket's whole point is proving the
-  e2e journeys pass, I verified the spec by every means short of running it: `bun run typecheck`
-  and `bun run lint` both pass on it, and every selector, redirect target and locale string was
-  re-checked by hand against the actual component/route it drives (`signin.tsx`'s exact button/
-  label text, `middleware/signon.ts` + `lib/auth/protection.ts`'s `checkGate` for hard-navigation
-  redirects and `originalUrl` recording, `product/[productId].tsx`'s per-item "Add to Cart" scoping,
-  `routes/api/staff/signon.post.ts`'s `/admin/console` redirect, `shell.ts`/`signin.ts`'s en/ja
-  copy). **This ticket's DONE is gated on CI's E2E tier reporting green** (CI has consistently
-  carried the correctly pinned Chromium across SWHR-T-0043/0046/0047's runs this sprint) —
-  confirmed via `a2a_await_ci` before transitioning.
+  retried, no browser installed, no version bump. **This ticket's DONE is gated on CI's E2E tier
+  reporting green**, confirmed via `a2a_await_ci` before transitioning.
+- **The first CI push was red, and hand review had missed it.** `getByLabel("User name")` /
+  `getByLabel("Password")` without `{ exact: true }` substring-match "Remember My User Name" and
+  "Repeat password" respectively (Playwright's `getByLabel` matches a substring by default, not
+  the whole accessible name) — CI's trace showed both, failing 5 of the 8 tests. Fixed with
+  `exact: true` throughout the spec. Re-reading the file after that fix (rather than re-pushing
+  immediately) surfaced two more defects the failed run never reached, both in SWHR-C-0135 only:
+  the quantity/item-name assertions were still English strings after the test switches the session
+  to Japanese (`"Quantity: 3"` → `"数量: 3"`, and the product-page item filter → the Japanese item
+  name), and the post-sign-out header check queried `role: "button"` for "サインイン" when the
+  anonymous Sign In control is a `<Link>` (`role: "link"`), not a button. All four are fixed;
+  `bun run typecheck`/`lint` pass, and a second CI push is the actual proof this ticket rests on.
 - **`src/pages/search.tsx` is outside this ticket's file ownership**, but SWHR-C-0106 (assigned to
   this ticket by PLAN.md) requires the page to "state the keyword", which the placeholder never
   did. The fix is one conditional heading line, additive, and doesn't touch the "coming soon" empty

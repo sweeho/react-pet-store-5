@@ -80,12 +80,18 @@ different build than `@playwright/test@~1.50.0` resolves to). Per AGENTS.md this
 genuine-absence fallback — not retried, no browser installed, no version bump attempted.
 
 **`e2e/sign-on.spec.ts` itself could not be executed in this container** for the same reason.
-Given this ticket's AC-2 is specifically "the eight cases pass in a browser", that gap is real and
-is called out in `summary.md` §Notes: `bun run typecheck` and `bun run lint` both pass on the spec,
-every selector and redirect was re-verified by hand against the actual page components it drives
-(signin.tsx, search.tsx, product/[productId].tsx, cart.tsx, checkout.tsx/account.tsx placeholders,
-admin/console.tsx, admin/signin.tsx — see summary.md), and CI (which does carry the pinned Chromium,
-confirmed by every prior ticket's green CI run this sprint) is the genuine first real execution —
-confirmed green before this ticket transitions to done.
+Given this ticket's AC-2 is specifically "the eight cases pass in a browser", that gap is real:
+`bun run typecheck` and `bun run lint` pass on the spec, and every selector/redirect was reviewed
+by hand against the actual page components it drives — but hand review is not execution, and the
+first real run (CI, which does carry the pinned Chromium) found two real defects hand review had
+missed: `getByLabel("User name")`/`getByLabel("Password")` without `exact: true` substring-match
+"Remember My User Name" and "Repeat password" respectively, failing 5 of 8 tests. Fixed by adding
+`exact: true` throughout. Re-reading the file afterward surfaced two more the same failed run
+never reached: SWHR-C-0135's `getByText("Quantity: 3")`/`addToCart`'s item-name filter were still
+the English strings after the test switches to Japanese (needed `"数量: 3"` and the Japanese item
+name), and the post-sign-out header assertion queried `role: "button"` for "サインイン" when
+Sign In in the anonymous state is a `<Link>` (`role: "link"`). All four are fixed; see
+`summary.md` §Notes for the account and why a second full CI run is the actual green run this
+ticket rests on.
 
 TDD-RESULT: 494 passed, 0 failed
