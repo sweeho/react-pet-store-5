@@ -41,11 +41,11 @@
 
 ## 6. Orders and emails
 
-- [ ] 6.1 Record a locale on every purchase order, defaulting to en_US (SWHR-T-0015)
-- [ ] 6.2 Select the customer email template (approval, shipment, completed) by order locale (SWHR-T-0015)
-- [ ] 6.3 Use the default template for an unresolvable order locale and fail generation when a resolved locale has no template (SWHR-T-0015)
-- [ ] 6.4 Apply the per-template unit price formats ($#,##0.00 for default, en_US and zh_CN; ￥#,##0 for ja_JP) (SWHR-T-0015)
-- [ ] 6.5 Test email template selection, failure path and price formats (SWHR-T-0015)
+- [x] 6.1 Record a locale on every purchase order, defaulting to en_US (SWHR-T-0015)
+- [x] 6.2 Select the customer email template (approval, shipment, completed) by order locale (SWHR-T-0015)
+- [x] 6.3 Use the default template for an unresolvable order locale and fail generation when a resolved locale has no template (SWHR-T-0015)
+- [x] 6.4 Apply the per-template unit price formats ($#,##0.00 for default, en_US and zh_CN; ￥#,##0 for ja_JP) (SWHR-T-0015)
+- [x] 6.5 Test email template selection, failure path and price formats (SWHR-T-0015)
 
 ## 7. Forms, encoding and admin strings
 
