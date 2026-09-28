@@ -32,4 +32,11 @@ describe("SearchPlaceholder", () => {
     renderSearch("/search?locale=ja_JP");
     expect(screen.getByRole("heading", { level: 1, name: "検索" })).toBeInTheDocument();
   });
+
+  it("[SWHR-C-0106] states the keyword in the heading when the header search routes here", () => {
+    renderSearch("/search?keywords=dog");
+    expect(
+      screen.getByRole("heading", { level: 1, name: 'Search results for "dog"' }),
+    ).toBeInTheDocument();
+  });
 });
