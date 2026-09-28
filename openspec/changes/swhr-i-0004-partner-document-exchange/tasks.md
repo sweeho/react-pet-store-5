@@ -54,10 +54,10 @@
 
 ## 7. Tests
 
-- [ ] 7.1 Round-trip and rejection tests for each shared element (SWHR-T-0034)
-- [ ] 7.2 PurchaseOrder and SupplierOrder document tests including date fallback and root checks (SWHR-T-0034)
-- [ ] 7.3 Partner document schema tests: zero price accepted, zero quantity rejected, duplicate item id rejected (SWHR-T-0034)
-- [ ] 7.4 Validation switch, document type check and malformed-input tests (SWHR-T-0034)
-- [ ] 7.5 Entity resolution order tests with bundled and deployment catalogs (SWHR-T-0034)
-- [ ] 7.6 Channel tests for invoice fan-out, one-message-per-order and intake rollback with redelivery (SWHR-T-0034)
-- [ ] 7.7 Supplier-order validation tests: invalid document not persisted when enabled, unvalidated when disabled (SWHR-T-0034)
+- [x] 7.1 Round-trip and rejection tests for each shared element (SWHR-T-0034)
+- [x] 7.2 PurchaseOrder and SupplierOrder document tests including date fallback and root checks (SWHR-T-0034)
+- [x] 7.3 Partner document schema tests: zero price accepted, zero quantity rejected, duplicate item id rejected (SWHR-T-0034)
+- [x] 7.4 Validation switch, document type check and malformed-input tests (SWHR-T-0034)
+- [x] 7.5 Entity resolution order tests with bundled and deployment catalogs (SWHR-T-0034)
+- [x] 7.6 Channel tests for invoice fan-out, one-message-per-order and intake rollback with redelivery (SWHR-T-0034)
+- [x] 7.7 Supplier-order validation tests: invalid document not persisted when enabled, unvalidated when disabled (SWHR-T-0034)
