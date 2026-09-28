@@ -1,8 +1,10 @@
+import { EmptyState } from "@/components/state";
+
 export default function AdminPlaceholder() {
   return (
-    <div className="p-8">
+    <div className="flex flex-col gap-4 p-8">
       <h1 className="text-2xl font-bold">Administration</h1>
-      <p className="text-muted-foreground-1 mt-2">Order approval is coming soon.</p>
+      <EmptyState title="Coming soon" description="Order approval is coming soon." />
     </div>
   );
 }

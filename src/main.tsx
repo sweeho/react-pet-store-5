@@ -6,12 +6,17 @@ import { BrowserRouter, useRoutes } from "react-router";
 import routes from "~react-pages";
 
 import { SiteLayout } from "@/components/layout";
+import { LoadingState } from "@/components/state";
+
+import RootErrorBoundary from "./pages/RootErrorBoundary";
 
 // eslint-disable-next-line react-refresh/only-export-components
 function App() {
   return (
     <SiteLayout>
-      <Suspense fallback={<p>...</p>}>{useRoutes(routes)}</Suspense>
+      <RootErrorBoundary>
+        <Suspense fallback={<LoadingState />}>{useRoutes(routes)}</Suspense>
+      </RootErrorBoundary>
     </SiteLayout>
   );
 }

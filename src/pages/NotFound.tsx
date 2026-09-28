@@ -1,9 +1,11 @@
+import { ErrorState } from "@/components/state";
+
 const NotFound = () => {
   return (
-    <div className="mt-28 min-h-screen">
-      <h1 className="text-center text-4xl font-bold">Not Found</h1>
-      <p className="text-center text-2xl">The page you are looking for does not exist.</p>
-    </div>
+    <ErrorState
+      title="Page not found"
+      description="The page you're looking for doesn't exist or has moved."
+    />
   );
 };
 

@@ -1,8 +1,10 @@
+import { EmptyState } from "@/components/state";
+
 export default function SupplierPlaceholder() {
   return (
-    <div className="p-8">
+    <div className="flex flex-col gap-4 p-8">
       <h1 className="text-2xl font-bold">Supplier</h1>
-      <p className="text-muted-foreground-1 mt-2">Supplier inventory is coming soon.</p>
+      <EmptyState title="Coming soon" description="Supplier inventory is coming soon." />
     </div>
   );
 }
