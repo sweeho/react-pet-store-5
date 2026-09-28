@@ -22,10 +22,10 @@
 
 ## 4. Sign-on, registration and sign-out API
 
-- [ ] 4.1 Add the sign-on route: authenticate, set or clear the 31-day remember cookie, mark the session signed on, return the original URL (SWHR-T-0045)
-- [ ] 4.2 Add the create-credential route, which refuses to create when the user name or password is absent and continues to the account-information form (SWHR-T-0045)
-- [ ] 4.3 Wire customer-profile completion to mark the session signed on and return to the original URL, or home when it was the account-change action (SWHR-T-0045)
-- [ ] 4.4 Add the sign-out route: rotate the session, keep the locale, start an empty cart (SWHR-T-0045)
+- [x] 4.1 Add the sign-on route: authenticate, set or clear the 31-day remember cookie, mark the session signed on, return the original URL (SWHR-T-0045)
+- [x] 4.2 Add the create-credential route, which refuses to create when the user name or password is absent and continues to the account-information form (SWHR-T-0045)
+- [x] 4.3 Wire customer-profile completion to mark the session signed on and return to the original URL, or home when it was the account-change action (SWHR-T-0045)
+- [x] 4.4 Add the sign-out route: rotate the session, keep the locale, start an empty cart (SWHR-T-0045)
 
 ## 5. Storefront screens
 
