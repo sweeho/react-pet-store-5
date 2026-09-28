@@ -5,3 +5,10 @@ export const users = sqliteTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
 });
+
+export const profiles = sqliteTable("profiles", {
+  userId: integer("userId")
+    .primaryKey()
+    .references(() => users.id),
+  preferredLanguage: text("preferredLanguage").notNull().default("en_US"),
+});
