@@ -49,8 +49,8 @@
 
 ## 6. Open decisions
 
-- [ ] 6.1 Obtain rulings on the address Country requirement, schema-violation rejection for non-supplier-order documents and version 1.0 support (SWHR-T-0032)
-- [ ] 6.2 Implement version 1.0 purchase order format intake if retained (SWHR-T-0032)
+- [x] 6.1 Obtain rulings on the address Country requirement, schema-violation rejection for non-supplier-order documents and version 1.0 support (SWHR-T-0032)
+- [x] 6.2 Implement version 1.0 purchase order format intake if retained (SWHR-T-0032)
 
 ## 7. Tests
 
