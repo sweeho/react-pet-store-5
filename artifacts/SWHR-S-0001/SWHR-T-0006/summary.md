@@ -84,6 +84,12 @@ per `AGENTS.md`. CI (pinned correctly) is the recorded verdict for `e2e/shell.sp
 
 ## Notes
 
+- CI's first run caught a real bug `bun run verify` couldn't: the headlessui `Dialog` root
+  (`role="dialog"`) had only `className="lg:hidden"`, no sizing of its own, while its
+  children were both `fixed` — which don't contribute to a `position: static` parent's
+  layout box, so the root collapsed to 0×0 and Playwright reported it as hidden even while
+  open. Fixed by moving `fixed inset-0` onto the Dialog root in `GlobalNav.tsx`. Full detail
+  and the failing log excerpt are in `tdd-test-result.md` → `## Red run`.
 - The site-shell and landing-page mockups (`artifacts/SWHR-S-0001/design/mockup-site-shell.html`,
   `mockup-landing-page.html`) both show pet categories as a persistent `<aside>` sidebar on the
   content side, not a header control. That sidebar sits inside `.body`/`main` content in the

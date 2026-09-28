@@ -74,9 +74,16 @@ export default function GlobalNav() {
         </div>
       </nav>
 
-      <Dialog open={mobileOpen} onClose={setMobileOpen} className="lg:hidden">
-        <div className="fixed inset-0 z-50 bg-black/30" aria-hidden="true" />
-        <DialogPanel className="bg-background fixed inset-y-0 right-0 z-50 w-full max-w-xs overflow-y-auto p-4 shadow-xl">
+      <Dialog open={mobileOpen} onClose={setMobileOpen} className="fixed inset-0 z-50 lg:hidden">
+        {/*
+         * The Dialog root (role="dialog") is the element Playwright/RTL
+         * queries for visibility. Its own children are all `fixed`, which
+         * don't contribute to a `position: static` parent's layout box — so
+         * without `fixed inset-0` here too, the root collapses to 0×0 and
+         * reads as hidden even while open (caught by e2e/shell.spec.ts).
+         */}
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <DialogPanel className="bg-background fixed inset-y-0 right-0 w-full max-w-xs overflow-y-auto p-4 shadow-xl">
           <div className="flex items-center justify-between">
             <Link
               to="/"

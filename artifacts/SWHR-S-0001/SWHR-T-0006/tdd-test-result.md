@@ -51,7 +51,20 @@ change, confirming the tests actually exercise the real components.
 Chromium (`/ms-playwright/chromium-1223`) doesn't match this project's pinned Playwright
 1.50.1 (expects `chromium-1155`), so `bun run test:e2e`'s preflight refuses to run rather
 than downloading a browser (documented, expected — see `## Notes`). It is unexecuted here
-in both phases; CI runs it (pinned correctly) and reported pass — see `summary.md`.
+in both phases.
+
+It found a real red on the first push, though: CI's `e2e/shell.spec.ts › the navigation
+folds behind a menu button…` failed 3/3 attempts with `getByRole('dialog')` resolving but
+reporting `Received: hidden`. Root cause: the `<Dialog>` root (the `role="dialog"` element)
+had only `className="lg:hidden"` — no `position`/sizing of its own — while both its children
+(`className="fixed inset-0 …"` backdrop, `className="fixed inset-y-0 right-0 …"` panel) used
+`fixed`, which doesn't contribute to a `position: static` parent's layout box. The Dialog
+root therefore collapsed to a 0×0 box even while open, which Playwright correctly reports as
+not visible. Fixed by moving `fixed inset-0` onto the Dialog root itself
+(`src/components/layout/GlobalNav.tsx`), so it now has a real, viewport-covering bounding
+box when open. `bun run verify` (jsdom, no real layout) couldn't have caught this — it's a
+CSS-layout bug a real browser is required to see, which is exactly why this project's gate
+requires `verify:full`/CI's E2E tier rather than stopping at `verify`.
 
 ## Green run
 
@@ -69,5 +82,8 @@ $ NODE_ENV=test bun --bun vitest run
 `bun run build` also ran clean (`tsc --build && vite build`, exit 0), and `node
 scripts/check-doc-links.mjs` reported all relative links resolve (unaffected by this
 ticket, checked as part of the full gate this project runs in CI).
+
+CI on the second push (after the `fixed inset-0` fix) is the recorded verdict for
+`e2e/shell.spec.ts` itself, since this container cannot run it — see `summary.md`.
 
 TDD-RESULT: 24 passed, 0 failed
