@@ -1,0 +1,1113 @@
+schemaVersion: 1
+program:
+  key: petstore-legacy-rebuild
+  title: Java Pet Store 1.3.2 rebuild
+  source: extraction
+  generator: vortex-spec-extraction
+  sourceRef: vortex/legacy-spec/sx-0001
+capabilities:
+  - slug: localization
+    title: Localization
+    order: 1
+    dependsOn: []
+    priority: 0
+    change:
+      dir: openspec/changes/sx-localization
+      specCapabilities:
+        - localization
+    canvas:
+      problem: The legacy storefront serves customers in US English, Japanese and Simplified Chinese, but its locale rules (default locale, switching, per-locale pages, catalog rows, prices, emails and form options) are spread across the front controller, catalog, cart, profile, orders and email templates and are written down nowhere.
+      solution: "Build the storefront locale model: en_US, ja_JP and zh_CN with en_US as default, a session locale that can be switched from every page and returns the visitor to the page they were on, preferred-language application at sign-on and profile save, per-locale pages with default-locale fallback, per-locale catalog data and prices with no conversion, per-locale state/province options, UTF-8 request handling and localized order emails."
+      userStories:
+        - As a shopper, I want to switch the storefront language from any page, so that I can read the catalog in my own language without losing my place.
+        - As a returning customer, I want the store to switch to my preferred language when I sign in, so that I do not have to change it every visit.
+        - As a Japanese shopper, I want prices shown in the format and currency of my locale, so that I understand what I will pay.
+      acceptanceCriteria:
+        - "Supported storefront locales — Every page exists in every supported locale: that page is rendered with content authored for the requested locale"
+        - "Default session locale — New visitor receives the default locale: the session locale is set to `en_US` and the request is processed in `en_US`"
+        - "Locale identifier interpretation — Two-part identifier: the result is the Japanese language with country Japan"
+        - "Language switching from every page — Switching language on a product page: the same product page is shown again in Japanese, the session locale is `ja_JP`, and the cart's item details are subsequently shown in `ja_JP`"
+        - 'Rejected locale change — Unparseable locale code: the request fails with the error "Unable to change language to ja" and the session locale remains `en_US`'
+        - "Locale change reaches server-side business state — Business operation after a switch: it reads `zh_CN`"
+        - "Preferred language applied at sign-on and profile save — Customer with a Japanese preference signs on: the session locale and the cart locale become `ja_JP`"
+        - "Customer preferred language — Profile created without a language: its preferred language is `en_US`"
+        - "Locale-specific page resolution — Request locale overrides session locale: the Japanese definition of the page is rendered and the session locale remains `en_US`"
+        - "Locale-specific catalog content — Item shown in the requested locale: the Japanese name, description, image and price are returned"
+        - "Locale-specific price display — Same item viewed in two locales: the English page shows 18.50 in US currency format and the Japanese page shows 2000 in Japanese currency format, with no conversion between them"
+        - "Shopping cart locale — Cart before any locale is set: item names and prices are taken from the `en_US` catalog details"
+        - "Purchase order locale — Order submitted without a locale: its recorded locale is `en_US`"
+        - "Localized customer emails — Japanese order: the email is rendered from the Japanese shipment template"
+        - "Email price formats — Price in an English email: the unit price reads `$1,234.50`"
+        - "Locale-specific state and province options — Japanese order form: the state/province choices are Tokyo, Osaka and Nagano"
+        - "UTF-8 request and response encoding — Japanese text on account creation: the stored and redisplayed name is identical to the submitted Japanese text"
+        - "Administrator client string catalogue — German administrator: labels, tooltips and mnemonics are taken from the German catalogue"
+        - "Locale selection screen — Locale selection screen is displayed: it shows a choice list with the options US English, German, Japanese and Simplified Chinese, and a Change Locale control"
+      outOfScope:
+        - The core rules of catalog, cart, customer, sign-on, order processing and notification; this capability owns only their locale dimension.
+        - Currency conversion; each locale carries its own price row.
+        - The WAF demo locale page's German (de_DE) option, which the storefront does not support.
+      risksAssumptions:
+        - The zh_CN dollar price format, emails that fail rather than fall back, and locale variant parsing are open questions in design.md.
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Locale selection screen: a form offering US English (en_US), German (de_DE), Japanese (ja_JP) and Simplified Chinese (zh_CN), and after a successful change a confirmation page showing the locale now in effect (legacy WAF demo page; the German option conflicts with the supported-locale list)"
+    evidence:
+      irRefs:
+        - CART-RULE-0007
+        - CATALOG-BR-0001
+        - CATALOG-BR-0010
+        - LOC-BR-0001
+        - LOC-BR-0002
+        - LOC-BR-0003
+        - LOC-BR-0004
+        - LOC-REQ-0001
+        - LOC-REQ-0002
+        - LOC-RULE-0001
+        - LOCALIZATION-BR-0001
+        - LOCALIZATION-BUSINESS-RULE-0001
+        - LOCALIZATION-BUSINESS-RULE-0002
+        - LOCALIZATION-BUSINESS-RULE-0004
+        - LOCALIZATION-REQ-0001
+        - LOCALIZATION-REQUIREMENT-0001
+        - LOCALIZATION-RULE-0001
+        - LOCALIZATION-WORKFLOW-0003
+        - localization-BR-0001
+        - localization-BR-0002
+        - localization-BR-0003
+        - localization-BUSINESS-RULE-0001
+        - localization-REQ-0001
+        - localization-REQ-0002
+        - localization-REQ-0003
+        - localization-REQ-0004
+        - localization-business-rule-0001
+        - localization-business-rule-0002
+        - localization-business-rule-0003
+        - localization-business-rule-0004
+        - localization-business-rule-0012
+        - localization-integration-0007
+        - localization-requirement-0001
+        - localization-requirement-0004
+        - localization-screen-0001
+        - localization-screen-0006
+        - localization-workflow-0001
+        - localization-workflow-0002
+        - localization-workflow-0005
+      reviewedBy: null
+      reviewedAt: null
+  - slug: b2b-document-exchange
+    title: Partner document exchange
+    order: 2
+    dependsOn: []
+    priority: 0
+    change:
+      dir: openspec/changes/sx-b2b-document-exchange
+      specCapabilities:
+        - b2b-document-exchange
+    canvas:
+      problem: The legacy system exchanges purchase orders, supplier orders and invoices with its supplier as XML documents over asynchronous channels, and those formats are a trading-partner contract documented only in code, DTDs and XSDs.
+      solution: Specify and build the document formats (PurchaseOrder, SupplierOrder, TPASupplierOrder, TPAInvoice, TPALineItem and their embedded contact, address, card and line elements), their validation and read-side rejection rules, partner order and invoice intake, and the asynchronous exchange (one supplier message per approved order, invoice fan-out to fulfilment and notification, atomic intake with redelivery).
+      userStories:
+        - As a supplier partner, I want to receive orders and send invoices in the document formats I already use, so that I can keep trading without changing my systems.
+        - As the order centre, I want every inbound document validated against its declared schema, so that malformed partner documents are caught at intake.
+        - As the order centre, I want supplier-order and invoice validation switchable per deployment, with an invalid supplier order refused when it is on, so that no order built from a bad document is persisted.
+      acceptanceCriteria:
+        - "Purchase order document structure — Purchase order written with two line items: the root `PurchaseOrder` element contains `OrderId`, `UserId`, `EmailId`, `OrderDate`, `ShippingInfo`, `BillingInfo`, `TotalPrice`, `CreditCard` and two `LineItem` elements, in that order"
+        - "Purchase order document root check — Wrong root element: reading fails with `PurchaseOrder element expected.` and no order is produced"
+        - "Purchase order date handling — Order date written: `OrderDate` contains `2002-03-15`"
+        - "Contact information element — Empty email accepted: the contact is accepted with an empty email"
+        - "Address element output — No second street line: exactly one `StreetName` element is produced, followed by `City`, `State`, `ZipCode` and `Country`"
+        - "Address element input — Empty city: reading fails with `City element: content expected.`"
+        - "Credit card element — Credit card round trip: the three values are unchanged and appear in the order `CardNumber`, `CardType`, `ExpiryDate`"
+        - "Order line item element — Non-numeric quantity: reading fails and no line item is produced"
+        - "Line item export excludes shipped quantity — Partly shipped line exported: the element carries quantity 5 and no shipped-quantity value"
+        - "Internal supplier order document — Wrong root element: reading fails with `SupplierOrder element expected.`"
+        - "Internal supplier order date handling — Unparseable supplier order date: the order date is set to the current date and reading continues"
+        - "Partner supplier order document — Partner order built for an approved order: it carries the order id, order date, the nine shipping-address fields in order, and two line items each with category id, product id, item id, line number, quantity and unit price"
+        - "Partner supplier order intake — Partner-format order received: an internal supplier order with the same order id, date, shipping contact and two line items is produced"
+        - "Partner invoice document — Invoice for a shipment: it contains `OrderId` 1001, `UserId` `j2ee`, `OrderDate`, `ShippingDate` and two line items, in that order"
+        - "Partner invoice intake — Valid invoice received: it reads order 1001 and the shipped quantities EST-1 → 2 and EST-2 → 1"
+        - "Partner line item values — Zero unit price: the line item is accepted"
+        - "Unique item per partner document — Duplicate item id: validation reports an error"
+        - "Partner document dates — Shipping date written: `ShippingDate` contains `2002-03-16`"
+        - "Required document values — Missing user id: building fails with an error naming `UserId`"
+        - "Document encoding — Non-ASCII name: the document declares UTF-8 encoding and the name is encoded in UTF-8"
+        - "Configurable document validation — Invoice validation switched off: only the purchase order is validated against its document type"
+        - "Document type check — Mismatched document type: it is rejected with `Document not of type`"
+        - "Malformed and invalid document handling — Malformed document: parsing fails and the document is not processed"
+        - "Supplier order document validation — Invalid supplier order with validation enabled: the order is not persisted"
+        - "Supplier order document validation — Validation disabled by deployment: the supplier-order document is processed without being validated against its schema"
+        - "Schema resolution — Deployment catalog overrides bundled mapping: the schema is loaded from the deployment catalog's location"
+        - "Asynchronous partner exchange — Approval yields supplier messages: two separate supplier purchase order messages are delivered to the supplier inbox"
+        - "Supplier order intake is atomic — Invoice publication fails: no supplier order is recorded and the message is redelivered"
+        - "Supplier invoice publication — Stock arrival ships pending orders: two invoice messages are published"
+        - "Legacy version 1.0 document formats — Version 1.0 purchase order received: its ship-to and bill-to addresses, card and two line items are read and its locale is `en_US`"
+      outOfScope:
+        - What order fulfilment does with an invoice after intake (shipped-quantity bookkeeping, order status).
+        - Customer email content on invoice receipt.
+        - Supplier inventory and pending-order logic, beyond the fact that an invoice is published per shipment.
+      risksAssumptions:
+        - Eleven disputed or low-confidence points (design.md R1-R11) need a human ruling, including the unresolved version 1.0 formats.
+        - order-fulfillment's design rules out wire-compatible XML/JMS while this capability keeps the formats; a human must settle which applies.
+      techStack: []
+      affectedCode: []
+    evidence:
+      irRefs:
+        - B2B-BR-0003
+        - B2B-DOCUMENT-EXCHANGE-BR-0001
+        - B2B-DOCUMENT-EXCHANGE-BR-0002
+        - B2B-DOCUMENT-EXCHANGE-BR-0003
+        - B2B-DOCUMENT-EXCHANGE-BR-0004
+        - B2B-DOCUMENT-EXCHANGE-BUSINESS-RULE-0001
+        - B2B-DOCUMENT-EXCHANGE-BUSINESS-RULE-0002
+        - B2B-DOCUMENT-EXCHANGE-ENTITY-0001
+        - B2B-DOCUMENT-EXCHANGE-INT-0001
+        - B2B-DOCUMENT-EXCHANGE-INTEGRATION-0001
+        - B2B-DOCUMENT-EXCHANGE-INTEGRATION-0002
+        - B2B-DOCUMENT-EXCHANGE-REQUIREMENT-0001
+        - B2B-DOCUMENT-EXCHANGE-RULE-0001
+        - B2B-DOCUMENT-EXCHANGE-RULE-0002
+        - B2B-DOCUMENT-EXCHANGE-RULE-0003
+        - B2B-ENTITY-0001
+        - B2B-ENTITY-0002
+        - B2B-ENTITY-0003
+        - B2B-ENTITY-0004
+        - B2B-INT-0001
+        - B2B-INT-0002
+        - B2B-REQ-0001
+        - B2B-REQ-0002
+        - B2B-REQ-0003
+        - B2B-RULE-0001
+        - B2B-RULE-0002
+        - B2B-RULE-0003
+        - B2B-RULE-0004
+        - B2B-RULE-0005
+        - B2B-RULE-0006
+        - B2BDOC-INTEG-0001
+        - B2BDOC-RULE-0001
+        - B2BDOC-RULE-0002
+        - b2b-document-exchange-BR-0001
+        - b2b-document-exchange-BR-0002
+        - b2b-document-exchange-BR-0003
+        - b2b-document-exchange-INT-0001
+        - b2b-document-exchange-INT-0003
+        - b2b-document-exchange-business-rule-0001
+        - b2b-document-exchange-business-rule-0002
+        - b2b-document-exchange-business-rule-0003
+        - b2b-document-exchange-business-rule-0004
+        - b2b-document-exchange-business-rule-0005
+        - b2b-document-exchange-business-rule-0006
+        - b2b-document-exchange-business-rule-0009
+        - b2b-document-exchange-business-rule-0011
+        - b2b-document-exchange-entity-0001
+        - b2b-document-exchange-entity-0013
+        - b2b-document-exchange-integration-0001
+        - b2b-document-exchange-integration-0002
+        - b2b-document-exchange-integration-0010
+      reviewedBy: null
+      reviewedAt: null
+  - slug: sign-on
+    title: Sign-on and access control
+    order: 3
+    dependsOn:
+      - localization
+    priority: 0
+    change:
+      dir: openspec/changes/sx-sign-on
+      specCapabilities:
+        - sign-on
+    canvas:
+      problem: Shoppers must sign on before seeing their account or checking out while catalog, search and cart stay anonymous, and the administration and supplier applications use a separate role-based sign-in; these credential, gating, cookie and session rules live in a servlet filter, deployment descriptors and entity-bean checks.
+      solution: Build the credential store with its creation rules, sign-on with return to the originally requested page and the remember-user-name cookie, the configurable protected-page gate, two-step registration, sign-out that keeps the language, per-application session timeouts, administrator-only access to the admin and supplier surfaces, and the sign-in, sign-in error and page header screens.
+      userStories:
+        - As a shopper, I want to browse and fill my cart without signing in, so that I only have to identify myself when I check out or view my account.
+        - As a returning customer, I want the store to remember my user name, so that signing in is quicker.
+        - As a customer who was sent to sign in, I want to land back on the page I asked for, so that I can carry on where I was.
+        - As an administrator, I want the admin console and supplier inventory restricted to my role, so that customers cannot reach them.
+      acceptanceCriteria:
+        - 'Sign-in screen — A remembered user name is present: the returning-customer user name field is pre-filled with "alice", the password field is empty, and the "Remember My User Name" checkbox is checked'
+        - 'Sign-in error screen — Unknown credentials submitted: the "Sign-in Error" screen is shown with the not-found message and an invitation to try again, and the shopper is not signed on'
+        - 'Storefront page header — Anonymous shopper views a page: the header shows the logo, search box, Account and Cart links, and a "Sign in" link, and no "Sign out" link'
+        - 'Sign-on credential record — Credential created: exactly one credential with user id "carol" is stored'
+        - 'Unique user id — Duplicate user id: no second credential is created and the "User Creation Error" screen asks for another user name'
+        - "User id length limit — 26-character user id: creation fails and no credential is stored"
+        - "User id wildcard characters forbidden — User id containing a percent sign: creation fails and no credential is stored"
+        - "Password length limit — Password over the maximum: creation fails and no credential is stored"
+        - "Credential authentication — Correct password: authentication succeeds"
+        - 'Sign-on submission and return to the requested page — Valid credentials after being gated: the session is signed on as "alice" and the shopper is redirected to the account page'
+        - 'Remember user name — Remember selected: a user-name cookie with value "alice" and a lifetime of 31 days is set'
+        - "Protected storefront pages — Anonymous shopper opens checkout: the sign-in screen is shown instead"
+        - "Protected-page gate — Signed-on user requests a protected page: the account page is served without showing the sign-on page"
+        - "Exact protected-path matching — Query string ignored: the request is gated"
+        - "Configurable sign-on protection — Duplicate protected-page name: only the first path is protected and a warning is logged"
+        - "Storefront protection ignores configured roles — Role configured on a protected page: the page is served"
+        - "Anonymous access to sign-on services — Anonymous account creation: the credential is created without any prior sign-on"
+        - "Anonymous catalog and cart access — Anonymous shopper adds to cart: the item is added and no sign-on is requested"
+        - "Data-layer access enforced by callers — Internal caller reads a purchase order: the data layer returns it without a role check of its own"
+        - 'Two-step customer registration — Registration started from checkout: the session is signed on as "dave" and the order-information page is shown'
+        - 'Storefront sign-out — Sign out with items in the cart: the "You are signed out" page is shown in Japanese, the session is no longer signed on, and the cart is empty'
+        - "Storefront session idle timeout — Idle beyond 15 minutes: the session has ended and the sign-in screen is shown"
+        - "Administration console restricted to administrators — Unauthenticated request for the console: the administrator sign-in form is shown instead"
+        - "Administrator role assignment — Member of the administrator group: the console is shown"
+        - "Administrative sign-in failure — Wrong administrator password: the login error page is shown with a link back to sign in"
+        - "Administrator sign-out — Administrator signs out: the session ends and the administration landing page is shown"
+        - "Administrator session idle timeout — Idle administrator: the administrator sign-in form is shown"
+        - "Administration data service requires a session — Expired session calls the data service: no data is returned and the reply says the session timed out and to sign in again"
+        - "Session-bound administration client launch — Client launched from the console: a launch descriptor bound to their session is returned and the client's order requests succeed without another sign-in"
+        - "Supplier inventory restricted to administrators — Supplier user without the role: a message says they are not authorised to update orders and no update form is shown"
+        - "Supplier sign-out — Supplier logs out: the session ends and a page with a link to re-enter the supplier application is shown"
+      outOfScope:
+        - Customer profile content and validation (owned by customer-account).
+        - Supplier inventory and order management behaviour beyond access control.
+        - Single sign-on across the storefront and the admin or supplier realms; the legacy system has none.
+      risksAssumptions:
+        - The legacy password maximum length is redacted in the source and passwords are stored in plain text; design.md OQ-1 to OQ-8 need a decision.
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Sign-in error screen: tells the shopper that the user name and password were not found and invites them to try again"
+        - "Sign-in screen: a returning-customer form (user name, password, Remember My User Name checkbox) and a new-account form (user name, password, password repeat); the user name is pre-filled and the remember box ticked when a remembered-user-name cookie is present; unknown credentials lead to a sign-in error stating the user name and password were not found"
+        - "Page header (every page): store logo linking home, a keyword search box, Account and Cart links, and a Sign out link when signed on or a Sign in link otherwise"
+    evidence:
+      irRefs:
+        - CART-RULE-0009
+        - SIGN-BR-0001
+        - SIGN-INT-0007
+        - SIGN-ON-BR-0001
+        - SIGN-ON-BR-0002
+        - SIGN-ON-BR-0003
+        - SIGN-ON-BR-0004
+        - SIGN-ON-BR-0005
+        - SIGN-ON-BR-0006
+        - SIGN-ON-BR-0007
+        - SIGN-ON-BR-0008
+        - SIGN-ON-BUSINESS-RULE-0001
+        - SIGN-ON-BUSINESS-RULE-0002
+        - SIGN-ON-BUSINESS-RULE-0003
+        - SIGN-ON-BUSINESS-RULE-0004
+        - SIGN-ON-BUSINESS-RULE-0005
+        - SIGN-ON-BUSINESS-RULE-0006
+        - SIGN-ON-BUSINESS-RULE-0007
+        - SIGN-ON-ENTITY-0001
+        - SIGN-ON-REQ-0001
+        - SIGN-ON-REQ-0002
+        - SIGN-ON-REQUIREMENT-0001
+        - SIGN-ON-REQUIREMENT-0002
+        - SIGN-ON-RULE-0001
+        - SIGN-ON-WF-0001
+        - SIGN-ON-WF-0002
+        - SIGN-ON-WORKFLOW-0001
+        - SIGN-ON-WORKFLOW-0002
+        - SIGN-REQ-0001
+        - SIGN-REQ-0002
+        - SIGN-REQ-0003
+        - SIGN-REQ-0004
+        - SIGN-RULE-0003
+        - SIGN-RULE-0005
+        - SIGN-RULE-0006
+        - SIGN-SCR-0001
+        - SIGN-SCR-0002
+        - SIGN-SCR-0003
+        - SIGN-WF-0001
+        - SIGNON-REQ-0001
+        - SIGNON-RULE-0001
+        - SIGN_ON-BR-0001
+        - SO-REQ-0001
+        - SO-REQ-0002
+        - SO-REQ-0003
+        - sign-on-BR-0001
+        - sign-on-BR-0002
+        - sign-on-BR-0004
+        - sign-on-BR-0005
+        - sign-on-INT-0006
+        - sign-on-REQ-0001
+        - sign-on-REQ-0002
+        - sign-on-REQ-0003
+        - sign-on-REQ-0004
+        - sign-on-REQ-0005
+        - sign-on-SCREEN-0001
+        - sign-on-WF-0001
+        - sign-on-WORKFLOW-0001
+        - sign-on-business-rule-0001
+        - sign-on-requirement-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: catalog-browsing
+    title: Catalog browsing and search
+    order: 4
+    dependsOn:
+      - localization
+    priority: 0
+    change:
+      dir: openspec/changes/sx-catalog-browsing
+      specCapabilities:
+        - catalog-browsing
+    canvas:
+      problem: Any visitor can browse a three-level pet catalog (category, product, item), search it by keyword and see an item's prices before adding it to the cart, but that behaviour is spread across a catalog data-access component, storefront pages and a page-fragment cache, and none of it is written down.
+      solution: Build the locale-aware catalog data model (categories, products, items with per-locale details and list/unit prices), read-only lookups ordered by name, OR-of-substring keyword search, paged listings with previous/next navigation, anonymous access, and the home category map, category menu, category, product, item and search result screens.
+      userStories:
+        - As a visitor, I want to browse pets by category and product, so that I can find an animal I am interested in.
+        - As a visitor, I want to search the catalog by keyword, so that I can find items without knowing their category.
+        - As a visitor, I want to see an item's list price and my price, so that I know what I will be charged before adding it to the cart.
+      acceptanceCriteria:
+        - 'Catalog category records — Category details stored for two locales: the Japanese name and description are returned and the category identifier is "DOGS" in both locales'
+        - 'Catalog product records — Product belongs to one category: "K9-BD-01" is included, and it is not included in the listing of any other category'
+        - "Catalog item records — Item prices are held to two decimal places: the list price 18.50 and unit cost 12.00 are returned exactly, without floating-point rounding"
+        - "Locale-scoped catalog visibility — Item without details in the shopper's locale is hidden: \"EST-15\" is not returned"
+        - "Category listing — Categories listed alphabetically: they are returned in the order Birds, Cats, Dogs, Fish, Reptiles"
+        - "Product listing for a category — Products of a category listed alphabetically: they are returned in the order Bulldog, Dalmation, Poodle"
+        - 'Item listing for a product — Items of a product carry their own identifiers: both items are returned, each with product identifier "K9-BD-01" and category identifier "DOGS"'
+        - "Single catalog entry lookup — Item found: its category, product, product name, image, description, attributes, list price and unit cost are returned"
+        - 'Search keyword parsing — Duplicate keywords collapse: the keywords searched are exactly "dog" and "puppy"'
+        - "Search keyword matching — Any keyword matches: items of both products are returned"
+        - "Paged catalog listings — Middle page: the 3rd and 4th items are returned, a next page exists and starts at 4"
+        - "Previous-page navigation — Previous from a full page: it starts at 2"
+        - "Default storefront page size — Fresh listing: the first 2 products are shown and a Next link is offered"
+        - "Anonymous catalog access — Visitor who is not signed on browses: the catalog content is shown and no sign-on is requested"
+        - "Read-only catalog operations and failure behaviour — Catalog store unavailable: the request fails with a catalog error and no partial listing is returned"
+        - "Cached catalog listings — Cached listing expires: the listing is regenerated and the new product appears"
+        - "Catalog seed data — First entry into an empty store: the bundled catalog is loaded before the home page is shown"
+        - 'Catalog browsing navigation — Browse to a bulldog: the Bulldog items such as "Male Adult Bulldog" are listed, each row with an Add to Cart action'
+        - "Storefront home category map — Selecting a region: the product listing of the Fish category is shown"
+        - 'Item detail page — Item detail displayed: the title reads "Male Adult Bulldog", the image is shown, "List Price: $18.50" and "Your Price: $12.00" are displayed, and an Add to Cart control is offered'
+        - 'Category navigation menu — Menu on every page: a "Pets" menu lists Birds, Cats, Dogs, Fish and Reptiles, and selecting Cats opens the Cats product listing'
+        - "Category product listing page — Category page with more products than one page: the first 2 products are shown with name and description, a Next link is shown and no Previous link is shown"
+        - 'Product item listing page — Product page displayed: each row shows "Male Adult Bulldog" or "Female Puppy Bulldog" linked to its detail page, the item description, the list price and an Add to Cart control'
+        - 'Search results page — Matching items displayed: the page shows "Items matching any of: bulldog" and one row per Bulldog item with name, description, unit cost and Add to Cart'
+      outOfScope:
+        - Catalog administration (create, edit or delete products); none exists in the legacy system.
+        - Cart contents, the price charged at checkout and locale switching, which belong to shopping-cart, checkout and localization.
+        - Per-locale suffixed tables and locale-aware keyword tokenising, which are unreachable legacy code.
+      risksAssumptions:
+        - Search case handling, which price the product listing shows, item ordering, previous-page arithmetic and cache keying are disputed in design.md.
+        - Whether the rebuild keeps the catalog seeding facility is open (design.md Q6).
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Item detail screen: the item's attribute and product name, its image, a List Price, a Your Price (the unit cost the customer pays) and an Add to Cart link"
+        - "Home screen: a picture map linking to the Birds, Fish, Dogs, Reptiles and Cats categories"
+    evidence:
+      irRefs:
+        - CAT-BR-0001
+        - CAT-BR-0002
+        - CAT-BR-0003
+        - CAT-BR-0004
+        - CAT-BR-0005
+        - CAT-ENT-0001
+        - CAT-ENT-0002
+        - CAT-ENT-0003
+        - CAT-REQ-0001
+        - CAT-SCR-0001
+        - CAT-SCR-0002
+        - CAT-SCR-0003
+        - CAT-SCR-0004
+        - CATALOG-BR-0002
+        - CATALOG-BR-0003
+        - CATALOG-BR-0004
+        - CATALOG-BR-0005
+        - CATALOG-BR-0006
+        - CATALOG-BR-0007
+        - CATALOG-BR-0008
+        - CATALOG-BR-0009
+        - CATALOG-BR-0011
+        - CATALOG-BROWSING-BR-0001
+        - CATALOG-BROWSING-BUSINESS-RULE-0001
+        - CATALOG-BROWSING-WF-0001
+        - CATALOG-ENTITY-0001
+        - CATALOG-ENTITY-0002
+        - CATALOG-ENTITY-0003
+        - CATALOG-INT-0001
+        - CATALOG-REQ-0001
+        - catalog-browsing-BR-0001
+        - catalog-browsing-BR-0002
+        - catalog-browsing-BR-0003
+        - catalog-browsing-BR-0004
+        - catalog-browsing-BR-0005
+        - catalog-browsing-BR-0006
+        - catalog-browsing-BR-0007
+        - catalog-browsing-BR-0008
+        - catalog-browsing-BR-0009
+        - catalog-browsing-ENT-0001
+        - catalog-browsing-ENT-0002
+        - catalog-browsing-ENT-0003
+        - catalog-browsing-ENTITY-0001
+        - catalog-browsing-ENTITY-0002
+        - catalog-browsing-ENTITY-0003
+        - catalog-browsing-INT-0001
+        - catalog-browsing-REQ-0001
+        - catalog-browsing-REQ-0002
+        - catalog-browsing-REQ-0003
+        - catalog-browsing-REQ-0004
+        - catalog-browsing-REQ-0005
+        - catalog-browsing-SCREEN-0001
+        - catalog-browsing-SCREEN-0002
+        - catalog-browsing-WF-0001
+        - catalog-browsing-WORKFLOW-0001
+        - catalog-browsing-business-rule-0001
+        - catalog-browsing-business-rule-0002
+      reviewedBy: null
+      reviewedAt: null
+  - slug: customer-account
+    title: Customer account and profile
+    order: 5
+    dependsOn:
+      - sign-on
+      - catalog-browsing
+      - localization
+    priority: 0
+    change:
+      dir: openspec/changes/sx-customer-account
+      specCapabilities:
+        - customer-account
+    canvas:
+      problem: What a customer account holds (status, contact information with postal address, credit card on file, and profile preferences for language, favourite category, My List and banners) and how it is created, edited, displayed and personalised is spread across four EJB components and the storefront web tier and is written down nowhere.
+      solution: Build the customer data model (one customer per user id owning one account and one profile), all-or-nothing creation with defaults and cascading deletion, account registration and update forms with required-field rules, choice lists and an empty-field check, card expiry handling, the account information page, the My List panel and the pet-tips banner driven by profile preferences.
+      userStories:
+        - As a new customer, I want to enter my contact details, card and preferences once when I register, so that checkout can be pre-filled later.
+        - As a signed-in customer, I want to view and edit my account information, so that my details stay current.
+        - As a customer, I want a My List of products from my favourite category and pet tips I can switch on or off, so that the store feels personal.
+      acceptanceCriteria:
+        - 'One customer per user id — Customer created for a new user id: one customer record exists for "j2ee" with exactly one account and exactly one profile'
+        - 'Account composition and status — Account read after creation: it carries a status of "active", one contact-information record and one credit-card record'
+        - "Contact information record — Contact information stored with its address: reading it back returns the same four values and the same postal address"
+        - "Postal address record — Two identical addresses: they are two distinct records with different identities"
+        - "Credit card on file — Same card number on two records: both records exist with different identities"
+        - 'Card expiry month and year — Expiry split into month and year: the month is "07" and the year is "2004"'
+        - 'Malformed expiry fallback — Expiry without a separator: the month is reported as "01" and the year as "2010"'
+        - "Account initialised on customer creation — New customer's account: the account status is \"active\", the contact information, its postal address and the credit card all exist with every field empty"
+        - "Profile defaults on customer creation — New customer's profile: preferred language is \"en_US\", favourite category is empty, My List is on and banner is on"
+        - 'Atomic customer creation — Profile creation fails: creation fails and no customer, account, contact information, address, credit card or profile exists for "newbie"'
+        - "Cascading deletion of customer data — Customer deleted: none of those six records remain"
+        - 'Customer lookup — Lookup by user id: the "ACID" customer is returned'
+        - "Account created with supplied details — Seeded account: the account carries exactly the supplied status, contact information and card"
+        - "Contact information creation paths — Created from a complete value: the names, telephone and email are copied and a new postal address record is created with the supplied address values"
+        - 'Field-level read and update of account data — Update a single contact field: the telephone reads "555-000-0000" and every other contact field is unchanged'
+        - "Account data access is enforced by the caller — Internal read without a role: the data store returns the record and any access decision is the calling layer's"
+        - "Account registration and update — Account created at registration: a customer is created and every submitted contact, address, card and profile value is stored on it"
+        - "Required contact fields on the account form — Required field missing: the submission is rejected and city is reported as missing"
+        - "Profile preferences on the account form — Preferences unticked: both preferences are stored as off"
+        - "Account form reference choices — Creation form defaults: language defaults to English, favourite category defaults to Birds and every choice list above is offered"
+        - 'Empty-field check before submission — Validated field left empty: submission is blocked and the message "First Name is empty." is shown'
+        - "My List panel — My List on: the panel lists the first 10 Fish products, each linking to its product page"
+        - "Pet-tips banner — Banner for a matching category: the cats pet-tips banner is shown"
+        - 'Account information page — Account page displayed: the page shows each stored contact field, the card type and card number, expiry month "07" and year "2004", the preferred language, the favourite category, "Yes" for My List and "No" for banners'
+      outOfScope:
+        - Credential creation, authentication and the protected-page gate (owned by sign-on).
+        - Payment authorisation; the legacy system never charges the card on file.
+      risksAssumptions:
+        - Card data handling (design.md Q1) needs a decision before implementation; the legacy card number is stored and shown in plain text.
+        - Reference lists are inconsistent between create and edit forms and the legacy expiry fallback (01/2010) is a defect candidate.
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Account information screen: the signed-on customer's contact information, credit card type, card number and expiry month/year, preferred language, favourite category, and Yes/No for the My List and pet-tips banner preferences, with a link to edit the account"
+    evidence:
+      irRefs:
+        - ACCT-BR-0001
+        - ACCT-BR-0002
+        - ACCT-BR-0003
+        - ACCT-BR-0004
+        - ACCT-BR-0005
+        - ACCT-ENT-0001
+        - ACCT-ENT-0002
+        - ACCT-ENT-0003
+        - ACCT-SCR-0001
+        - ACCT-SCR-0002
+        - ACCT-WF-0001
+        - CUSTACCT-ENTITY-0001
+        - CUSTACCT-REQ-0001
+        - CUSTACCT-REQ-0002
+        - CUSTACCT-RULE-0001
+        - CUSTACCT-RULE-0002
+        - CUSTACCT-RULE-0003
+        - CUSTOMER-ACCOUNT-BUSINESS-RULE-0001
+        - CUSTOMER-ACCOUNT-BUSINESS-RULE-0002
+        - CUSTOMER-ACCOUNT-BUSINESS-RULE-0003
+        - CUSTOMER-ACCOUNT-ENTITY-0001
+        - CUSTOMER-ACCOUNT-ENTITY-0002
+        - CUSTOMER-ACCOUNT-ENTITY-0003
+        - CUSTOMER-ACCOUNT-ENTITY-0004
+        - CUSTOMER-ACCOUNT-ENTITY-0005
+        - CUSTOMER-ACCOUNT-REQ-0001
+        - CUSTOMER-ACCOUNT-REQ-0002
+        - CUSTOMER-ACCOUNT-REQUIREMENT-0001
+        - CUSTOMER-ACCOUNT-RULE-0001
+        - CUSTOMER-ACCOUNT-RULE-0002
+        - CUSTOMER-ACCOUNT-RULE-0003
+        - CUSTOMER-ACCOUNT-RULE-0004
+        - customer-account-BR-0001
+        - customer-account-BR-0002
+        - customer-account-BR-0003
+        - customer-account-BUSINESS-RULE-0001
+        - customer-account-BUSINESS-RULE-0002
+        - customer-account-BUSINESS-RULE-0003
+        - customer-account-BUSINESS-RULE-0004
+        - customer-account-BUSINESS-RULE-0005
+        - customer-account-BUSINESS-RULE-0006
+        - customer-account-BUSINESS-RULE-0007
+        - customer-account-ENTITY-0001
+        - customer-account-ENTITY-0002
+        - customer-account-ENTITY-0003
+        - customer-account-ENTITY-0004
+        - customer-account-ENTITY-0005
+        - customer-account-ENTITY-0006
+        - customer-account-REQ-0001
+        - customer-account-REQ-0002
+        - customer-account-REQ-0003
+        - customer-account-REQUIREMENT-0001
+        - customer-account-REQUIREMENT-0002
+        - customer-account-SCREEN-0001
+        - customer-account-business-rule-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: shopping-cart
+    title: Shopping cart
+    order: 6
+    dependsOn:
+      - catalog-browsing
+      - localization
+    priority: 0
+    change:
+      dir: openspec/changes/sx-shopping-cart
+      specCapabilities:
+        - shopping-cart
+    canvas:
+      problem: The storefront keeps one cart per shopper session that shoppers add to, remove from and re-quantify before checking out, and several of its rules (re-add resets quantity to 1, quantity 0 or non-numeric removes the line, count is distinct lines, prices re-read from the catalog) are undocumented.
+      solution: "Build a session-scoped cart usable without sign-on: add by item id, remove, batch quantity update, item count, subtotal, read-time catalog resolution of price and description, silent dropping of unresolvable items, discard on sign-out, emptying after an order is placed, and the cart screen."
+      userStories:
+        - As a shopper, I want to add items to a cart without signing in, so that I can collect what I want before deciding to buy.
+        - As a shopper, I want to change several quantities at once and see the subtotal, so that I know what my order will cost.
+        - As a shopper, I want to remove an item from my cart, so that I only buy what I still want.
+      acceptanceCriteria:
+        - 'Cart screen — Empty cart is displayed: the message "Your Shopping Cart is Empty." is shown and no item rows, Update Cart, total or Check Out control are shown'
+        - "One cart per shopper session — First cart access in a session: an empty cart is created for that session"
+        - "Anonymous cart use — Anonymous shopper adds an item: the item is added and no sign-on is requested"
+        - "Add item to cart — Item not yet in the cart: the cart contains one line for EST-6 with quantity 1"
+        - "Remove item from cart — Item in the cart is removed: the cart holds only EST-1"
+        - "Batch quantity update — Positive quantity: EST-6 has quantity 3"
+        - "Non-numeric quantity treated as zero — Letters entered as quantity: EST-6 is removed from the cart and no error is shown"
+        - "Cart item count — Count of a cart with multiple units: the count is 2"
+        - "Cart line contents — Line total: the EST-6 line carries its item, product, category, name and attribute details, quantity 3, unit cost 18.50 and line total 55.50"
+        - "Catalog resolution at read time — Catalog price changes after the item was added: the EST-6 line shows unit cost 20.00"
+        - "Unresolvable cart items — One item cannot be resolved: only EST-6 is listed, the subtotal is 18.50, the count is 2, and no error is shown"
+        - "Cart subtotal — Subtotal of several lines: the subtotal is 53.50"
+        - "Empty cart after order placement — Order placed: the cart holds no lines and the item count is 0"
+      outOfScope:
+        - Persisting a cart across sessions or devices; the legacy system never did.
+        - Discounts, tax and shipping in the cart subtotal.
+        - Locale-switch rules (owned by localization) and order placement (owned by checkout).
+      risksAssumptions:
+        - Reset-to-1 on re-add, floating-point money with no rounding rule, and the count/listing disagreement for unresolvable items are open (design.md OQ-1 to OQ-7).
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Cart screen: 'Your Shopping Cart is Empty.' when there are no items; otherwise each item (attribute and name linked to the item page), a Remove link, an editable quantity of at most 10 characters and the unit price, followed by an Update Cart button, the cart subtotal and a Check Out link to the order-information screen"
+    evidence:
+      irRefs:
+        - CART-BR-0001
+        - CART-BR-0002
+        - CART-ENTITY-0001
+        - CART-ENTITY-0002
+        - CART-INTEGRATION-0001
+        - CART-REQ-0001
+        - CART-RULE-0001
+        - CART-RULE-0002
+        - CART-RULE-0003
+        - CART-RULE-0004
+        - CART-RULE-0005
+        - CART-RULE-0006
+        - CART-RULE-0008
+        - CART-RULE-0010
+        - CART-RULE-0011
+        - CART-SCR-0001
+        - SHOPPING_CART-BR-0001
+        - SHOPPING_CART-BR-0002
+        - SHOPPING_CART-BR-0003
+        - SHOPPING_CART-BR-0004
+        - SHOPPING_CART-ENT-0001
+        - SHOPPING_CART-ENT-0002
+        - SHOPPING_CART-REQ-0001
+        - SHOPPING_CART-REQ-0002
+        - SHOPPING_CART-REQ-0003
+        - shopping-cart-BR-0001
+        - shopping-cart-REQ-0001
+        - shopping-cart-SCREEN-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: checkout
+    title: Checkout and order placement
+    order: 7
+    dependsOn:
+      - sign-on
+      - customer-account
+      - shopping-cart
+      - b2b-document-exchange
+    priority: 0
+    change:
+      dir: openspec/changes/sx-checkout
+      specCapabilities:
+        - checkout
+    canvas:
+      problem: A signed-in customer turns a cart into an order by confirming billing and shipping details and receives an order id immediately while the order is handed to order processing asynchronously; the order id sequence, empty-cart rejection, contact snapshot and transactional hand-off are stated nowhere.
+      solution: Build the order information form pre-filled from the account, required-field rules for billing and shipping, empty-cart rejection, purchase order contents, lines and total, the card attachment, order id generation, persistence of the order snapshot, a transactional asynchronous hand-off to order processing, error routing and the order complete screen.
+      userStories:
+        - As a signed-in customer, I want the billing and shipping form pre-filled from my account, so that checking out is quick.
+        - As a customer, I want an order number as soon as I submit, so that I can refer to my order.
+        - As a customer, I want to be told if my cart is empty when I try to order, so that I do not place an empty order.
+      acceptanceCriteria:
+        - "Checkout hands the order off asynchronously — Customer checks out a non-empty cart: the order information form is presented, pre-filled from the customer's account"
+        - "Order information screen — Form is displayed pre-filled: the Billing Information and Shipping Information sections each show those values in the first name, last name, street address, city, state/province, postal code, country, telephone and e-mail inputs, and a Submit control is shown"
+        - "Required billing and shipping contact fields — A required shipping field is blank: no order is placed and the telephone number is reported as missing"
+        - "Empty-cart order rejection — Order submitted with an empty cart: no order is handed to order processing and the Order Error explaining the empty cart and the possible re-submission is shown"
+        - 'Purchase order contents — Purchase order is populated at submission: the purchase order carries a new order id, user id "j2ee", contact e-mail "bill@example.com", the current timestamp as order date, both contacts, a credit card and locale en_US'
+        - "Order lines and total — Two-line cart: line 0 is EST-1 quantity 2 unit cost 16.50, line 1 is EST-6 quantity 1 unit cost 18.50, and the order total is 51.50"
+        - "Credit card attached to every order — Order carries a card: the purchase order handed to order processing includes a card number, card type and expiry date"
+        - "Order hand-off to order processing — Successful hand-off: exactly one message containing the purchase order XML is published on the order-processing queue, and afterwards the cart is empty"
+        - "Order message is enqueued within the caller's unit of work — Caller rolls back after enqueueing: the message is not delivered to order processing"
+        - "Enqueue failure is raised, never silent — Queue cannot be reached: an error is raised to the caller, the caller's unit of work is aborted, and no connection is left open"
+        - 'Order complete screen — Confirmation after a successful order: it shows "Your Order is Complete", the order id "10017" and a statement that a confirmation e-mail will be sent to "jane@example.com"'
+        - 'Order identifier format — First and subsequent orders: they receive order ids "10011", "10012" and "10013"'
+        - 'Per-prefix identifier counters — New prefix: a counter for "2002" is created and "20021" is returned'
+        - 'Atomic identifier issuance — Concurrent requests for the same prefix: one receives "100121" and the other "100122", and the counter holds 22'
+        - "Identifier counter record — Duplicate counter name: the insert is rejected by the uniqueness constraint"
+        - "Stored purchase order total — Supplied total is persisted verbatim: the stored order value is 51.50, read from the supplied total and not re-derived from the lines"
+        - "Stored purchase order contact and payment — Order contact is a snapshot: the stored order still holds the address supplied with the order"
+        - "Order placement is one transaction — Failure inside order placement: the transaction is rolled back, including the order id increment and the enqueued message, and the order complete screen is not shown"
+        - "Error screen selection by failure kind — Mapped failure: the empty-cart Order Error screen is shown"
+        - "Consistent reads while rendering a screen — Transaction unavailable: the page is still rendered and delivered"
+      outOfScope:
+        - Order approval, supplier fulfilment and the confirmation email itself, which belong to order processing and notification.
+        - Payment authorisation; the legacy code never charges a card.
+        - Tax, shipping charges and discounts; the legacy code has none.
+      risksAssumptions:
+        - The hard-coded credit card, the partly swallowed hand-off failure and the broken missing-field path are open (design.md OQ-1 to OQ-7).
+        - The legacy order total is summed in float while the cart subtotal uses double (discovery F2).
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Order information screen: a Billing Information section and a Shipping Information section, each with first name, last name, street address (2 lines), city, state/province, zip code, country, telephone and e-mail, both pre-filled from the customer's account contact information, and a Submit control that places the order"
+        - "Order complete screen: 'Your Order is Complete' with the order id and a statement that a confirmation e-mail will be sent to the order's e-mail address"
+    evidence:
+      irRefs:
+        - CHECKOUT-BR-0001
+        - CHECKOUT-BR-0002
+        - CHECKOUT-BUSINESS-RULE-0001
+        - CHECKOUT-BUSINESS-RULE-0002
+        - CHECKOUT-BUSINESS-RULE-0003
+        - CHECKOUT-ENTITY-0001
+        - CHECKOUT-INTEGRATION-0001
+        - CHECKOUT-REQUIREMENT-0001
+        - CHECKOUT-REQUIREMENT-0002
+        - CHECKOUT-RULE-0001
+        - CHECKOUT-WF-0001
+        - CHECKOUT-WORKFLOW-0001
+        - CHECKOUT-WORKFLOW-0002
+        - CHK-BR-0001
+        - CHK-BR-0002
+        - CHK-BR-0003
+        - CHK-BR-0004
+        - CHK-INT-0001
+        - CHK-SCR-0001
+        - CHK-WF-0001
+        - checkout-BR-0001
+        - checkout-BR-0002
+        - checkout-BR-0003
+        - checkout-BR-0004
+        - checkout-INT-0001
+        - checkout-REQ-0001
+        - checkout-SCREEN-0001
+        - checkout-SCREEN-0002
+        - checkout-WF-0001
+        - checkout-WORKFLOW-0001
+        - checkout-workflow-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: order-approval
+    title: Order approval
+    order: 8
+    dependsOn:
+      - sign-on
+      - checkout
+    priority: 0
+    change:
+      dir: openspec/changes/sx-order-approval
+      specCapabilities:
+        - order-approval
+    canvas:
+      problem: The legacy system decides which orders need a human decision, lets an administrator approve or deny them and feeds the outcome into fulfilment and notification, but none of it is written down outside a short user guide that disagrees with the code on the approval threshold.
+      solution: Build automatic approval by per-locale threshold, the pending-order review workflow with batched approve/deny commits, idempotent application of decisions to PENDING orders only, hand-off of outcomes to fulfilment and notification, administrator order listing by status, the sales revenue and order-count reports, and the administrator screens.
+      userStories:
+        - As an administrator, I want to see pending orders and approve or deny them in one commit, so that orders over the automatic limit are reviewed.
+        - As an administrator, I want a read-only view of approved, denied and completed orders, so that I can check what has been decided.
+        - As an administrator, I want revenue and order-count charts by category for a date range, so that I can see how sales are going.
+      acceptanceCriteria:
+        - "Automatic approval threshold — Small US order is auto-approved: its status becomes APPROVED without administrator action and it does not appear among pending orders"
+        - "Orders in other locales await review — Chinese-locale order of any value: it remains PENDING and is listed among pending orders"
+        - 'Order summary for administrator review — Order summary fields: the summary carries the order identifier, user "j2ee", the order date, amount 612.50 and the current status'
+        - "List orders by status — Pending orders requested: exactly the three pending orders are returned, each once, with a total count of 3"
+        - "Order data loaded on start and refresh — Client start: orders of all four statuses and the sales chart data are loaded without any further action"
+        - "Decisions take effect only on commit — Mixed commit: one approval batch containing 1001 and 1002 and one denial batch containing 1003 are submitted, and the order lists are reloaded"
+        - "Asynchronous delivery of approval decisions — Decisions queued: one approval document with both entries is queued and success is returned before either order's status changes"
+        - "Approval document structure — Wrong root: reading fails"
+        - "Decisions apply only to pending orders — Duplicate decision: only order 1002 changes status and is notified, and order 1001 is left unchanged with no new supplier purchase order or notification"
+        - "Applying an approval decision — Approval batch processed: order 1001 becomes APPROVED and a supplier purchase order is dispatched for it, order 1002 becomes DENIED with no supplier purchase order, and one notice listing both orders is sent for customer email"
+        - "Warning on refresh with uncommitted changes — Refresh cancelled: no data is reloaded and order 1001 is still marked DENIED"
+        - 'Busy state during server requests — Commit in progress: the status message reads "Updating data on the server..." and Approve, Deny, Commit and Refresh are disabled until the response arrives'
+        - 'Server failure in the administrator client — Server unreachable: a "Fatal Error!" dialog shows the error and the client session ends'
+        - 'Invalid administrator data requests — Unknown request type: it replies with an error stating it is unable to process an unknown request type "DELETE"'
+        - "Sales revenue report — Revenue by category: Fish shows 60.00, Dogs shows 500.00 and the total is 560.00"
+        - "Order-count report — Quantities by category: Fish shows 5, Dogs shows 1 and the total is 6"
+        - "Report window and status coverage — Order on the boundary: the order is included"
+        - 'Report date entry validation — Invalid date entered: the message "Dates must be in the format of MM/dd/yyyy" is shown and no report data is requested'
+        - "Default report date range — First display of the sales charts: the start date shows 01/01/2001 and the end date shows 12/31/2002"
+        - "Invalid report groups omitted — Group without a name: only the Fish group appears"
+        - 'Administrator landing page — Landing page displayed: it shows the explanatory text, a "Launch Rich Client" control and a "logout" control'
+        - "Order-management client workspace — Workspace opened: the pending-orders, non-pending-orders and sales views are available and Refresh, About and Exit can be used"
+        - "Process Pending Orders display — Pending orders listed: exactly the two pending orders appear with their ID, User ID, Date, Amount and a yellow PENDING status"
+        - "Process Pending Orders decisions — Bulk approve: all three rows show status APPROVED in green and nothing is submitted yet"
+        - "View Non-Pending Orders display — Non-pending orders listed: the approved, denied and completed orders appear and the pending order does not"
+        - "Sales charts view — Pie chart percentages: Fish is shown as 30% and Dogs as 70% of revenue"
+        - "Order row date and amount display — Date shown without padding: its date is shown as 2/3/2002 and its amount as 612.50"
+      outOfScope:
+        - Administrator authentication itself (owned by sign-on).
+        - Supplier fulfilment and customer email content; this capability only emits the triggers.
+        - Reproducing JMS, XML/DTD wire formats or the Java Web Start rich client.
+      risksAssumptions:
+        - Auto-approval thresholds are bare literals (US under 500, Japan under 50000, every other locale including zh_CN never auto-approved) and the user guide disagrees (design.md D1).
+        - The admin XML endpoint sits outside the administrator security constraint (discovery F4).
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Administrator landing screen: explains that the administrator can view sales, revenue and orders by state and approve or deny pending orders, and offers two actions: launch the order-management client and log out"
+        - "Sales screen: a pie chart of each category's percentage share of revenue and a bar chart of the number of orders per category, each with editable Start Date and End Date fields and a Get Data action that reloads that chart for the range"
+        - "Orders by status list: for each order in a given status its id, the customer user id, the order date as M/D/YYYY, the order total value and the status; used for the non-pending view of approved, denied or committed (fulfilled) orders, kept separate from the pending view and reloaded on an explicit refresh action"
+        - "Non-pending orders screen: orders that have been approved, denied or committed (fulfilled), separate from the pending-orders view, loaded on demand by a Refresh action"
+        - "Process Pending Orders screen: PENDING orders in a table with columns ID, User ID, Date, Amount and Status, sortable by column, with Approve, Deny and Commit actions and colour-coded status (APPROVED green, DENIED red, PENDING yellow)"
+        - "View Non-Pending Orders screen: a read-only list of APPROVED, COMPLETED and DENIED orders with the same columns as the pending-orders screen, sortable by column, with no way to change an order"
+        - "Order views: a pending-orders view for approving or denying orders and a non-pending-orders view of approved, denied or committed orders, each reloadable on demand so the administrator sees the latest statuses including changes just committed"
+    evidence:
+      irRefs:
+        - APPR-ENTITY-0001
+        - OA-ENT-0003
+        - OA-INT-0008
+        - OA-REQ-0002
+        - OA-REQ-0004
+        - OA-REQ-0014
+        - OA-REQ-0015
+        - OA-RULE-0007
+        - OA-RULE-0009
+        - OA-RULE-0010
+        - OA-RULE-0011
+        - OA-RULE-0012
+        - OA-RULE-0013
+        - OA-RULE-0017
+        - OA-RULE-0018
+        - OA-RULE-0019
+        - OA-RULE-0020
+        - OA-SCREEN-0001
+        - OA-SCREEN-0005
+        - OA-SCREEN-0006
+        - OA-SCREEN-0016
+        - ORDER-APPROVAL-BR-0001
+        - ORDER-APPROVAL-BUSINESS-RULE-0001
+        - ORDER-APPROVAL-BUSINESS-RULE-0002
+        - ORDER-APPROVAL-BUSINESS-RULE-0003
+        - ORDER-APPROVAL-INTEGRATION-0001
+        - ORDER-APPROVAL-REQ-0001
+        - ORDER-APPROVAL-REQUIREMENT-0001
+        - ORDER-APPROVAL-SCREEN-0001
+        - ORDER-APPROVAL-WF-0001
+        - order-approval-BR-0001
+        - order-approval-BR-0002
+        - order-approval-BR-0007
+        - order-approval-BR-0011
+        - order-approval-BR-0012
+        - order-approval-BR-0013
+        - order-approval-BR-0014
+        - order-approval-BR-0015
+        - order-approval-ENT-0001
+        - order-approval-INT-0006
+        - order-approval-REQ-0001
+        - order-approval-REQ-0002
+        - order-approval-REQ-0004
+        - order-approval-REQ-0005
+        - order-approval-REQ-0010
+        - order-approval-RULE-0001
+        - order-approval-SCR-0003
+        - order-approval-SCR-0008
+        - order-approval-SCR-0009
+        - order-approval-SCREEN-0001
+        - order-approval-WF-0002
+        - order-approval-WF-0003
+        - order-approval-WF-0005
+        - order-approval-business-rule-0008
+        - order-approval-integration-0007
+        - order-approval-requirement-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: order-fulfillment
+    title: Order fulfillment
+    order: 9
+    dependsOn:
+      - b2b-document-exchange
+      - checkout
+      - order-approval
+    priority: 0
+    change:
+      dir: openspec/changes/sx-order-fulfillment
+      specCapabilities:
+        - order-fulfillment
+    canvas:
+      problem: An order's life after placement (intake at the order processing centre, workflow status from PENDING to COMPLETED, supplier purchase orders on approval, fulfilment from stock, partial shipments and invoices) is documented only in legacy code, deployment descriptors and demo docs.
+      solution: Build the purchase order record and its line items, the per-order workflow status and lifecycle, intake at the order centre, supplier purchase order generation on approval, supplier fulfilment from stock with whole-line shipment, invoicing and invoice-driven completion, with an atomicity and retry contract for every asynchronous step.
+      userStories:
+        - As the store, I want each approved order turned into a supplier purchase order automatically, so that stock is shipped without manual work.
+        - As a supplier, I want to ship the lines I have stock for and invoice them, so that customers receive what is available while the rest waits.
+        - As an administrator, I want an order to be marked completed once every line is invoiced, so that its status reflects reality.
+      acceptanceCriteria:
+        - "Order capture is separated from order processing and supplier fulfilment — A placed order flows to the supplier and is invoiced back: the storefront submission returns without waiting for fulfilment, the supplier receives a purchase order for it, and the order processing centre receives an invoice for every shipment the supplier makes"
+        - "Purchase order record — Order stored under its incoming identifier: it is retrievable by identifier `1001` with its user id, email, date, locale, total value, contact, address, credit card and both line items"
+        - "Purchase order creation is atomic — Lines start unshipped: both stored lines have shipped quantity 0 and carry their incoming category, product, item, line number, quantity and unit price"
+        - 'Single stored contact serves as billing and shipping contact — Billing contact differs from shipping contact on intake: both the billing and the shipping contact read back as "B. Receiver"'
+        - "Purchase order deletion removes its dependents — Deleting an order: none of the contact, address, credit card or line items remain stored"
+        - "Purchase order snapshot — Snapshot read after the loading transaction ends: the snapshot still returns both lines with their shipped quantities 0 and 2 and all header, contact and card fields"
+        - "Line item attributes and immutability — Catalog price change does not alter a stored line: the stored line still carries unit price 16.50"
+        - "Line item creation requires an initial shipped quantity — Line copied with a stated shipped quantity: the new line has 4 units of `EST-2` at 12.00, the same category, product and line number, and shipped quantity 0"
+        - "Order workflow status record — One status per order: exactly one status, APPROVED, is returned"
+        - "Order workflow lifecycle — Approval: its status becomes APPROVED"
+        - "Starting order workflow tracking — Tracking started for a new order: a record for `1001` exists with status PENDING"
+        - "Reading and updating order workflow status — Status update of an existing order: reading the status of `1001` returns APPROVED"
+        - "Listing orders by workflow status — Orders listed by status: exactly `1001` and `1003` are returned"
+        - "Workflow tracking operations are transactional — Status change rolled back with its triggering step: the status of `1001` is still PENDING"
+        - "Order intake at the order processing centre — New order received: order `1001` is stored and its workflow status is PENDING before approval is evaluated"
+        - "Supplier purchase order generation on approval — Approved order produces one supplier purchase order: its status is APPROVED and exactly one supplier purchase order for `1001` is sent containing the ship-to block and both lines"
+        - "Batched customer status notification after an approval batch — Mixed approval batch: one supplier purchase order for `1001` is sent first, followed by one notification covering both `1001` and `1002`"
+        - "Recording supplier shipments against an order — Invoice applied to matching lines: the `EST-1` line has shipped quantity 2 and the `EST-6` line still has shipped quantity 0"
+        - "Order completion evaluation on invoice receipt — Final invoice completes the order: the status of `1001` becomes COMPLETED and one completed-order notice for `1001` is raised"
+        - "Order processing steps are atomic and retried — Failure while sending after a status change: `1001` remains PENDING, no supplier purchase order or notification for the batch is delivered, and the batch is processed again later"
+        - "Supplier purchase order record — Supplier orders listed by status: `1001` and `1003` are each returned exactly once"
+        - "Supplier purchase order creation — Supplier order created as pending: supplier order `1001` has status PENDING, one shipping contact, and two lines each with shipped quantity 0"
+        - "Supplier purchase order statuses — Fulfilled supplier order: its status becomes COMPLETED"
+        - "Supplier purchase order deletion removes its dependents — Deleting a supplier order: none of the contact, address or line items remain stored"
+        - "Supplier handling of a received purchase order — Nothing in stock on receipt: `1001` is stored as PENDING and no invoice is sent"
+        - "Whole-line shipment from stock — Insufficient stock for a line: no units of the line ship and stock of `EST-1` remains 3"
+        - "Partial shipment across lines and supplier order completion — One of two lines can ship: the `EST-1` line is shipped, the `EST-6` line is not, and the order stays PENDING"
+        - "Supplier invoice content — Invoice lists only this attempt's lines: the invoice for that attempt lists only the `EST-6` line, the original order date and today's date as shipping date"
+        - "Re-fulfilment of pending supplier orders on stock update — Stock update releases a waiting order: the supplier order ships and becomes COMPLETED, an invoice is sent, and the customer order becomes COMPLETED without further administrator action"
+        - "Supplier message channels — Invoice published after stock update: its invoice is published on the invoice channel and received by the order processing centre"
+        - "Workflow step failures preserve their root cause — Handler fails: a workflow-step error is raised whose root cause is the connection error"
+        - "Configured dependencies fail fast — Missing configured channel: a dependency-resolution error carrying the underlying cause is raised immediately and no fallback channel is used"
+      outOfScope:
+        - The approval decision itself (auto-approval thresholds, admin approval), owned by order-approval.
+        - Customer notification content and mail transport, owned by customer-notifications.
+        - The supplier stock table and its edit surface, owned by supplier-inventory.
+        - Wire-compatible XML documents or JMS; the rebuild is a single monolith.
+      risksAssumptions:
+        - The single stored contact reused as billing and shipping (discovery F3), exact-equality completion that never completes an over-shipped order, and plain-text card storage are flagged in design.md.
+      techStack: []
+      affectedCode: []
+    evidence:
+      irRefs:
+        - OF-BR-0002
+        - OF-BR-0003
+        - OF-BR-0004
+        - OF-WF-0001
+        - OF-WF-0005
+        - ORDER-FULFILLMENT-BR-0001
+        - ORDER-FULFILLMENT-BR-0002
+        - ORDER-FULFILLMENT-BR-0003
+        - ORDER-FULFILLMENT-BR-0004
+        - ORDER-FULFILLMENT-BR-0005
+        - ORDER-FULFILLMENT-BUSINESS-RULE-0001
+        - ORDER-FULFILLMENT-BUSINESS-RULE-0002
+        - ORDER-FULFILLMENT-ENTITY-0001
+        - ORDER-FULFILLMENT-INTEGRATION-0001
+        - ORDER-FULFILLMENT-REQ-0001
+        - ORDER-FULFILLMENT-REQUIREMENT-0001
+        - ORDER-FULFILLMENT-RULE-0001
+        - ORDER-FULFILLMENT-RULE-0002
+        - ORDER-FULFILLMENT-RULE-0003
+        - ORDER-FULFILLMENT-RULE-0004
+        - ORDER-FULFILLMENT-RULE-0005
+        - ORDER-FULFILLMENT-RULE-0006
+        - ORDER-FULFILLMENT-WF-0001
+        - ORDER-FULFILLMENT-WORKFLOW-0001
+        - ORDER-FULFILLMENT-WORKFLOW-0002
+        - ORDFUL-ENT-0001
+        - ORDFUL-INT-0001
+        - ORDFUL-INT-0002
+        - ORDFUL-RULE-0001
+        - ORDFUL-RULE-0002
+        - ORDFUL-RULE-0003
+        - ORDFUL-RULE-0004
+        - ORDFUL-RULE-0005
+        - ORDFUL-WF-0001
+        - order-fulfillment-BR-0001
+        - order-fulfillment-BR-0002
+        - order-fulfillment-BR-0003
+        - order-fulfillment-BR-0004
+        - order-fulfillment-BR-0005
+        - order-fulfillment-ENT-0004
+        - order-fulfillment-ENT-0005
+        - order-fulfillment-ENTITY-0001
+        - order-fulfillment-INT-0001
+        - order-fulfillment-INTEGRATION-0001
+        - order-fulfillment-REQ-0001
+        - order-fulfillment-REQ-0002
+        - order-fulfillment-REQ-0003
+        - order-fulfillment-REQ-0004
+        - order-fulfillment-REQ-0006
+        - order-fulfillment-WF-0001
+        - order-fulfillment-WORKFLOW-0001
+        - order-fulfillment-business-rule-0001
+        - order-fulfillment-business-rule-0002
+        - order-fulfillment-business-rule-0003
+        - order-fulfillment-business-rule-0004
+        - order-fulfillment-entity-0001
+        - order-fulfillment-entity-0002
+        - order-fulfillment-integration-0001
+        - order-fulfillment-requirement-0001
+        - order-fulfillment-requirement-0002
+        - order-fulfillment-requirement-0003
+        - order-fulfillment-workflow-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: supplier-inventory
+    title: Supplier inventory
+    order: 10
+    dependsOn:
+      - sign-on
+      - order-fulfillment
+    priority: 0
+    change:
+      dir: openspec/changes/sx-supplier-inventory
+      specCapabilities:
+        - supplier-inventory
+    canvas:
+      problem: The supplier keeps a stock level per catalog item that staff maintain through a small web interface, and updating stock is also what retries back-ordered supplier orders and sends their invoices; none of this is documented beyond the demo usage guide.
+      solution: Build the supplier stock record, the batch stock update (absolute replacement, selected rows only, blank and negative values ignored per row), a single unit of work that re-attempts pending supplier orders and sends invoices after an update, the initial stock load, and the supplier home, inventory, inventory-unavailable and confirmation screens.
+      userStories:
+        - As supplier staff, I want to see every item's stock and set new quantities for the rows I tick, so that stock levels match the warehouse.
+        - As supplier staff, I want back-ordered orders to ship automatically when I restock, so that customers are not left waiting.
+      acceptanceCriteria:
+        - "Supplier stock record — Stock record created for an item: exactly one stock record for EST-1 exists with quantity 10000"
+        - "Stock update applies only to selected rows — Selected row with a new quantity is replaced: EST-3 has quantity 25"
+        - "Negative stock quantity is ignored per row — Negative value skipped, rest of batch applied: EST-7 still has quantity 40, EST-8 has quantity 30, and the update confirmation is shown"
+        - "Stock update re-attempts pending supplier orders — Back-ordered order ships after restock: the order's EST-9 line is shipped, EST-9 has quantity 15, and one invoice is sent for that order"
+        - "Initial stock load — Load into empty inventory: stock records EST-1 through EST-29 exist, each with quantity 10000"
+        - "Supplier home screen — Entry point shows the home screen: the home screen is shown with the back-order explanation and the Display Inventory and Logout actions"
+        - "Inventory update screen — Every stock record is listed: two rows are shown, EST-1 with existing quantity 10000 and EST-2 with existing quantity 7, each with an empty New Quantity input and an unticked Update checkbox, and one Submit control is offered"
+        - "Inventory unavailable state — Empty inventory: the message that there are no items in inventory is shown and no table or Submit control is shown"
+        - "Inventory update confirmation screen — Confirmation after update: a screen stating that the inventory was updated successfully is shown with Display Inventory and Logout actions"
+      outOfScope:
+        - Supplier order fulfilment and invoice content (owned by order-fulfillment).
+        - Authentication, roles and logout (owned by sign-on).
+        - Additive stock receipts, stock history or an audit trail; none exist in the legacy system.
+      risksAssumptions:
+        - The initial-load endpoint is unguarded, invoice failures are swallowed, non-numeric input is unhandled and pending-order priority is undefined (design.md).
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Inventory update screen: every stock record with its item identifier and existing quantity, a new-quantity entry field and an update selector per item, and a single submit action for all changes"
+        - "Inventory unavailable state: a message that there are no items in inventory instead of the update form"
+        - "Inventory screen: the current quantity of each item, a new quantity per item, a mark for which rows to update, and a submit that persists only the marked rows"
+        - "Inventory screen: the current quantity of every inventory item, a new quantity and an update mark per item, and a submit that persists new quantities only for marked items, applying all marked changes in one submission"
+    evidence:
+      irRefs:
+        - SI-BR-0004
+        - SI-BR-0007
+        - SI-ENT-0001
+        - SI-SCR-0002
+        - SI-SCR-0003
+        - SI-WF-0005
+        - SI-WF-0006
+        - SUPINV-ENT-0001
+        - SUPINV-REQ-0001
+        - SUPINV-RULE-0001
+        - SUPINV-RULE-0002
+        - SUPINV-RULE-0003
+        - SUPINV-SCR-0001
+        - SUPINV-WF-0001
+        - SUPPLIER-INVENTORY-SCREEN-0001
+        - supplier-inventory-REQ-0001
+        - supplier-inventory-SCREEN-0001
+      reviewedBy: null
+      reviewedAt: null
+  - slug: customer-notifications
+    title: Customer notifications
+    order: 11
+    dependsOn:
+      - localization
+      - order-approval
+      - order-fulfillment
+    priority: 0
+    change:
+      dir: openspec/changes/sx-customer-notifications
+      specCapabilities:
+        - customer-notifications
+    canvas:
+      problem: Customers are emailed when their order is approved or denied, when part of it ships and when it completes, but the triggers, switches, content and failure handling sit across the order centre's mail producers, a shared mailer and a deployment guide.
+      solution: Build the three order-status emails (approval decision, shipment, order completed) with a deployment switch each, asynchronous delivery through a queued mail request, mail request validation and formatting, sender and mail-server configuration, log-and-discard on send failure, and localized content in en_US, ja_JP and zh_CN.
+      userStories:
+        - As a customer, I want an email telling me whether my order was approved or denied, so that I know whether it will be fulfilled.
+        - As a customer, I want an email listing what has shipped, so that I know what to expect.
+        - As an operator, I want each kind of email switchable, so that a deployment can turn notifications off.
+      acceptanceCriteria:
+        - "Order approval decision notification — Order approved: one email with subject `Java Pet Store Order Status: 1001` is sent to `ann@example.com` stating the order was approved"
+        - "Shipment notification — Partial shipment: one email with subject `Java Pet Store Order Shipped: 1001` is sent to the order's email address listing those two lines only"
+        - "Order completed notification — Order completes: one email with subject `Java Pet Store Order COMPLETED: 1001` is sent to the order's email address listing all three lines"
+        - "Notification sequence over an order's life — Order fulfilled in two shipments: the customer receives four emails in total: one approval, two shipment and one completion email"
+        - "Independently switchable notification kinds — Shipment emails switched off: no shipment email is sent, the invoice is still applied to the order, and the other two kinds continue to be sent when their triggers occur"
+        - "Missing or invalid notification switch fails fast — Switch not configured: start-up fails with a configuration error naming the missing switch and no completed-order email is sent"
+        - "Asynchronous email delivery — Mail server slow: the approval is recorded without waiting for the mail server, and the approval email is sent later by the mail-sending service"
+        - "Mail request structure and validation — Request missing its subject: no email is sent and processing of the request fails with a validation error"
+        - "Outgoing email format — Email headers and body: the sent email has To `ann@example.com`, subject `S`, an HTML body `<b>hello</b>` encoded as UTF-8, and a sent date of 2026-09-26T10:00:00Z"
+        - "Configured sender and mail server — Default sender: its From address is `customerservice@javapetstoredemo.com` and it is submitted to the configured mail server"
+        - "Send failure handling — Mail server down: the failure is logged, the request is not retried, and the order's approval remains recorded"
+        - "Notifications rendered in the order's locale — Japanese-locale order: the shipment email body is rendered with the ja_JP wording"
+        - 'Approval decision email content — Approved order email displayed: it thanks the customer for the order, shows order id 1001, and states "approved! We will now fulfill your order."'
+        - "Shipment email content — Shipment of two lines displayed: it shows order id 1001, states that this part of the order has shipped, and shows a table with headers Category, Product #, Quantity, Unit Price and two rows `FISH | FI-SW-01 | 2 | $16.50` and `DOGS | K9-BD-01 | 1 | $18.50`"
+      outOfScope:
+        - Retry, dead-lettering or operator alerting for failed sends; the legacy system has none.
+        - Emails other than these three, such as account or password mail.
+        - Partner (supplier) document exchange, owned by b2b-document-exchange.
+      risksAssumptions:
+        - A failed send is logged and discarded, so a customer can silently miss a notification.
+      techStack: []
+      affectedCode: []
+      screens:
+        - "Approval decision email: thanks the customer, shows the order id, and states either 'approved! We will now fulfill your order.' when APPROVED or 'denied unfortunately. Sorry we could not place your order.' when DENIED (ja_JP and zh_CN carry translated equivalents)"
+        - "Shipment email: the order id, a statement that this part of the order has shipped, and the shipment contents in a table with columns Category, Product #, Quantity and Unit Price"
+    evidence:
+      irRefs:
+        - CUSTOMER-NOTIFICATIONS-BR-0001
+        - CUSTOMER-NOTIFICATIONS-BUSINESS-RULE-0001
+        - CUSTOMER-NOTIFICATIONS-INT-0001
+        - CUSTOMER-NOTIFICATIONS-REQUIREMENT-0001
+        - CUSTOMER-NOTIFICATIONS-REQUIREMENT-0002
+        - CUSTOMER-NOTIFICATIONS-REQUIREMENT-0003
+        - CUSTOMER-NOTIFICATIONS-WF-0001
+        - customer-notifications-BR-0002
+        - customer-notifications-BR-0004
+        - customer-notifications-BUSINESS-RULE-0001
+        - customer-notifications-BUSINESS-RULE-0002
+        - customer-notifications-BUSINESS-RULE-0003
+        - customer-notifications-BUSINESS-RULE-0004
+        - customer-notifications-ENTITY-0001
+        - customer-notifications-INT-0007
+        - customer-notifications-INTEGRATION-0001
+        - customer-notifications-REQ-0001
+        - customer-notifications-REQ-0002
+        - customer-notifications-REQ-0003
+        - customer-notifications-RULE-0001
+        - customer-notifications-RULE-0002
+        - customer-notifications-RULE-0003
+        - customer-notifications-SCR-0005
+        - customer-notifications-SCR-0006
+      reviewedBy: null
+      reviewedAt: null
+artifacts:
+  openapi: api/openapi.yaml
+  erd: architecture/erd.mermaid
+  schema: architecture/schema.sql
+  agents: architecture/rebuild-guidance.md
