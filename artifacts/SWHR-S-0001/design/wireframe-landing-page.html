@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#fff;color:#27272a;font-size:12px;width:720px}
+.hdr{height:52px;border-bottom:1px solid #d4d4d8;display:flex;align-items:center;gap:10px;padding:0 14px}
+.logo{width:92px;height:26px;background:#d4d4d8;border:1px solid #a1a1aa;display:flex;align-items:center;justify-content:center;font-size:10px}
+.search{flex:1;display:flex;gap:4px}.search .in{flex:1;height:30px;border:1px solid #a1a1aa;border-radius:6px;padding:7px;color:#71717a}
+.btn{height:30px;border:1px solid #71717a;border-radius:6px;padding:0 10px;display:flex;align-items:center;white-space:nowrap}
+.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.flags{display:flex;gap:3px}.flag{width:26px;height:18px;background:#e4e4e7;border:1px solid #a1a1aa;font-size:8px;display:flex;align-items:center;justify-content:center}
+.lnk{padding:0 4px;text-decoration:underline}
+.body{display:flex;min-height:470px}
+.side{width:180px;border-right:1px solid #d4d4d8;background:#fafafa;padding:10px 8px}
+.grp{font-size:9px;text-transform:uppercase;color:#71717a;margin:10px 4px 4px;letter-spacing:.05em}
+.nav{padding:5px 6px;border-radius:5px}.nav.on{background:#e4e4e7;font-weight:600}
+.main{flex:1;padding:18px}
+.bar{background:#d4d4d8;height:9px;border-radius:3px;margin:6px 0}.bar.h{height:18px;background:#a1a1aa;width:55%}
+.hero{display:flex;gap:14px;align-items:center;border:1px solid #d4d4d8;border-radius:10px;padding:14px;margin-bottom:14px}
+.img{background:#f4f4f5;border:1px solid #d4d4d8;display:flex;align-items:center;justify-content:center;color:#71717a;font-size:10px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.card{border:1px solid #d4d4d8;border-radius:8px;padding:8px;min-height:62px}
+.card b{display:block;margin-bottom:4px}.card .bar{height:6px}
+.sec{font-weight:600;margin:12px 0 6px}
+.ftr{border-top:1px solid #d4d4d8;padding:10px 14px;display:flex;justify-content:space-between;color:#52525b;font-size:10px}
+.note{font-size:10px;color:#71717a;margin-top:4px}
+</style></head><body>
+<div class="hdr"><div class="logo">Pet Store logo</div>
+<div class="search"><div class="in">Search pets…</div><div class="btn">Search</div></div>
+<div class="flags"><div class="flag">US</div><div class="flag">JP</div><div class="flag">CN</div></div>
+<span class="lnk">Account</span><span class="lnk">Cart (0)</span><div class="btn">Sign in</div></div>
+<div class="body">
+<div class="side">
+<div class="grp">Pets</div><div class="nav">Birds</div><div class="nav">Cats</div><div class="nav">Dogs</div><div class="nav">Fish</div><div class="nav">Reptiles</div>
+<div class="grp">Areas</div><div class="nav on">Home</div><div class="nav">(11 area entries — see Site shell)</div>
+</div>
+<div class="main">
+<div class="hero"><div style="flex:1"><div class="bar h"></div><div class="bar" style="width:90%"></div><div class="bar" style="width:70%"></div>
+<div style="display:flex;gap:6px;margin-top:10px"><div class="btn pri">Browse pets</div><div class="btn">Sign in</div></div></div>
+<div class="img" style="width:210px;height:110px">Pet picture map<br>(5 clickable categories)</div></div>
+<div class="sec">Everything in the store</div>
+<div class="grid">
+<div class="card"><b>Catalog browsing and search</b><div class="bar" style="width:90%"></div></div>
+<div class="card"><b>Shopping cart</b><div class="bar" style="width:80%"></div></div>
+<div class="card"><b>Checkout and order placement</b><div class="bar" style="width:70%"></div></div>
+<div class="card"><b>Customer account and profile</b><div class="bar" style="width:85%"></div></div>
+<div class="card"><b>Sign-on and access control</b><div class="bar" style="width:75%"></div></div>
+<div class="card"><b>Localization</b><div class="bar" style="width:60%"></div></div>
+<div class="card"><b>Order approval</b><div class="bar" style="width:80%"></div><div class="note">Admin only</div></div>
+<div class="card"><b>Order fulfillment</b><div class="bar" style="width:70%"></div><div class="note">Admin only</div></div>
+<div class="card"><b>Supplier inventory</b><div class="bar" style="width:90%"></div><div class="note">Supplier staff</div></div>
+<div class="card"><b>Customer notifications</b><div class="bar" style="width:65%"></div></div>
+<div class="card"><b>Partner document exchange</b><div class="bar" style="width:75%"></div><div class="note">Admin only</div></div>
+<div class="card img" style="min-height:62px">Pet tips banner<br>(when enabled)</div>
+</div></div></div>
+<div class="ftr"><span>React Pet Store</span><span>Home · Administration · Supplier · English | 日本語 | 中文</span></div>
+</body></html>

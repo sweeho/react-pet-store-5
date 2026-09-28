@@ -1,0 +1,22 @@
+# Tasks — Bootstrap, landing page and shared site shell
+
+## 1. Boilerplate
+
+- [x] 1.1 Stand up or extend the application scaffold, build and test tooling (SWHR-T-0004)
+- [x] 1.2 Add a smoke test that loads the root route (SWHR-T-0004)
+
+## 2. Landing page
+
+- [x] 2.1 Add the landing page at the root route (SWHR-T-0005)
+- [x] 2.2 Link the landing page to every primary area (SWHR-T-0005)
+
+## 3. Site shell
+
+- [x] 3.1 Add the shared page layout with header and footer (SWHR-T-0006)
+- [x] 3.2 Add the global navigation with one entry per primary area and a link to the landing page (SWHR-T-0006)
+
+## 4. Shared frames
+
+- [x] 4.1 Add the shared empty frame (SWHR-T-0007)
+- [x] 4.2 Add the shared error frame with a retry action (SWHR-T-0007)
+- [x] 4.3 Add the shared loading frame (SWHR-T-0007)
