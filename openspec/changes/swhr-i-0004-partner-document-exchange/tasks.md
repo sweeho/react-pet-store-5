@@ -1,14 +1,14 @@
 ## 1. XML infrastructure
 
-- [ ] 1.1 Select and wire an XML parser/serializer supporting DTD and XSD validation on the server (SWHR-T-0028)
-- [ ] 1.2 Implement UTF-8, indented document serialization with optional DOCTYPE public/system identifiers (SWHR-T-0028)
-- [ ] 1.3 Implement element builders that fail with an error naming the element when a value is null and accept empty strings (SWHR-T-0028)
-- [ ] 1.4 Implement positional child readers that reject missing, out-of-order or empty required elements with element-named errors (SWHR-T-0028)
-- [ ] 1.5 Implement the document type check (reject mismatched public identifier, pass when no DOCTYPE) (SWHR-T-0028)
-- [ ] 1.6 Implement parse error handling: reject malformed XML, log schema violations and continue (SWHR-T-0028)
-- [ ] 1.7 Implement the entity catalog resolver with the four-step resolution order and deployment catalog override (SWHR-T-0028)
-- [ ] 1.8 Serve the order centre entity catalog for TPA-LineItem, TPA-SupplierOrder and TPA-Invoice identifiers (SWHR-T-0028)
-- [ ] 1.9 Add per-document-type validation switches and the DTD/XSD form selector to server configuration (SWHR-T-0028)
+- [x] 1.1 Select and wire an XML parser/serializer supporting DTD and XSD validation on the server (SWHR-T-0028)
+- [x] 1.2 Implement UTF-8, indented document serialization with optional DOCTYPE public/system identifiers (SWHR-T-0028)
+- [x] 1.3 Implement element builders that fail with an error naming the element when a value is null and accept empty strings (SWHR-T-0028)
+- [x] 1.4 Implement positional child readers that reject missing, out-of-order or empty required elements with element-named errors (SWHR-T-0028)
+- [x] 1.5 Implement the document type check (reject mismatched public identifier, pass when no DOCTYPE) (SWHR-T-0028)
+- [x] 1.6 Implement parse error handling: reject malformed XML, log schema violations and continue (SWHR-T-0028)
+- [x] 1.7 Implement the entity catalog resolver with the four-step resolution order and deployment catalog override (SWHR-T-0028)
+- [x] 1.8 Serve the order centre entity catalog for TPA-LineItem, TPA-SupplierOrder and TPA-Invoice identifiers (SWHR-T-0028)
+- [x] 1.9 Add per-document-type validation switches and the DTD/XSD form selector to server configuration (SWHR-T-0028)
 
 ## 2. Shared document elements
 
