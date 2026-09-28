@@ -1,8 +1,8 @@
 ## 1. Data model
 
-- [ ] 1.1 Add the `users` credential table (user id primary key, password hash) to the `db/` schema and generate its `drizzle/` migration (SWHR-T-0042)
-- [ ] 1.2 Add the `sessions` table (id, user id, signed-on flag, original URL, locale, realm, last-seen) and generate its migration (SWHR-T-0042)
-- [ ] 1.3 Add an administrator role assignment (user or group to role) to the schema and seed the administrator and supplier principals (SWHR-T-0042)
+- [x] 1.1 Add the `users` credential table (user id primary key, password hash) to the `db/` schema and generate its `drizzle/` migration (SWHR-T-0042)
+- [x] 1.2 Add the `sessions` table (id, user id, signed-on flag, original URL, locale, realm, last-seen) and generate its migration (SWHR-T-0042)
+- [x] 1.3 Add an administrator role assignment (user or group to role) to the schema and seed the administrator and supplier principals (SWHR-T-0042)
 
 ## 2. Credential rules
 
