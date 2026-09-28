@@ -37,12 +37,12 @@
 
 ## 6. Administrator and supplier access
 
-- [ ] 6.1 Implement the `requireRole("administrator")` guard for admin console and supplier routes (SWHR-T-0047)
-- [ ] 6.2 Build the administrator sign-in form and login-error page with a link back to sign in (SWHR-T-0047)
-- [ ] 6.3 Implement administrator and supplier sign-out, returning to the respective landing page (SWHR-T-0047)
-- [ ] 6.4 Make the admin data service reply with a session-timed-out error when called without a session (SWHR-T-0047)
-- [ ] 6.5 Make the supplier inventory page show a not-authorised message and no update form to users without the role (SWHR-T-0047)
-- [ ] 6.6 Decide and implement the session-bound admin client launch, or its browser equivalent (OQ-6) (SWHR-T-0047)
+- [x] 6.1 Implement the `requireRole("administrator")` guard for admin console and supplier routes (SWHR-T-0047)
+- [x] 6.2 Build the administrator sign-in form and login-error page with a link back to sign in (SWHR-T-0047)
+- [x] 6.3 Implement administrator and supplier sign-out, returning to the respective landing page (SWHR-T-0047)
+- [x] 6.4 Make the admin data service reply with a session-timed-out error when called without a session (SWHR-T-0047)
+- [x] 6.5 Make the supplier inventory page show a not-authorised message and no update form to users without the role (SWHR-T-0047)
+- [x] 6.6 Decide and implement the session-bound admin client launch, or its browser equivalent (OQ-6) (SWHR-T-0047)
 
 ## 7. Tests
 
