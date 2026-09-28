@@ -2,15 +2,26 @@ import { rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { H3Event } from "nitro/h3";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import getSchema from "./[file].get";
 
+// A fixture identifier/file pair, not a real one from lib/b2b/schemas/catalog.ts.
+// Every real catalog entry eventually gets a real, permanently-committed file
+// as its owning ticket lands, so using one as a scratch "on disk" / "not yet
+// on disk" fixture is a trap: the moment that ticket ships, this suite starts
+// writing over and deleting a real bundled schema out from under it (found
+// when SWHR-T-0030 landed lib/b2b/schemas/files/PurchaseOrder.dtd.xsd and this
+// file's afterEach deleted it during the very next `bun run verify`).
+// vi.mock is hoisted above this file's own declarations, so the fixture
+// name is inlined here rather than referencing the KNOWN_FILE constant below.
+vi.mock("../../../../lib/b2b/schemas/catalog", () => ({
+  BUNDLED_SCHEMA_CATALOG: [{ identifier: "test-fixture-id", file: "__route-test-fixture.xsd" }],
+}));
+
+const KNOWN_FILE = "__route-test-fixture.xsd";
+
 const SCHEMAS_DIR = path.join(process.cwd(), "lib/b2b/schemas/files");
-// A real catalog filename (lib/b2b/schemas/catalog.ts) — no schema is
-// authored for it yet, so tests that need actual file bytes write it
-// themselves and clean up.
-const KNOWN_FILE = "PurchaseOrder.dtd.xsd";
 const KNOWN_FILE_PATH = path.join(SCHEMAS_DIR, KNOWN_FILE);
 
 function eventFor(file: string) {

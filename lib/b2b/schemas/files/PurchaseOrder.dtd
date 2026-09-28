@@ -1,0 +1,21 @@
+<!--
+  PurchaseOrder 1.1 (design.md P9, SWHR-R-0024). ShippingInfo and
+  BillingInfo each wrap one ContactInfo; at least one LineItem is required.
+  The root carries a locale attribute defaulting to en_US.
+-->
+<!ENTITY % ContactInfo SYSTEM "ContactInfo.dtd">
+%ContactInfo;
+<!ENTITY % CreditCard SYSTEM "CreditCard.dtd">
+%CreditCard;
+<!ENTITY % LineItem SYSTEM "LineItem.dtd">
+%LineItem;
+
+<!ELEMENT PurchaseOrder (OrderId, UserId, EmailId, OrderDate, ShippingInfo, BillingInfo, TotalPrice, CreditCard, LineItem+)>
+<!ATTLIST PurchaseOrder locale CDATA "en_US">
+<!ELEMENT OrderId (#PCDATA)>
+<!ELEMENT UserId (#PCDATA)>
+<!ELEMENT EmailId (#PCDATA)>
+<!ELEMENT OrderDate (#PCDATA)>
+<!ELEMENT ShippingInfo (ContactInfo)>
+<!ELEMENT BillingInfo (ContactInfo)>
+<!ELEMENT TotalPrice (#PCDATA)>
