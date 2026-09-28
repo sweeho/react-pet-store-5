@@ -1,0 +1,5 @@
+Bundled DTD/XSD files served under GET /api/b2b/schemas/:file and used by
+validateDocument (lib/b2b/xml/validate.ts). Populated by the tickets that
+author each document type's schema (see lib/b2b/schemas/catalog.ts); empty
+for now — validateDocument and the route both degrade gracefully when a
+catalog-listed file isn't on disk yet.

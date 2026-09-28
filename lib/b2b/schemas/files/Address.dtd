@@ -1,0 +1,11 @@
+<!--
+  Address 1.1 (design.md P9, SWHR-R-0028/SWHR-R-0029). A second StreetName
+  line is present only for a second address line; City, State, ZipCode and
+  Country are always present.
+-->
+<!ELEMENT Address (StreetName, StreetName?, City, State, ZipCode, Country)>
+<!ELEMENT StreetName (#PCDATA)>
+<!ELEMENT City (#PCDATA)>
+<!ELEMENT State (#PCDATA)>
+<!ELEMENT ZipCode (#PCDATA)>
+<!ELEMENT Country (#PCDATA)>

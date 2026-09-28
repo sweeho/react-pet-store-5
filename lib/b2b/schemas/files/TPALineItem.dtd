@@ -1,0 +1,16 @@
+<!--
+  TPA-LineItem 1.0 (design.md P9, SWHR-R-0039). categoryId, productId,
+  itemId, lineNo, quantity and unitPrice as attributes, all required. A
+  DTD ATTLIST cannot express the value ranges (lineNo >= 0, quantity >= 1,
+  unitPrice >= 0) or the item-id uniqueness constraint — those live in
+  TPALineItem.dtd.xsd and TPASupplierOrder.xsd/TPAInvoice.xsd (SD-2, R9).
+-->
+<!ELEMENT LineItem EMPTY>
+<!ATTLIST LineItem
+  categoryId CDATA #REQUIRED
+  productId CDATA #REQUIRED
+  itemId CDATA #REQUIRED
+  lineNo CDATA #REQUIRED
+  quantity CDATA #REQUIRED
+  unitPrice CDATA #REQUIRED
+>

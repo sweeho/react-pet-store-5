@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for Address.dtd (design.md P1/SD-2). Mirrors the DTD's
+  structure and PCDATA-only content exactly, adding no constraint the DTD
+  didn't already express — the stricter non-empty rules (SWHR-R-0029) are
+  enforced by the reader, not this schema.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Address">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="StreetName" type="xs:string" minOccurs="1" maxOccurs="2"/>
+        <xs:element name="City" type="xs:string"/>
+        <xs:element name="State" type="xs:string"/>
+        <xs:element name="ZipCode" type="xs:string"/>
+        <xs:element name="Country" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

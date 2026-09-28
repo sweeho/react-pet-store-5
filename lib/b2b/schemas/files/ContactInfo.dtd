@@ -1,0 +1,13 @@
+<!--
+  ContactInfo 1.1 (design.md P9, SWHR-R-0027). FamilyName, GivenName,
+  Address, Email and Phone, each exactly once, in this order. Email content
+  may be empty; FamilyName, GivenName and Phone content may not.
+-->
+<!ENTITY % Address SYSTEM "Address.dtd">
+%Address;
+
+<!ELEMENT ContactInfo (FamilyName, GivenName, Address, Email, Phone)>
+<!ELEMENT FamilyName (#PCDATA)>
+<!ELEMENT GivenName (#PCDATA)>
+<!ELEMENT Email (#PCDATA)>
+<!ELEMENT Phone (#PCDATA)>

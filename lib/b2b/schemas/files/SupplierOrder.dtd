@@ -1,0 +1,13 @@
+<!--
+  SupplierOrder 1.1 (design.md P9, SWHR-R-0033). ShippingInfo wraps one
+  ContactInfo; at least one LineItem is required.
+-->
+<!ENTITY % ContactInfo SYSTEM "ContactInfo.dtd">
+%ContactInfo;
+<!ENTITY % LineItem SYSTEM "LineItem.dtd">
+%LineItem;
+
+<!ELEMENT SupplierOrder (OrderId, OrderDate, ShippingInfo, LineItem+)>
+<!ELEMENT OrderId (#PCDATA)>
+<!ELEMENT OrderDate (#PCDATA)>
+<!ELEMENT ShippingInfo (ContactInfo)>

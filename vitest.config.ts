@@ -39,7 +39,7 @@ export default defineConfig({
           environment: "jsdom",
           setupFiles: ["./src/test/setup.ts"],
           css: false,
-          exclude: ["node_modules", "dist", ".output", "e2e", "routes/**", "lib/**"],
+          exclude: ["node_modules", "dist", ".output", "e2e", "routes/**", "lib/**", "plugins/**"],
         },
       },
       {
@@ -47,7 +47,10 @@ export default defineConfig({
         test: {
           name: "server",
           environment: "node",
-          include: ["routes/**/*.test.ts", "lib/**/*.test.ts"],
+          // plugins/outbox-dispatcher.ts imports lib/messaging/dispatcher.ts,
+          // which reaches db/client.ts's bun:sqlite import — same reason
+          // routes/**/lib/** run here instead of under jsdom (SWHR-T-0033).
+          include: ["routes/**/*.test.ts", "lib/**/*.test.ts", "plugins/**/*.test.ts"],
         },
       },
     ],

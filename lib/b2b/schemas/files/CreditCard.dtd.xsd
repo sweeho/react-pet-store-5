@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for CreditCard.dtd (design.md P1/SD-2).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="CreditCard">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CardNumber" type="xs:string"/>
+        <xs:element name="CardType" type="xs:string"/>
+        <xs:element name="ExpiryDate" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

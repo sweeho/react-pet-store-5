@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for PurchaseOrder-1.0.dtd (design.md P1/SD-2, SD-6).
+  RECONSTRUCTION — see PurchaseOrder-1.0.dtd's header comment. Requires at
+  least one LineItem; `locale` is optional with no schema-level default
+  (the reader supplies "en_US" when absent, SWHR-R-0052).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:include schemaLocation="CreditCard.dtd.xsd"/>
+  <xs:include schemaLocation="LineItem.dtd.xsd"/>
+
+  <xs:element name="PurchaseOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderId" type="xs:string"/>
+        <xs:element name="UserId" type="xs:string"/>
+        <xs:element name="EmailId" type="xs:string"/>
+        <xs:element name="OrderDate" type="xs:string"/>
+        <xs:element name="ShipToAddress">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="FirstName" type="xs:string"/>
+              <xs:element name="LastName" type="xs:string"/>
+              <xs:element name="Street" type="xs:string"/>
+              <xs:element name="City" type="xs:string"/>
+              <xs:element name="State" type="xs:string"/>
+              <xs:element name="Country" type="xs:string"/>
+              <xs:element name="ZipCode" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="BillToAddress">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="FirstName" type="xs:string"/>
+              <xs:element name="LastName" type="xs:string"/>
+              <xs:element name="Street" type="xs:string"/>
+              <xs:element name="City" type="xs:string"/>
+              <xs:element name="State" type="xs:string"/>
+              <xs:element name="Country" type="xs:string"/>
+              <xs:element name="ZipCode" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="TotalPrice" type="xs:string"/>
+        <xs:element ref="CreditCard"/>
+        <xs:element ref="LineItem" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="locale" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
