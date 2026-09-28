@@ -81,17 +81,11 @@ genuine-absence fallback — not retried, no browser installed, no version bump 
 
 **`e2e/sign-on.spec.ts` itself could not be executed in this container** for the same reason.
 Given this ticket's AC-2 is specifically "the eight cases pass in a browser", that gap is real:
-`bun run typecheck` and `bun run lint` pass on the spec, and every selector/redirect was reviewed
-by hand against the actual page components it drives — but hand review is not execution, and the
-first real run (CI, which does carry the pinned Chromium) found two real defects hand review had
-missed: `getByLabel("User name")`/`getByLabel("Password")` without `exact: true` substring-match
-"Remember My User Name" and "Repeat password" respectively, failing 5 of 8 tests. Fixed by adding
-`exact: true` throughout. Re-reading the file afterward surfaced two more the same failed run
-never reached: SWHR-C-0135's `getByText("Quantity: 3")`/`addToCart`'s item-name filter were still
-the English strings after the test switches to Japanese (needed `"数量: 3"` and the Japanese item
-name), and the post-sign-out header assertion queried `role: "button"` for "サインイン" when
-Sign In in the anonymous state is a `<Link>` (`role: "link"`). All four are fixed; see
-`summary.md` §Notes for the account and why a second full CI run is the actual green run this
-ticket rests on.
+hand review is not execution, and CI (which does carry the pinned Chromium) found five real
+defects across two red runs before going green on the third — see `summary.md` §Notes for the
+full account (a `getByLabel` exact-match bug, two locale-string mismatches, a language-switch
+race, and a retry/duplicate-user-id collision). `bun run typecheck`/`lint` passed throughout; the
+CI run this ticket's DONE actually rests on is the one confirmed via `a2a_await_ci` just before
+transitioning, not any of the earlier red ones.
 
 TDD-RESULT: 494 passed, 0 failed

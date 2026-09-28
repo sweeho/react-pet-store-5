@@ -86,12 +86,16 @@ test.describe("Sign-on journeys", () => {
 
   test("[SWHR-C-0117] gated shopper signing on as alice is returned to the account page", async ({
     page,
-  }) => {
+  }, testInfo) => {
     // The case's own precondition credential — created here (PLAN.md step 2)
     // rather than seeded, then signed out so the actual gated scenario below
-    // starts from a clean anonymous browser.
+    // starts from a clean anonymous browser. Suffixed only on a retry, so a
+    // partial first attempt that already created 'alice' doesn't collide
+    // with the retry as a "duplicate user id" instead of the real failure.
+    const userId = testInfo.retry === 0 ? "alice" : `alice-retry${testInfo.retry}`;
+
     await page.goto("/signin");
-    await signUpAndCompleteRegistration(page, "alice", "Secret1");
+    await signUpAndCompleteRegistration(page, userId, "Secret1");
     await page
       .getByRole("navigation", { name: "Global" })
       .getByRole("button", { name: "Sign out" })
@@ -102,7 +106,7 @@ test.describe("Sign-on journeys", () => {
     await expect(page).toHaveURL("/signin");
 
     const returningForm = page.getByRole("form", { name: "Are you a returning customer?" });
-    await returningForm.getByLabel("User name", { exact: true }).fill("alice");
+    await returningForm.getByLabel("User name", { exact: true }).fill(userId);
     await returningForm.getByLabel("Password", { exact: true }).fill("Secret1");
     await returningForm.getByRole("button", { name: "Sign In" }).click();
 
@@ -125,13 +129,16 @@ test.describe("Sign-on journeys", () => {
 
   test("[SWHR-C-0132] registration from checkout signs on as dave and returns to order information", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    // Suffixed only on a retry — see SWHR-C-0117's comment.
+    const userId = testInfo.retry === 0 ? "dave" : `dave-retry${testInfo.retry}`;
+
     await addToCart(page, "POODLE");
 
     await page.goto("/checkout");
     await expect(page).toHaveURL("/signin");
 
-    await signUpAndCompleteRegistration(page, "dave", "Secret1");
+    await signUpAndCompleteRegistration(page, userId, "Secret1");
 
     await expect(page).toHaveURL("/checkout");
     await expect(
@@ -141,11 +148,14 @@ test.describe("Sign-on journeys", () => {
 
   test("[SWHR-C-0134] first-time visitor signs up from the sign-in screen and can proceed to purchase", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    // Suffixed only on a retry — see SWHR-C-0117's comment.
+    const userId = testInfo.retry === 0 ? "frank" : `frank-retry${testInfo.retry}`;
+
     await addToCart(page, "DALMATIAN");
 
     await page.goto("/signin");
-    await signUpAndCompleteRegistration(page, "frank", "Secret1");
+    await signUpAndCompleteRegistration(page, userId, "Secret1");
 
     await page.goto("/checkout");
     await expect(page).toHaveURL("/checkout");
@@ -156,14 +166,22 @@ test.describe("Sign-on journeys", () => {
 
   test("[SWHR-C-0135] sign out in Japanese with 3 cart items shows the signed-out page and empties the cart", async ({
     page,
-  }) => {
-    await page.goto("/signin");
-    await signUpAndCompleteRegistration(page, "iris", "Secret1");
+  }, testInfo) => {
+    // Suffixed only on a retry — see SWHR-C-0117's comment.
+    const userId = testInfo.retry === 0 ? "iris" : `iris-retry${testInfo.retry}`;
 
-    await page
+    await page.goto("/signin");
+    await signUpAndCompleteRegistration(page, userId, "Secret1");
+
+    const japaneseButton = page
       .getByRole("navigation", { name: "Global" })
-      .getByRole("button", { name: "日本語" })
-      .click();
+      .getByRole("button", { name: "日本語" });
+    await japaneseButton.click();
+    // Wait for the switch to actually land (POST /api/locale resolves and
+    // the client state updates) before the hard navigation below — a
+    // language button click doesn't block on that, so navigating right
+    // after it is a race that can load the product page in the old locale.
+    await expect(japaneseButton).toHaveAttribute("aria-pressed", "true");
 
     // Japanese item name (catalog seed's EST-6 ja_JP details) — the locale
     // switch above means the product page renders in Japanese from here on.

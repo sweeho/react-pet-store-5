@@ -69,17 +69,26 @@ test's real red→green (8 missing ids → 0).
   which is absent. Per AGENTS.md/PLAYBOOK this is the documented genuine-absence fallback — not
   retried, no browser installed, no version bump. **This ticket's DONE is gated on CI's E2E tier
   reporting green**, confirmed via `a2a_await_ci` before transitioning.
-- **The first CI push was red, and hand review had missed it.** `getByLabel("User name")` /
+- **Two CI pushes were needed to go green.** Push 1: `getByLabel("User name")` /
   `getByLabel("Password")` without `{ exact: true }` substring-match "Remember My User Name" and
   "Repeat password" respectively (Playwright's `getByLabel` matches a substring by default, not
-  the whole accessible name) — CI's trace showed both, failing 5 of the 8 tests. Fixed with
-  `exact: true` throughout the spec. Re-reading the file after that fix (rather than re-pushing
-  immediately) surfaced two more defects the failed run never reached, both in SWHR-C-0135 only:
-  the quantity/item-name assertions were still English strings after the test switches the session
-  to Japanese (`"Quantity: 3"` → `"数量: 3"`, and the product-page item filter → the Japanese item
-  name), and the post-sign-out header check queried `role: "button"` for "サインイン" when the
-  anonymous Sign In control is a `<Link>` (`role: "link"`), not a button. All four are fixed;
-  `bun run typecheck`/`lint` pass, and a second CI push is the actual proof this ticket rests on.
+  the whole accessible name), failing 5 of 8 tests — fixed with `exact: true` throughout. Re-reading
+  the file after that (rather than re-pushing immediately) also caught two defects the failed run
+  never reached, both in SWHR-C-0135: the quantity/item-name assertions were still English after
+  the test switches to Japanese, and the post-sign-out header check queried `role: "button"` for
+  "サインイン" when the anonymous Sign In control is a `<Link>` (`role: "link"`). Push 2: 7 of 8
+  passed; SWHR-C-0135 alone timed out — clicking the 日本語 language button doesn't block on its
+  `POST /api/locale`, so the immediately-following hard navigation to the product page was a race
+  that could (and did) land in the still-English locale, leaving the Japanese item-name filter
+  matching nothing. Fixed by waiting for `aria-pressed="true"` on the language button first — the
+  same synchronization `e2e/language-switch.spec.ts` already relies on. While reasoning through that
+  race I found a second, structural one: a test that creates a credential and fails partway through
+  leaves that user name behind in the (only-reset-once-per-run) database, so a Playwright retry of
+  the _same_ test collides on it as "duplicate user id" instead of surfacing the real failure —
+  confirmed in the push-2 log for 'iris'. All four sign-up tests (alice/dave/frank/iris) now suffix
+  their user name with the retry index on any retry beyond the first, so a retry is never sunk by
+  its own predecessor's leftover state. `bun run typecheck`/`lint` pass on every revision; the CI
+  run this ticket's DONE actually rests on is confirmed separately below.
 - **`src/pages/search.tsx` is outside this ticket's file ownership**, but SWHR-C-0106 (assigned to
   this ticket by PLAN.md) requires the page to "state the keyword", which the placeholder never
   did. The fix is one conditional heading line, additive, and doesn't touch the "coming soon" empty
