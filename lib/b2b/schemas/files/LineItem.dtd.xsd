@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DTD-equivalent XSD for LineItem.dtd (design.md P1/SD-2). Quantity and
+  UnitPrice stay xs:string, matching the DTD's untyped PCDATA — the integer/
+  decimal rejection (SWHR-R-0031) is enforced by the reader, not this schema.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="LineItem">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CategoryId" type="xs:string"/>
+        <xs:element name="ProductId" type="xs:string"/>
+        <xs:element name="ItemId" type="xs:string"/>
+        <xs:element name="LineNum" type="xs:string"/>
+        <xs:element name="Quantity" type="xs:string"/>
+        <xs:element name="UnitPrice" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

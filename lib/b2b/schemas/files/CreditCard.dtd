@@ -1,0 +1,8 @@
+<!--
+  CreditCard 1.1 (design.md P9, SWHR-R-0030). CardNumber, CardType and
+  ExpiryDate, each exactly once, in this order.
+-->
+<!ELEMENT CreditCard (CardNumber, CardType, ExpiryDate)>
+<!ELEMENT CardNumber (#PCDATA)>
+<!ELEMENT CardType (#PCDATA)>
+<!ELEMENT ExpiryDate (#PCDATA)>
