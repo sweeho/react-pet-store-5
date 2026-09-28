@@ -48,11 +48,12 @@ the current page in place rather than navigating away.
 $ bun run verify
 lint ✓  typecheck ✓
 Test Files  29 passed (29)
-     Tests  97 passed (97)
+     Tests  98 passed (98)
 ```
 
-See `tdd-test-result.md` — `TDD-RESULT: 97 passed, 0 failed`, including the real red run (12 files
-failing on missing modules with the implementation stashed aside).
+See `tdd-test-result.md` — `TDD-RESULT: 98 passed, 0 failed`, including the real red run (12 files
+failing on missing modules with the implementation stashed aside) and the CI-caught mobile-drawer
+regression (fixed and re-verified).
 
 `bun run verify:full`'s E2E tier could not run: `scripts/ensure-playwright-browser.mjs` reports
 Chromium is not installed in this container. Not retried, per workflow instructions — Validation
@@ -75,7 +76,12 @@ serves the locale seam correctly: `bun run dev`, then `curl localhost:5000/` →
 - **Category taxonomy labels (`PET_CATEGORIES`/`PRIMARY_AREAS` in `src/constants/navigation.ts`)
   stay English.** That file is outside this ticket's file ownership (owned elsewhere / catalog
   capability per design SD-2); the mockup's fully-localized catalog nav is out of scope until that
-  capability exists. Filed as a follow-up below.
+  capability exists. Raised as a follow-up ticket (see the ticket comment thread).
+- **A real bug caught by `e2e/language-switch.spec.ts` in CI:** the mobile-drawer language buttons
+  didn't close the drawer, so headlessui's `Dialog` left the rest of the page `aria-hidden` and the
+  "re-renders in place" check timed out looking for the new heading. Fixed in `GlobalNav.tsx` (the
+  drawer's language buttons now also call `setMobileOpen(false)`, matching every other drawer link)
+  and pinned locally with a new RTL test — see `tdd-test-result.md`.
 - `useSearchParams` is imported explicitly from `react-router` in `LocaleProvider.tsx` rather than
   relying on the project's auto-import, since `auto-imports.d.ts` is a gitignored, lazily-regenerated
   file and this project's `verify` runs `typecheck` before `test` — an explicit import avoids a

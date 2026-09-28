@@ -124,7 +124,10 @@ export default function GlobalNav() {
                 key={language.code}
                 type="button"
                 aria-pressed={language.code === locale}
-                onClick={() => void changeLocale(language.code)}
+                onClick={() => {
+                  void changeLocale(language.code);
+                  setMobileOpen(false);
+                }}
                 style={
                   language.cjk
                     ? { fontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif' }

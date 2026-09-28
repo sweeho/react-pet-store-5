@@ -146,4 +146,20 @@ describe("SiteLayout", () => {
     const nav = screen.getByRole("navigation", { name: "Global" });
     expect(within(nav).getByText("言語")).toBeInTheDocument();
   });
+
+  it("switching language from the mobile drawer closes the drawer and re-renders the page", async () => {
+    const user = userEvent.setup();
+    renderShell("/cart");
+
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    const dialog = screen.getByRole("dialog");
+
+    await user.click(within(dialog).getByRole("button", { name: "中文" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("page body")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "中文" })).toHaveAttribute("aria-pressed", "true"),
+    );
+  });
 });
