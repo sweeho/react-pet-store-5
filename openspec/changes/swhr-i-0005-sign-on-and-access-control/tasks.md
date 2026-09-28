@@ -29,11 +29,11 @@
 
 ## 5. Storefront screens
 
-- [ ] 5.1 Build the sign-in page with the returning-customer and new-account forms, remembered-name pre-fill and the empty-field check (SWHR-T-0046)
-- [ ] 5.2 Build the sign-in error page (SWHR-T-0046)
-- [ ] 5.3 Build the user-creation error page for a duplicate or invalid user id (SWHR-T-0046)
-- [ ] 5.4 Build the signed-out page with a link to sign in again (SWHR-T-0046)
-- [ ] 5.5 Build the storefront header component (logo, search, Account, Cart, and Sign in or Sign out by session state) (SWHR-T-0046)
+- [x] 5.1 Build the sign-in page with the returning-customer and new-account forms, remembered-name pre-fill and the empty-field check (SWHR-T-0046)
+- [x] 5.2 Build the sign-in error page (SWHR-T-0046)
+- [x] 5.3 Build the user-creation error page for a duplicate or invalid user id (SWHR-T-0046)
+- [x] 5.4 Build the signed-out page with a link to sign in again (SWHR-T-0046)
+- [x] 5.5 Build the storefront header component (logo, search, Account, Cart, and Sign in or Sign out by session state) (SWHR-T-0046)
 
 ## 6. Administrator and supplier access
 
