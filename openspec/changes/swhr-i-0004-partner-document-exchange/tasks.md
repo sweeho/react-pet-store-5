@@ -22,11 +22,11 @@
 
 ## 3. Order documents
 
-- [ ] 3.1 Implement the PurchaseOrder 1.1 writer with locale attribute and element order (SWHR-T-0030)
-- [ ] 3.2 Implement the PurchaseOrder 1.1 reader with root check, default validation and locale default en_US (SWHR-T-0030)
-- [ ] 3.3 Implement yyyy-MM-dd order date formatting and the current-date fallback on read (SWHR-T-0030)
-- [ ] 3.4 Implement the internal SupplierOrder 1.1 writer and reader with root check and date fallback (SWHR-T-0030)
-- [ ] 3.5 Bundle the PurchaseOrder 1.1 and SupplierOrder 1.1 schemas (SWHR-T-0030)
+- [x] 3.1 Implement the PurchaseOrder 1.1 writer with locale attribute and element order (SWHR-T-0030)
+- [x] 3.2 Implement the PurchaseOrder 1.1 reader with root check, default validation and locale default en_US (SWHR-T-0030)
+- [x] 3.3 Implement yyyy-MM-dd order date formatting and the current-date fallback on read (SWHR-T-0030)
+- [x] 3.4 Implement the internal SupplierOrder 1.1 writer and reader with root check and date fallback (SWHR-T-0030)
+- [x] 3.5 Bundle the PurchaseOrder 1.1 and SupplierOrder 1.1 schemas (SWHR-T-0030)
 
 ## 4. Partner documents
 
