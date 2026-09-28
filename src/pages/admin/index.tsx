@@ -1,7 +1,14 @@
-import { EmptyState } from "@/components/state";
+import { Link } from "react-router";
+
 import { useAdminStrings } from "@/i18n/admin/useAdminStrings";
 
-export default function AdminPlaceholder() {
+/**
+ * design.md P12: the public administration landing page — anyone can see
+ * it (SWHR-R-0069/design.md's "anonymous access to sign-on services"
+ * extends to reaching the sign-in form), only a signed-in administrator
+ * gets past `/admin/signin` to the console.
+ */
+export default function AdminLandingPage() {
   const strings = useAdminStrings();
 
   return (
@@ -13,7 +20,10 @@ export default function AdminPlaceholder() {
       >
         {strings.title.label}
       </h1>
-      <EmptyState title={strings.emptyTitle.label} description={strings.emptyDescription.label} />
+      <p className="text-muted-foreground-2 max-w-2xl">{strings.landingDescription.label}</p>
+      <Link to="/admin/signin" className="text-primary self-start font-semibold underline">
+        {strings.signInLink.label}
+      </Link>
     </div>
   );
 }

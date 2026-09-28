@@ -1,44 +1,53 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import AdminPlaceholder from "./index";
+import AdminLandingPage from "./index";
 
 function setNavigatorLanguage(language: string) {
   vi.spyOn(window.navigator, "language", "get").mockReturnValue(language);
 }
 
+function renderAdminLanding() {
+  return render(
+    <MemoryRouter initialEntries={["/admin"]}>
+      <AdminLandingPage />
+    </MemoryRouter>,
+  );
+}
+
 /**
  * UI / PAGE TEST
  *
- * Same render+assert pattern as src/pages/index.test.tsx. navigator.language
- * is the browser-language analogue of the legacy Swing admin client's
- * JVM-default locale (design SD-5) — stubbed per test via vi.spyOn.
+ * The public administration landing page (design.md P12): anyone can see
+ * it, a Sign in link leads to /admin/signin. navigator.language drives the
+ * en/de catalogue the same way the legacy Swing admin client's JVM-default
+ * locale did (design SD-5) — stubbed per test via vi.spyOn.
  */
-describe("Admin page", () => {
+describe("Admin landing page", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders the English catalogue by default", () => {
+  it("renders the English catalogue by default with a link to sign in", () => {
     setNavigatorLanguage("en-US");
 
-    render(<AdminPlaceholder />);
+    renderAdminLanding();
 
     expect(screen.getByRole("heading", { name: "Administration" })).toBeInTheDocument();
-    expect(screen.getByText("Coming soon")).toBeInTheDocument();
-    expect(screen.getByText("Order approval is coming soon.")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Sign in" });
+    expect(link).toHaveAttribute("href", "/admin/signin");
   });
 
-  it("[AC-3] renders the German catalogue's labels, tooltip and mnemonic for a German browser language", () => {
+  it("renders the German catalogue's labels, tooltip and mnemonic for a German browser language", () => {
     setNavigatorLanguage("de-DE");
 
-    render(<AdminPlaceholder />);
+    renderAdminLanding();
 
     const heading = screen.getByRole("heading", { name: "Verwaltung" });
     expect(heading).toBeInTheDocument();
     expect(heading).toHaveAttribute("title", "Shopverwaltung");
     expect(heading).toHaveAttribute("accesskey", "v");
-    expect(screen.getByText("Demnächst verfügbar")).toBeInTheDocument();
-    expect(screen.getByText("Die Bestellfreigabe ist demnächst verfügbar.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Anmelden" })).toHaveAttribute("href", "/admin/signin");
   });
 });
