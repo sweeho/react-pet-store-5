@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font:13px/1.4 system-ui,sans-serif;color:#27272a;background:#fff;padding:16px;width:720px}
+.frame{border:1px solid #d4d4d8;border-radius:6px;overflow:hidden}
+.util{height:30px;background:#f4f4f5;border-bottom:1px solid #e4e4e7;font-size:11px;display:flex;align-items:center;padding:0 12px;gap:6px;color:#52525b}
+.hdr{height:44px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;gap:12px;padding:0 12px}.logo{width:80px;height:14px;background:#71717a}.sb{flex:1;height:26px;border:1px solid #d4d4d8;border-radius:4px}
+.body{display:flex;gap:12px;padding:12px;min-height:300px}.side{width:120px;border:1px solid #e4e4e7;border-radius:4px;font-size:11px;padding:6px;color:#52525b}
+.card{flex:1;border:1px solid #d4d4d8;border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px;align-self:flex-start}
+h1{font-size:18px}label{font-size:12px;font-weight:600}
+.sel{border:1px solid #a1a1aa;border-radius:4px;overflow:hidden;width:280px}.sel div{padding:6px 10px;border-bottom:1px solid #e4e4e7;font-size:12px}.sel div.on{background:#e4e4e7;font-weight:600}
+.btn{border:1px solid #3f3f46;background:#3f3f46;color:#fff;border-radius:4px;padding:8px 14px;font-size:12px;width:max-content}
+.ftr{height:22px;background:#f4f4f5;border-top:1px solid #e4e4e7}.note{font-size:11px;color:#52525b;margin-top:8px}
+</style></head><body>
+<div class="frame">
+ <div class="util">Language · English · 日本語 · 中文</div>
+ <div class="hdr"><span class="logo"></span><span class="sb"></span></div>
+ <div class="body"><div class="side"><b>Pets</b><br>Birds<br>Cats<br>Dogs<br>Fish<br>Reptiles</div>
+  <div class="card"><h1>Change language</h1>
+   <label>Locale</label>
+   <div class="sel"><div>US English (en_US)</div><div class="on">Japanese (ja_JP) ✓</div><div>Simplified Chinese (zh_CN)</div></div>
+   <span class="btn">Change Locale</span></div></div>
+ <div class="ftr"></div>
+</div>
+<div class="note">This is one choice list with a single Change Locale button. Submitting it goes to the same language-change step as the header flags.</div>
+</body></html>

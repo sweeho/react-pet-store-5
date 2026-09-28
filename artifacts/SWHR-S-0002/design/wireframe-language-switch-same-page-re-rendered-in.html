@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font:13px/1.4 system-ui,sans-serif;color:#27272a;background:#fff;padding:16px;width:720px}
+.frame{border:1px solid #d4d4d8;border-radius:6px;overflow:hidden;margin-bottom:10px}
+.util{display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 12px;background:#f4f4f5;border-bottom:1px solid #e4e4e7;font-size:11px}
+.lang{display:flex;gap:4px;align-items:center}.lang a{border:1px solid transparent;border-radius:99px;padding:1px 8px;display:flex;gap:4px;align-items:center;color:#52525b;text-decoration:none}
+.lang a.on{border-color:#71717a;background:#fff;color:#18181b;font-weight:600}.flag{width:14px;height:9px;background:#d4d4d8;border:1px solid #a1a1aa}
+.hdr{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-bottom:1px solid #e4e4e7}
+.logo{width:80px;height:14px;background:#71717a;border-radius:2px}.search{flex:1;height:26px;border:1px solid #d4d4d8;border-radius:4px;font-size:11px;color:#a1a1aa;padding:5px 8px}
+.act{border:1px solid #d4d4d8;border-radius:4px;padding:4px 8px;font-size:11px}
+.body{display:flex;gap:12px;padding:12px}.side{width:120px;border:1px solid #e4e4e7;border-radius:4px;padding:6px;font-size:11px;color:#52525b}.side div{padding:3px 4px}
+.main{flex:1;display:flex;flex-direction:column;gap:6px}.bar{height:8px;background:#d4d4d8;border-radius:2px}.h{height:14px;background:#a1a1aa;width:40%}
+.row{display:flex;justify-content:space-between;align-items:center;border:1px solid #e4e4e7;border-radius:4px;padding:6px 8px}.btn{border:1px solid #71717a;border-radius:4px;padding:3px 8px;font-size:11px}
+.cap{font-size:11px;font-weight:600;color:#52525b;margin:4px 0}.note{font-size:11px;color:#52525b;border-left:3px solid #a1a1aa;padding:4px 8px;background:#fafafa}
+.ftr{height:22px;background:#f4f4f5;border-top:1px solid #e4e4e7}
+</style></head><body>
+<div class="cap">BEFORE — product page "Bulldog", session locale en_US, cart has 2 items</div>
+<div class="frame">
+ <div class="util"><div class="lang">Language <a class="on" href="#"><span class="flag"></span>English</a><a href="#"><span class="flag"></span>日本語</a><a href="#"><span class="flag"></span>中文</a></div><span>Store staff: Administration · Supplier</span></div>
+ <div class="hdr"><span class="logo"></span><span class="search">Search pets by name or description</span><span class="act">Search</span><span class="act">Account</span><span class="act">Cart 2</span><span class="act">Sign in</span></div>
+ <div class="body"><div class="side"><b>Pets</b><div>Birds</div><div>Cats</div><div>Dogs</div><div>Fish</div><div>Reptiles</div></div>
+ <div class="main"><div class="h bar"></div><div class="bar" style="width:80%"></div>
+  <div class="row"><span>Male Adult Bulldog · <b>$18.50</b></span><span class="btn">Add to Cart</span></div>
+  <div class="row"><span>Female Puppy Bulldog · <b>$18.50</b></span><span class="btn">Add to Cart</span></div></div></div>
+ <div class="ftr"></div>
+</div>
+<div class="cap">↓ visitor chooses 日本語 → returns to the SAME page, not Home</div>
+<div class="cap">AFTER — same product page, session locale and cart locale = ja_JP</div>
+<div class="frame">
+ <div class="util"><div class="lang">言語 <a href="#"><span class="flag"></span>English</a><a class="on" href="#"><span class="flag"></span>日本語</a><a href="#"><span class="flag"></span>中文</a></div><span>[staff links, Japanese labels]</span></div>
+ <div class="hdr"><span class="logo"></span><span class="search">[search placeholder in Japanese]</span><span class="act">[Search]</span><span class="act">[Account]</span><span class="act">[Cart] 2</span><span class="act">[Sign in]</span></div>
+ <div class="body"><div class="side"><b>[Pets]</b><div>[Birds]</div><div>[Cats]</div><div>[Dogs]</div><div>[Fish]</div><div>[Reptiles]</div></div>
+ <div class="main"><div class="h bar"></div><div class="bar" style="width:80%"></div>
+  <div class="row"><span>[Japanese item name] · <b>￥2,000</b></span><span class="btn">[Add to Cart]</span></div>
+  <div class="row"><span>[Japanese item name] · <b>[ja_JP price]</b></span><span class="btn">[Add to Cart]</span></div></div></div>
+ <div class="ftr"></div>
+</div>
+<div class="note">Labels, catalogue names, descriptions and prices all come from ja_JP. Prices are the ja_JP list price, never converted. An item with no ja_JP details is left out, and English is never shown in its place.</div>
+</body></html>

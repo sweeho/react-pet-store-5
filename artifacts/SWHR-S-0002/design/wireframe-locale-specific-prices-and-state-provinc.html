@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font:13px/1.4 system-ui,sans-serif;color:#27272a;background:#fff;padding:16px;width:720px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.col{border:1px solid #d4d4d8;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.tag{font-size:11px;font-weight:600;background:#e4e4e7;border-radius:99px;padding:2px 8px;width:max-content}
+.sub{font-size:11px;font-weight:600;color:#52525b;text-transform:uppercase;letter-spacing:.04em}
+.img{height:60px;background:#f4f4f5;border:1px solid #d4d4d8;display:grid;place-items:center;font-size:11px;color:#71717a}
+.bar{height:8px;background:#d4d4d8;border-radius:2px}.price{font-weight:700;font-size:15px}
+.sel{border:1px solid #a1a1aa;border-radius:4px;font-size:12px}.sel div{padding:4px 8px;border-bottom:1px solid #e4e4e7}.sel div:first-child{background:#f4f4f5;color:#71717a}
+.note{font-size:11px;color:#52525b;margin-top:10px}
+</style></head><body>
+<div class="grid">
+ <div class="col"><span class="tag">English · en_US</span><div class="sub">Item detail</div><div class="img">Item image</div><div class="bar" style="width:70%"></div>
+  <div>List Price <span class="price">$18.50</span></div>
+  <div class="sub">Checkout — State / Province</div><div class="sel"><div>Choose…</div><div>California</div><div>New York</div><div>Texas</div></div></div>
+ <div class="col"><span class="tag">日本語 · ja_JP</span><div class="sub">[Item detail]</div><div class="img">[ja_JP image]</div><div class="bar" style="width:70%"></div>
+  <div>[List Price] <span class="price">￥2,000</span></div>
+  <div class="sub">[State / Province]</div><div class="sel"><div>[Choose…]</div><div>Tokyo</div><div>Osaka</div><div>Nagano</div></div></div>
+ <div class="col"><span class="tag">中文 · zh_CN</span><div class="sub">[Item detail]</div><div class="img">[zh_CN image]</div><div class="bar" style="width:70%"></div>
+  <div>[List Price] <span class="price">[zh_CN price, Chinese format]</span></div>
+  <div class="sub">[State / Province]</div><div class="sel"><div>[Choose…]</div><div>Beijing</div><div>Shanghai</div><div>Jiangsu</div></div></div>
+</div>
+<div class="note">Each column shows the same item stored separately for its locale, with no currency conversion. The cart shows prices the same way, using the cart's locale. The state/province list on the checkout form follows the page's locale.</div>
+</body></html>
