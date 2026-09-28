@@ -1,58 +1,56 @@
-import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
+
+import { PET_CATEGORIES, PRIMARY_AREAS } from "@/constants/navigation";
 
 import Home from "./index";
 
 /**
- * UI / PAGE TEST
+ * UI / PAGE TEST — [SWHR-C-0003]
  *
- * Same tools as a component test (render + user-event), but exercises a
- * full page and a real interactive feature end to end inside jsdom: opening
- * the mobile nav (a @headlessui/react Dialog) and reading what appears.
- * Copy this pattern for other pages under src/pages.
+ * Renders the landing page at '/' in a MemoryRouter and asserts it links to
+ * every primary area and every pet category, using the shared
+ * src/constants/navigation.ts list so this test and the page can never drift.
  */
 describe("Home page", () => {
-  it("renders the hero heading and primary CTA", () => {
-    render(<Home />);
+  it("renders the hero heading", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Home />
+      </MemoryRouter>,
+    );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /Vortex: the AI-driven autonomous/i }),
+      screen.getByRole("heading", { level: 1, name: "Find your next pet" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Get started" })).toBeInTheDocument();
   });
 
-  it("lists the tech stack", () => {
-    render(<Home />);
+  it("[SWHR-C-0003] links to every primary area", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Home />
+      </MemoryRouter>,
+    );
 
-    for (const tech of ["React 19", "TypeScript", "Vite 8", "Tailwind CSS v4"]) {
-      expect(screen.getByText(tech)).toBeInTheDocument();
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+
+    for (const area of PRIMARY_AREAS) {
+      expect(hrefs).toContain(area.href);
     }
   });
 
-  it("opens the mobile nav dialog and lists the nav links inside it", async () => {
-    const user = userEvent.setup();
-    render(<Home />);
+  it("[SWHR-C-0003] links to every pet category", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Home />
+      </MemoryRouter>,
+    );
 
-    // The mobile menu content isn't mounted until the dialog opens.
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
 
-    await user.click(screen.getByRole("button", { name: "Open main menu" }));
-
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByRole("link", { name: "Features" })).toBeInTheDocument();
-    expect(within(dialog).getByRole("link", { name: "Tech Stack" })).toBeInTheDocument();
-  });
-
-  it("closes the mobile nav dialog", async () => {
-    const user = userEvent.setup();
-    render(<Home />);
-
-    await user.click(screen.getByRole("button", { name: "Open main menu" }));
-    await screen.findByRole("dialog");
-
-    await user.click(screen.getByRole("button", { name: "Close menu" }));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    for (const category of PET_CATEGORIES) {
+      expect(hrefs).toContain(category.href);
+    }
   });
 });
