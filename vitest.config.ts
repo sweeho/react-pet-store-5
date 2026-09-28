@@ -39,7 +39,7 @@ export default defineConfig({
           environment: "jsdom",
           setupFiles: ["./src/test/setup.ts"],
           css: false,
-          exclude: ["node_modules", "dist", ".output", "e2e", "routes/**"],
+          exclude: ["node_modules", "dist", ".output", "e2e", "routes/**", "lib/**"],
         },
       },
       {
@@ -47,7 +47,7 @@ export default defineConfig({
         test: {
           name: "server",
           environment: "node",
-          include: ["routes/**/*.test.ts"],
+          include: ["routes/**/*.test.ts", "lib/**/*.test.ts"],
         },
       },
     ],
