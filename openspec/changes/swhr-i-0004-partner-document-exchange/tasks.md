@@ -12,13 +12,13 @@
 
 ## 2. Shared document elements
 
-- [ ] 2.1 Implement the ContactInfo element writer and reader, with the empty-Email exception (SWHR-T-0029)
-- [ ] 2.2 Implement the Address element writer with a conditional second StreetName and empty elements for absent values (SWHR-T-0029)
-- [ ] 2.3 Implement the Address element reader with strict ordering and required Country (SWHR-T-0029)
-- [ ] 2.4 Implement the CreditCard element writer and reader (SWHR-T-0029)
-- [ ] 2.5 Implement the order LineItem element writer and reader with integer Quantity and decimal UnitPrice (SWHR-T-0029)
-- [ ] 2.6 Ensure line item export omits the shipped quantity (SWHR-T-0029)
-- [ ] 2.7 Bundle the ContactInfo, Address, CreditCard and LineItem 1.1 schemas (SWHR-T-0029)
+- [x] 2.1 Implement the ContactInfo element writer and reader, with the empty-Email exception (SWHR-T-0029)
+- [x] 2.2 Implement the Address element writer with a conditional second StreetName and empty elements for absent values (SWHR-T-0029)
+- [x] 2.3 Implement the Address element reader with strict ordering and required Country (SWHR-T-0029)
+- [x] 2.4 Implement the CreditCard element writer and reader (SWHR-T-0029)
+- [x] 2.5 Implement the order LineItem element writer and reader with integer Quantity and decimal UnitPrice (SWHR-T-0029)
+- [x] 2.6 Ensure line item export omits the shipped quantity (SWHR-T-0029)
+- [x] 2.7 Bundle the ContactInfo, Address, CreditCard and LineItem 1.1 schemas (SWHR-T-0029)
 
 ## 3. Order documents
 
