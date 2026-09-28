@@ -8,7 +8,7 @@ A `/locale` screen with the four-option choice list and Change Locale, a `/local
 
 ## Steps
 
-1. `src/pages/locale/index.tsx` + `src/i18n/screens/locale.ts` (all three locales): `<select name="locale">` US English `en_US`, German `de_DE`, Japanese `ja_JP`, Simplified Chinese `zh_CN`; "Currently in effect"; submit "Change Locale" calls `useLocale().changeLocale`.
+1. `src/pages/locale/index.tsx` + `src/i18n/screens/locale.ts` (all three locales): a choice list — US English `en_US`, German `de_DE`, Japanese `ja_JP`, Simplified Chinese `zh_CN` — submitting the chosen locale code; "Currently in effect"; submit "Change Locale" calls `useLocale().changeLocale`. **Implemented as** (deviation, no contract change) `role="radiogroup"`/`role="radio"` buttons in a bordered list, mirroring `src/components/forms/StateProvinceSelect.tsx`, rather than a native `<select name="locale">` — it matches the mockup's per-row layout (label + right-aligned mono code) more closely than a native `<option>` can express.
 2. Success → navigate to `/locale/changed` (`src/pages/locale/changed.tsx` + `src/i18n/screens/locale-changed.ts`) showing the locale in effect.
 3. Failure (e.g. `/locale?requested=ja` or a rejected submission) → rejected screen per mockup: "Unable to change language to <id>", locale unchanged.
 4. UI tests plus `e2e/locale-selection.spec.ts`: display, submit ja_JP → confirmation shows `ja_JP`, rejected leaves `en_US`.
