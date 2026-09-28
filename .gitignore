@@ -53,3 +53,10 @@ sqlite.db
 sqlite.db-journal
 sqlite.db-wal
 sqlite.db-shm
+
+# Throwaway e2e database (playwright.config.ts webServer, SQLITE_PATH) —
+# deleted and recreated fresh before every Playwright run (SWHR-T-0048)
+e2e-test.db
+e2e-test.db-journal
+e2e-test.db-wal
+e2e-test.db-shm
