@@ -22,12 +22,12 @@
 
 ## 4. Page localization
 
-- [ ] 4.1 Provide per-locale page content bundles for en_US, ja_JP and zh_CN (SWHR-T-0018)
-- [ ] 4.2 Resolve the effective locale with the per-request override taking precedence over the session locale without persisting it (SWHR-T-0018)
-- [ ] 4.3 Fall back to the default locale's content when a locale or a page is missing, and show the not-found error when no locale defines the page (SWHR-T-0018)
-- [ ] 4.4 Add the header language switch (English, Japanese, Chinese) to every page (SWHR-T-0018)
-- [ ] 4.5 Keep the visitor on the current page with its state after a switch and re-render in the new locale (SWHR-T-0018)
-- [ ] 4.6 UI-test the header switch and the fallback behaviour (SWHR-T-0018)
+- [x] 4.1 Provide per-locale page content bundles for en_US, ja_JP and zh_CN (SWHR-T-0018)
+- [x] 4.2 Resolve the effective locale with the per-request override taking precedence over the session locale without persisting it (SWHR-T-0018)
+- [x] 4.3 Fall back to the default locale's content when a locale or a page is missing, and show the not-found error when no locale defines the page (SWHR-T-0018)
+- [x] 4.4 Add the header language switch (English, Japanese, Chinese) to every page (SWHR-T-0018)
+- [x] 4.5 Keep the visitor on the current page with its state after a switch and re-render in the new locale (SWHR-T-0018)
+- [x] 4.6 UI-test the header switch and the fallback behaviour (SWHR-T-0018)
 
 ## 5. Catalog and prices
 
