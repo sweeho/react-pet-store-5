@@ -1,9 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { PET_CATEGORIES, PRIMARY_AREAS } from "@/constants/navigation";
+import { LocaleProvider } from "@/i18n/LocaleProvider";
 import Home from "@/pages/index";
 
 import SiteLayout from "./SiteLayout";
@@ -13,17 +14,24 @@ import SiteLayout from "./SiteLayout";
  *
  * Renders the shared shell around a routed child in a MemoryRouter, mirroring
  * how src/main.tsx mounts it in production (SiteLayout wraps the routed
- * pages, not the other way round).
+ * pages, not the other way round). `fetchLocale` is stubbed so the shell
+ * renders synchronously in en_US without a real network round trip
+ * (SiteHeader/GlobalNav/SiteFooter all read their copy via useScreen()).
  */
 function renderShell(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <SiteLayout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cart" element={<div>page body</div>} />
-        </Routes>
-      </SiteLayout>
+      <LocaleProvider
+        fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}
+        postLocale={(id) => Promise.resolve({ ok: true, locale: id })}
+      >
+        <SiteLayout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/cart" element={<div>page body</div>} />
+          </Routes>
+        </SiteLayout>
+      </LocaleProvider>
     </MemoryRouter>,
   );
 }
@@ -91,5 +99,67 @@ describe("SiteLayout", () => {
     await user.click(within(dialog).getByRole("button", { name: "Close menu" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("[AC-2] offers English, Japanese and Chinese language controls, pressed on the effective locale", () => {
+    renderShell("/cart");
+
+    const english = screen.getByRole("button", { name: "English" });
+    const japanese = screen.getByRole("button", { name: "日本語" });
+    const chinese = screen.getByRole("button", { name: "中文" });
+
+    expect(english).toHaveAttribute("aria-pressed", "true");
+    expect(japanese).toHaveAttribute("aria-pressed", "false");
+    expect(chinese).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("[AC-2] offers the same three language controls in the mobile drawer", async () => {
+    const user = userEvent.setup();
+    renderShell("/cart");
+
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByRole("button", { name: "English" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(within(dialog).getByRole("button", { name: "日本語" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "中文" })).toBeInTheDocument();
+  });
+
+  it("switching language re-renders the same page in place, in the new language", async () => {
+    const user = userEvent.setup();
+    renderShell("/cart");
+
+    expect(screen.getByText("page body")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "日本語" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "日本語" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(screen.getByText("page body")).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "Global" });
+    expect(within(nav).getByText("言語")).toBeInTheDocument();
+  });
+
+  it("switching language from the mobile drawer closes the drawer and re-renders the page", async () => {
+    const user = userEvent.setup();
+    renderShell("/cart");
+
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    const dialog = screen.getByRole("dialog");
+
+    await user.click(within(dialog).getByRole("button", { name: "中文" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("page body")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "中文" })).toHaveAttribute("aria-pressed", "true"),
+    );
   });
 });

@@ -2,6 +2,7 @@ import { Bird, Cat, Dog, Fish, LogIn, Shield, Truck, Turtle, User } from "lucide
 import { Link } from "react-router";
 
 import { PET_CATEGORIES, type PetCategoryId } from "@/constants/navigation";
+import { useScreen } from "@/i18n/screens";
 
 const CATEGORY_ICONS: Record<PetCategoryId, typeof Bird> = {
   BIRDS: Bird,
@@ -12,44 +13,43 @@ const CATEGORY_ICONS: Record<PetCategoryId, typeof Bird> = {
 };
 
 const Home = () => {
+  const t = useScreen("home");
+
   return (
     <div className="flex flex-col gap-6">
       <section className="border-line-2 from-primary-50 to-background flex flex-wrap items-center gap-10 rounded-xl border bg-gradient-to-br p-10">
         <div className="flex min-w-64 flex-1 flex-col gap-3.5">
-          <span className="text-primary text-sm font-semibold">
-            Birds, cats, dogs, fish and reptiles
-          </span>
-          <h1 className="text-3xl font-bold tracking-tight">Find your next pet</h1>
-          <p className="text-muted-foreground-2 max-w-xl text-base">
-            Browse by kind of pet or search by name. Fill your cart without an account — you only
-            sign in when you check out.
-          </p>
+          <span className="text-primary text-sm font-semibold">{t.eyebrow}</span>
+          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+          <p className="text-muted-foreground-2 max-w-xl text-base">{t.description}</p>
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-3">
             <Link
               to="/category/DOGS"
               className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold"
             >
-              Shop dogs
+              {t.shopDogs}
             </Link>
             <Link
               to="/cart"
               className="border-line-2 bg-background hover:bg-background-1 inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold"
             >
-              View cart
+              {t.viewCart}
             </Link>
             <Link to="/search" className="text-primary text-sm font-semibold hover:underline">
-              Search all pets
+              {t.searchAll}
             </Link>
             <Link to="/checkout" className="text-primary text-sm font-semibold hover:underline">
-              Go to checkout
+              {t.goToCheckout}
             </Link>
           </div>
         </div>
       </section>
 
       <div className="flex items-baseline justify-between">
-        <h2 className="text-xl font-semibold">Shop by pet</h2>
-        <span className="text-muted-foreground-1 text-sm">{PET_CATEGORIES.length} categories</span>
+        <h2 className="text-xl font-semibold">{t.shopByPetHeading}</h2>
+        <span className="text-muted-foreground-1 text-sm">
+          {PET_CATEGORIES.length} {t.categoriesLabel}
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {PET_CATEGORIES.map((category) => {
@@ -69,7 +69,7 @@ const Home = () => {
                   {category.sampleBreeds}
                 </span>
                 <span className="text-primary mt-1 text-sm font-semibold">
-                  Browse {category.label} →
+                  {t.browseLabel} {category.label} →
                 </span>
               </div>
             </Link>
@@ -84,18 +84,16 @@ const Home = () => {
           </div>
           <div className="flex-1">
             <Link to="/account" className="font-semibold hover:underline">
-              Your account
+              {t.yourAccount}
             </Link>
-            <p className="text-muted-foreground-1 text-sm">
-              Contact details, card on file, language.
-            </p>
+            <p className="text-muted-foreground-1 text-sm">{t.accountDescription}</p>
           </div>
           <Link
             to="/signin"
             className="border-line-2 bg-background hover:bg-background-1 inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border px-4 text-sm font-semibold"
           >
             <LogIn aria-hidden="true" className="size-4" />
-            Sign in
+            {t.signIn}
           </Link>
         </div>
 
@@ -104,10 +102,8 @@ const Home = () => {
             <Truck aria-hidden="true" className="size-5" />
           </div>
           <div className="flex-1">
-            <span className="font-semibold">Store staff</span>
-            <p className="text-muted-foreground-1 text-sm">
-              Order approval, sales and stock levels.
-            </p>
+            <span className="font-semibold">{t.storeStaff}</span>
+            <p className="text-muted-foreground-1 text-sm">{t.staffDescription}</p>
           </div>
           <div className="flex shrink-0 gap-1">
             <Link
@@ -115,14 +111,14 @@ const Home = () => {
               className="text-primary hover:bg-background-1 inline-flex h-10 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold"
             >
               <Shield aria-hidden="true" className="size-4" />
-              Administration
+              {t.administration}
             </Link>
             <Link
               to="/supplier"
               className="text-primary hover:bg-background-1 inline-flex h-10 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold"
             >
               <Truck aria-hidden="true" className="size-4" />
-              Supplier
+              {t.supplier}
             </Link>
           </div>
         </div>
