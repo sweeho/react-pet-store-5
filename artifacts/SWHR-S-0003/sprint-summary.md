@@ -32,7 +32,8 @@ downstream: [artifacts/SWHR-S-0003/release-notes.md]
 | SWHR-T-0033 | TASK  | Asynchronous exchange — SQLite outbox, supplier channel, invoice fan-out, atomic intake        | DONE (#24) — [summary](SWHR-T-0033/summary.md) |
 | SWHR-T-0034 | TASK  | Exchange test suite — test-case traceability and order-to-invoice flow                         | DONE (#25) — [summary](SWHR-T-0034/summary.md) |
 | SWHR-T-0036 | TASK  | Integration QA report — SWHR-S-0003                                                            | DONE (#26), verdict PASS                       |
-| SWHR-T-0037 | TASK  | Sprint close bundle — SWHR-S-0003                                                              | this file                                      |
+| SWHR-T-0037 | TASK  | Sprint close bundle — SWHR-S-0003                                                              | DONE (commit 2b6996b)                          |
+| SWHR-T-0038 | TASK  | Sprint close bundle — SWHR-S-0003 (duplicate dispatch)                                         | this revision                                  |
 
 ## What shipped
 
@@ -54,7 +55,7 @@ As in SWHR-S-0002, several parts are seams that nothing calls yet, because the c
 
 ## Verification
 
-PASS. Lint, typecheck and 328 unit tests pass (76 files). All 28 storefront E2E tests pass, and all 52 scenarios of change `swhr-i-0004-partner-document-exchange` pass against approved cases SWHR-C-0047–SWHR-C-0098. No defects were found in integration. See [qa-test-report.md](qa-test-report.md), [integration-test-result.md](integration-test-result.md) and [integration-defects-resolution.md](integration-defects-resolution.md).
+PASS. Lint, typecheck and 328 unit tests pass (76 files). All 28 storefront E2E tests pass, and all 52 scenarios of change `swhr-i-0004-partner-document-exchange` pass against approved cases SWHR-C-0047–SWHR-C-0098. No defects were found in integration. See [qa-test-report.md](qa-test-report.md), [traceability.md](traceability.md), [integration-test-result.md](integration-test-result.md) and [integration-defects-resolution.md](integration-defects-resolution.md).
 
 ## Defects Raised
 
@@ -81,11 +82,11 @@ The shipped code follows design.md's current reading of each. The last ruling mu
 
 ## Compliance / Control Evidence
 
-| Control                        | Evidence                                                    | Location                                                                                              | Status    | Exception                                      |
-| ------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------- | ---------------------------------------------- |
-| Work planned before execution  | Change proposal, design, specs, tasks; per-ticket PLAN.md   | `openspec/changes/swhr-i-0004-partner-document-exchange/`, `artifacts/SWHR-S-0003/SWHR-T-00*/PLAN.md` | Satisfied | —                                              |
-| Tests executed per ticket      | TDD results                                                 | `artifacts/SWHR-S-0003/SWHR-T-00{28..34}/tdd-test-result.md`                                          | Satisfied | E2E not run in ticket containers (no Chromium) |
-| Change verified before release | QA report, PASS, 52/52 scenarios                            | `artifacts/SWHR-S-0003/qa-test-report.md`                                                             | Satisfied | —                                              |
-| Defects dispositioned          | 0 integration defects                                       | `artifacts/SWHR-S-0003/integration-defects-resolution.md`                                             | Satisfied | —                                              |
-| Open decisions tracked         | Rulings ticket                                              | SWHR-T-0035                                                                                           | Satisfied | Rulings pending                                |
-| Release approval               | Sprint reached SPRINT_CLOSE via `validation.all_acs_passed` | SWHR-T-0036                                                                                           | Satisfied | Human approver: Not Provided                   |
+| Control                        | Evidence                                                    | Location                                                                                                                 | Status    | Exception                                      |
+| ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- | ---------------------------------------------- |
+| Work planned before execution  | Change proposal, design, specs, tasks; per-ticket PLAN.md   | `openspec/changes/archive/2026-09-28-swhr-i-0004-partner-document-exchange/`, `artifacts/SWHR-S-0003/SWHR-T-00*/PLAN.md` | Satisfied | —                                              |
+| Tests executed per ticket      | TDD results                                                 | `artifacts/SWHR-S-0003/SWHR-T-00{28..34}/tdd-test-result.md`                                                             | Satisfied | E2E not run in ticket containers (no Chromium) |
+| Change verified before release | QA report, PASS, 52/52 scenarios                            | `artifacts/SWHR-S-0003/qa-test-report.md`                                                                                | Satisfied | —                                              |
+| Defects dispositioned          | 0 integration defects                                       | `artifacts/SWHR-S-0003/integration-defects-resolution.md`                                                                | Satisfied | —                                              |
+| Open decisions tracked         | Rulings ticket                                              | SWHR-T-0035                                                                                                              | Satisfied | Rulings pending                                |
+| Release approval               | Sprint reached SPRINT_CLOSE via `validation.all_acs_passed` | SWHR-T-0036                                                                                                              | Satisfied | Human approver: Not Provided                   |
