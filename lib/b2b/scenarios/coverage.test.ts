@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -6,10 +6,16 @@ import { describe, expect, it } from "vitest";
 // SD-8: each implementing ticket writes the approved cases for the
 // scenarios it covers, named with their SWHR-C-* id — this makes that
 // self-checking rather than trusting a manually maintained list.
-const TEST_CASES_PATH = path.join(
-  process.cwd(),
-  "openspec/changes/swhr-i-0004-partner-document-exchange/test-cases.md",
+// The change directory moves to openspec/changes/archive/<date>-<id>/ at
+// sprint close, so look in both places.
+const CHANGE_ID = "swhr-i-0004-partner-document-exchange";
+const CHANGES_DIR = path.join(process.cwd(), "openspec/changes");
+const ARCHIVED_CHANGE = readdirSync(path.join(CHANGES_DIR, "archive")).find((name) =>
+  name.endsWith(`-${CHANGE_ID}`),
 );
+const TEST_CASES_PATH = existsSync(path.join(CHANGES_DIR, CHANGE_ID))
+  ? path.join(CHANGES_DIR, CHANGE_ID, "test-cases.md")
+  : path.join(CHANGES_DIR, "archive", ARCHIVED_CHANGE ?? CHANGE_ID, "test-cases.md");
 const LIB_B2B_DIR = path.join(process.cwd(), "lib/b2b");
 
 function approvedCaseIds(): string[] {
