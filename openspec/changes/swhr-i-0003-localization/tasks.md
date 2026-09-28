@@ -49,9 +49,9 @@
 
 ## 7. Forms, encoding and admin strings
 
-- [ ] 7.1 Provide the per-locale state/province option lists on the order information form (SWHR-T-0016)
-- [ ] 7.2 Verify UTF-8 decoding of request parameters and bodies ahead of sign-on checks and UTF-8 responses with a Japanese and Chinese round-trip test (SWHR-T-0016)
-- [ ] 7.3 Move administrator-facing labels, messages, tooltips and mnemonics into an English default and a German catalogue (SWHR-T-0016)
+- [x] 7.1 Provide the per-locale state/province option lists on the order information form (SWHR-T-0016)
+- [x] 7.2 Verify UTF-8 decoding of request parameters and bodies ahead of sign-on checks and UTF-8 responses with a Japanese and Chinese round-trip test (SWHR-T-0016)
+- [x] 7.3 Move administrator-facing labels, messages, tooltips and mnemonics into an English default and a German catalogue (SWHR-T-0016)
 
 ## 8. Locale selection screen
 
