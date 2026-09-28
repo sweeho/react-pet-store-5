@@ -127,24 +127,28 @@ const BULLDOG_ITEMS: ItemSeed[] = [
         name: "Female Puppy Bulldog",
         description: "Friendly puppy from England",
         image: "bulldog.gif",
-        listPrice: 1850,
-        unitCost: 1850,
+        // Deliberately different from EST-6's price (design mockup /
+        // AC only names one item's price; keeping the two items priced
+        // differently avoids an ambiguous "$18.50 appears twice" match in
+        // e2e/product-locale.spec.ts, which asserts on a single item card).
+        listPrice: 1650,
+        unitCost: 1650,
       },
       {
         locale: "ja_JP",
         name: "メス子犬ブルドッグ",
         description: "イギリス原産のフレンドリーな子犬",
         image: "bulldog.gif",
-        listPrice: 2000,
-        unitCost: 2000,
+        listPrice: 1800,
+        unitCost: 1800,
       },
       {
         locale: "zh_CN",
         name: "幼年雌性斗牛犬",
         description: "来自英国的友好幼犬",
         image: "bulldog.gif",
-        listPrice: 12000,
-        unitCost: 12000,
+        listPrice: 10000,
+        unitCost: 10000,
       },
     ],
   },

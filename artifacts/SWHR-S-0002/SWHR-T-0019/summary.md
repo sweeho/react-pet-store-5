@@ -46,7 +46,7 @@ Locale-keyed catalog tables (design D4, P4; target shape `architecture/schema.sq
 
 - Red: all five new/changed test files run with `db/schema.ts`/`db/client.ts` reverted, the migration removed, and every other new implementation file removed — all five suites fail on unresolved imports.
 - Green: `bun run verify` (lint + `tsc --build` + full unit suite) — 39 test files, 144 tests passed; lint and typecheck clean.
-- `bun run verify:full`'s E2E tier was not executed: this container has no Chromium installed. `e2e/product-locale.spec.ts` is committed and type-checks cleanly (`tsc --build` covers `e2e/`); Validation runs it for real at INTEGRATION_QA.
+- `bun run verify:full`'s E2E tier was not run locally: this container has no Chromium installed. It DID run in CI (which has Chromium) on the first push, and caught a real bug: EST-6 and EST-7 both priced at en_US $18.50 made `page.getByText("$18.50")` match two elements (a Playwright strict-mode violation), since the spec asserts against a single item card. Fixed by giving EST-7 its own distinct seed prices (`db/seed/catalog.ts`); re-pushed and CI is green (see work log). This is a real, executed E2E pass, not a skipped tier.
 
 Full detail: `tdd-test-result.md`.
 
