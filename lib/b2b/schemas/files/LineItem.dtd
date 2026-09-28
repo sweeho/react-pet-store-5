@@ -1,0 +1,11 @@
+<!--
+  LineItem 1.1 (design.md P9, SWHR-R-0031). CategoryId, ProductId, ItemId,
+  LineNum, Quantity and UnitPrice, each exactly once, in this order.
+-->
+<!ELEMENT LineItem (CategoryId, ProductId, ItemId, LineNum, Quantity, UnitPrice)>
+<!ELEMENT CategoryId (#PCDATA)>
+<!ELEMENT ProductId (#PCDATA)>
+<!ELEMENT ItemId (#PCDATA)>
+<!ELEMENT LineNum (#PCDATA)>
+<!ELEMENT Quantity (#PCDATA)>
+<!ELEMENT UnitPrice (#PCDATA)>
