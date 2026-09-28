@@ -31,13 +31,13 @@
 
 ## 5. Catalog and prices
 
-- [ ] 5.1 Key category, product and item detail rows by locale in the Drizzle schema and generate the migration (SWHR-T-0019)
-- [ ] 5.2 Filter every catalog query by locale with no cross-locale fallback (SWHR-T-0019)
-- [ ] 5.3 Return an item only when its item and product details share the requested locale (SWHR-T-0019)
-- [ ] 5.4 Seed catalog detail data for all three locales (SWHR-T-0019)
-- [ ] 5.5 Format catalog and cart prices in the page locale's currency convention using the locale's own price row (SWHR-T-0019)
-- [ ] 5.6 Default the cart locale to en_US and use it for cart item lookups (SWHR-T-0019)
-- [ ] 5.7 Test not-found for missing locale rows and per-locale price display (SWHR-T-0019)
+- [x] 5.1 Key category, product and item detail rows by locale in the Drizzle schema and generate the migration (SWHR-T-0019)
+- [x] 5.2 Filter every catalog query by locale with no cross-locale fallback (SWHR-T-0019)
+- [x] 5.3 Return an item only when its item and product details share the requested locale (SWHR-T-0019)
+- [x] 5.4 Seed catalog detail data for all three locales (SWHR-T-0019)
+- [x] 5.5 Format catalog and cart prices in the page locale's currency convention using the locale's own price row (SWHR-T-0019)
+- [x] 5.6 Default the cart locale to en_US and use it for cart item lookups (SWHR-T-0019)
+- [x] 5.7 Test not-found for missing locale rows and per-locale price display (SWHR-T-0019)
 
 ## 6. Orders and emails
 
