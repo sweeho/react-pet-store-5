@@ -2,8 +2,8 @@
 
 ## 1. Boilerplate
 
-- [ ] 1.1 Stand up or extend the application scaffold, build and test tooling (SWHR-T-0004)
-- [ ] 1.2 Add a smoke test that loads the root route (SWHR-T-0004)
+- [x] 1.1 Stand up or extend the application scaffold, build and test tooling (SWHR-T-0004)
+- [x] 1.2 Add a smoke test that loads the root route (SWHR-T-0004)
 
 ## 2. Landing page
 
