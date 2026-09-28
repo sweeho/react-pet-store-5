@@ -14,11 +14,11 @@
 
 ## 3. Sessions and the protected-page gate
 
-- [ ] 3.1 Implement the session cookie, session lookup and per-realm idle timeout (storefront 15 min, admin and supplier 54 min) (SWHR-T-0044)
-- [ ] 3.2 Define the protected-page configuration (sign-on page, error page, named protected paths with roles), where the first entry wins on a duplicate name and the duplicate is logged (SWHR-T-0044)
-- [ ] 3.3 Implement the server middleware gate with exact path matching that ignores query strings, and store the original URL (SWHR-T-0044)
-- [ ] 3.4 Implement the SPA route guard for protected pages, backed by a session-state endpoint (SWHR-T-0044)
-- [ ] 3.5 Make sure catalog, search and cart routes carry no sign-on requirement (SWHR-T-0044)
+- [x] 3.1 Implement the session cookie, session lookup and per-realm idle timeout (storefront 15 min, admin and supplier 54 min) (SWHR-T-0044)
+- [x] 3.2 Define the protected-page configuration (sign-on page, error page, named protected paths with roles), where the first entry wins on a duplicate name and the duplicate is logged (SWHR-T-0044)
+- [x] 3.3 Implement the server middleware gate with exact path matching that ignores query strings, and store the original URL (SWHR-T-0044)
+- [x] 3.4 Implement the SPA route guard for protected pages, backed by a session-state endpoint (SWHR-T-0044)
+- [x] 3.5 Make sure catalog, search and cart routes carry no sign-on requirement (SWHR-T-0044)
 
 ## 4. Sign-on, registration and sign-out API
 
