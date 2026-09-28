@@ -1,0 +1,10 @@
+{
+  "signOnPage": "/signin",
+  "signOnErrorPage": "/signin-error",
+  "protectedPages": [
+    { "name": "customer.screen", "path": "/account", "roles": [] },
+    { "name": "customer.do", "path": "/account-edit", "roles": [] },
+    { "name": "enter_order_information.screen", "path": "/checkout", "roles": [] },
+    { "name": "signon_welcome.screen", "path": "/signon-welcome", "roles": [] }
+  ]
+}

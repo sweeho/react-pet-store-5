@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router";
 import routes from "~react-pages";
 
+import { SignOnGate } from "@/components/auth/SignOnGate";
 import { SiteLayout } from "@/components/layout";
 import { LoadingState } from "@/components/state";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
@@ -19,7 +20,9 @@ function App() {
       <SiteLayout>
         <RootErrorBoundary>
           <ScreenBoundary>
-            <Suspense fallback={<LoadingState />}>{useRoutes(routes)}</Suspense>
+            <Suspense fallback={<LoadingState />}>
+              <SignOnGate>{useRoutes(routes)}</SignOnGate>
+            </Suspense>
           </ScreenBoundary>
         </RootErrorBoundary>
       </SiteLayout>

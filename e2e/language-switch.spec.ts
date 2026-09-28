@@ -40,14 +40,16 @@ test.describe("Language switch", () => {
   test("[SWHR-R-0013.01] a ?locale= query overrides the session locale for this page only", async ({
     page,
   }) => {
-    await page.goto("/account?locale=zh_CN");
+    // /cart, not /account: SWHR-T-0044 gates /account behind sign-on
+    // (SWHR-R-0064), so an anonymous visit no longer renders it directly.
+    await page.goto("/cart?locale=zh_CN");
 
-    await expect(page.getByRole("heading", { level: 1, name: "账户" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "购物车" })).toBeVisible();
 
     // The override was not persisted: a fresh navigation without the query
     // parameter falls back to the (still en_US) session locale.
-    await page.goto("/account");
-    await expect(page.getByRole("heading", { level: 1, name: "Account" })).toBeVisible();
+    await page.goto("/cart");
+    await expect(page.getByRole("heading", { level: 1, name: "Cart" })).toBeVisible();
   });
 
   test("the language switch is also available in the mobile drawer and updates the page in place", async ({
