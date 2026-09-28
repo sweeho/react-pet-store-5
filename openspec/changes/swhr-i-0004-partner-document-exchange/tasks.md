@@ -40,12 +40,12 @@
 
 ## 5. Asynchronous exchange
 
-- [ ] 5.1 Record the messaging mechanism decision in ARCHITECTURE.md Key Decisions (SWHR-T-0033)
-- [ ] 5.2 Implement the supplier purchase order channel, one message per approved order (SWHR-T-0033)
-- [ ] 5.3 Implement the invoice channel with independent delivery to order fulfilment and customer notification (SWHR-T-0033)
-- [ ] 5.4 Make supplier order intake atomic, with no persisted order and redelivery on any failure (SWHR-T-0033)
-- [ ] 5.5 Publish one invoice per shipment for immediate shipments and stock-update shipments (SWHR-T-0033)
-- [ ] 5.6 Reject supplier-order intake without persisting when validation is enabled and the document fails it (SWHR-T-0033)
+- [x] 5.1 Record the messaging mechanism decision in ARCHITECTURE.md Key Decisions (SWHR-T-0033)
+- [x] 5.2 Implement the supplier purchase order channel, one message per approved order (SWHR-T-0033)
+- [x] 5.3 Implement the invoice channel with independent delivery to order fulfilment and customer notification (SWHR-T-0033)
+- [x] 5.4 Make supplier order intake atomic, with no persisted order and redelivery on any failure (SWHR-T-0033)
+- [x] 5.5 Publish one invoice per shipment for immediate shipments and stock-update shipments (SWHR-T-0033)
+- [x] 5.6 Reject supplier-order intake without persisting when validation is enabled and the document fails it (SWHR-T-0033)
 
 ## 6. Open decisions
 
