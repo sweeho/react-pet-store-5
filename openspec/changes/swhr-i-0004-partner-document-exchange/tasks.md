@@ -30,13 +30,13 @@
 
 ## 4. Partner documents
 
-- [ ] 4.1 Implement the TPASupplierOrder builder (namespace, element order, nine-field shipping address) (SWHR-T-0031)
-- [ ] 4.2 Build the partner supplier order from an approved order, sending street line 1 only (SWHR-T-0031)
-- [ ] 4.3 Implement the TPALineItem attribute writer with whole-number quantity and decimal unit price (SWHR-T-0031)
-- [ ] 4.4 Implement the TPAInvoice builder with order id, user id, order date, shipping date and line items (SWHR-T-0031)
-- [ ] 4.5 Bundle the TPASupplierOrder, TPAInvoice and TPALineItem DTDs and XSDs, including value ranges and item-id uniqueness (SWHR-T-0031)
-- [ ] 4.6 Implement partner supplier order intake converting TPA format to the internal SupplierOrder, passing 1.1 through unchanged (SWHR-T-0031)
-- [ ] 4.7 Implement invoice intake: root and namespace check, OrderId and itemId-to-quantity extraction (SWHR-T-0031)
+- [x] 4.1 Implement the TPASupplierOrder builder (namespace, element order, nine-field shipping address) (SWHR-T-0031)
+- [x] 4.2 Build the partner supplier order from an approved order, sending street line 1 only (SWHR-T-0031)
+- [x] 4.3 Implement the TPALineItem attribute writer with whole-number quantity and decimal unit price (SWHR-T-0031)
+- [x] 4.4 Implement the TPAInvoice builder with order id, user id, order date, shipping date and line items (SWHR-T-0031)
+- [x] 4.5 Bundle the TPASupplierOrder, TPAInvoice and TPALineItem DTDs and XSDs, including value ranges and item-id uniqueness (SWHR-T-0031)
+- [x] 4.6 Implement partner supplier order intake converting TPA format to the internal SupplierOrder, passing 1.1 through unchanged (SWHR-T-0031)
+- [x] 4.7 Implement invoice intake: root and namespace check, OrderId and itemId-to-quantity extraction (SWHR-T-0031)
 
 ## 5. Asynchronous exchange
 
