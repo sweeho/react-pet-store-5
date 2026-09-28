@@ -3,9 +3,11 @@ import { Bird, Cat, Dog, Fish, PawPrint, Turtle, X } from "lucide-react";
 import { Link } from "react-router";
 
 import { PET_CATEGORIES, PRIMARY_AREAS, type PetCategoryId } from "@/constants/navigation";
+import { useLocale } from "@/i18n/LocaleProvider";
+import { useScreen } from "@/i18n/screens";
 import { cn } from "@/utils";
 
-import SiteHeader from "./SiteHeader";
+import SiteHeader, { LANGUAGES } from "./SiteHeader";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -35,6 +37,8 @@ const SECONDARY_AREAS = PRIMARY_AREAS.filter(
  */
 export default function GlobalNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { locale, changeLocale } = useLocale();
+  const t = useScreen("shell");
 
   return (
     <header className="bg-background border-line-2 border-b">
@@ -108,14 +112,40 @@ export default function GlobalNav() {
                 FOCUS_RING,
               )}
             >
-              <span className="sr-only">Close menu</span>
+              <span className="sr-only">{t.closeMenu}</span>
               <X aria-hidden="true" className="size-5" />
             </button>
           </div>
 
+          <div className="border-line-2 mt-4 flex items-center gap-1 border-b pb-3">
+            <span className="text-muted-foreground-1 mr-1 text-xs">{t.language}</span>
+            {LANGUAGES.map((language) => (
+              <button
+                key={language.code}
+                type="button"
+                aria-pressed={language.code === locale}
+                onClick={() => void changeLocale(language.code)}
+                style={
+                  language.cjk
+                    ? { fontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif' }
+                    : undefined
+                }
+                className={cn(
+                  "inline-flex h-8 items-center rounded-full px-2.5 text-xs font-medium",
+                  FOCUS_RING,
+                  language.code === locale
+                    ? "border-line-2 bg-background-1 text-foreground border"
+                    : "hover:text-foreground",
+                )}
+              >
+                {language.label}
+              </button>
+            ))}
+          </div>
+
           <div className="mt-4 flex flex-col gap-1">
             <p className="text-muted-foreground-1 px-2.5 pt-2 text-xs font-semibold tracking-wide uppercase">
-              Shop by pet
+              {t.shopByPet}
             </p>
             {PET_CATEGORIES.map((category) => {
               const Icon = CATEGORY_ICONS[category.id];
@@ -136,7 +166,7 @@ export default function GlobalNav() {
             })}
 
             <p className="text-muted-foreground-1 px-2.5 pt-3 text-xs font-semibold tracking-wide uppercase">
-              Storefront
+              {t.storefront}
             </p>
             {PRIMARY_AREAS.filter((area) => !PET_CATEGORIES.some((c) => c.id === area.id)).map(
               (area) => (
