@@ -14,6 +14,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 - **Icons**: `lucide-react`, `@heroicons/react`
 - **Auto-imports**: `unplugin-auto-import` — `react` + `react-router` need no import
 - **Fonts**: `unplugin-fonts` (config in `configs/fonts.config.ts`)
+- **XML**: `@xmldom/xmldom` (parse, build, serialize) + `xmllint-wasm` (XSD validation, async) — partner documents only, see [Partner documents and messaging](#partner-documents-and-messaging)
 - **Tests**: Vitest + Testing Library (unit/integration/UI), Playwright (E2E/smoke)
 - **Lint/format**: ESLint 9 + typescript-eslint, Prettier, Husky + lint-staged
 
@@ -34,7 +35,10 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 │   └── main.tsx
 ├── routes/api/            # Backend routes, file-based (+ *.test.ts)
 ├── lib/                    # Server and shared modules (locale model, session, catalog queries, e-mail) — not auto-registered by Nitro
+│   ├── b2b/                # Partner XML documents: xml/ infrastructure, elements/, documents/, partner/, exchange/, schemas/ (bundled DTD/XSD + catalog)
+│   └── messaging/          # The one outbox and dispatcher every asynchronous hop uses
 ├── middleware/             # Runs before every route handler
+├── plugins/                # Nitro server plugins (the outbox dispatcher poller)
 ├── db/                      # Drizzle schema.ts + client.ts (sqlite connection, migrate, seed)
 ├── drizzle/                  # Generated SQL migrations (drizzle-kit generate), committed
 ├── e2e/                     # Playwright specs + global-setup.ts
@@ -67,6 +71,13 @@ The storefront runs in `en_US`, `ja_JP` or `zh_CN`; the default is deployment co
 - **Screens.** Page copy lives in `src/i18n/screens/<screen>.ts`, one map per locale, found by an `import.meta.glob` registry. A missing locale or screen falls back to `en_US`; a screen defined nowhere is an error. A `?locale=` query overrides the session for that render only.
 - **Data.** Catalog, profile, order and e-mail content are keyed by locale. Prices are per-locale rows in integer minor units, formatted at display time and never converted.
 
+## Partner documents and messaging
+
+The order centre and the supplier exchange XML documents in the legacy trading-partner formats (purchase order, supplier order, invoice). Spec: `openspec/specs/b2b-document-exchange/` once change `swhr-i-0004-partner-document-exchange` archives.
+
+- **Documents.** `lib/b2b/` writes and reads every document format. Schemas are bundled under `lib/b2b/schemas/`, found through an entity catalog; a deployment catalog (`B2B_ENTITY_CATALOG`) overrides the bundled one. Validation is switched per document type and form (`B2B_VALIDATE_*`, `B2B_SCHEMA_FORM`). The order centre publishes its catalog and schemas at `GET /api/b2b/entity-catalog` and `GET /api/b2b/schemas/:file`. There is no XML-over-HTTP intake.
+- **Messaging.** Asynchronous hops go through one SQLite outbox (`lib/messaging/`). A producer enqueues inside its own `db.transaction()`. Each channel has a fixed subscriber list and one delivery row per subscriber. A dispatcher, polled by a Nitro plugin, runs each handler's commit and marks it delivered in one transaction, and retries on failure. Channels today: `supplier.purchase-order` (→ supplier intake) and `opc.invoice` (→ order fulfilment, customer notification).
+
 ## Database
 
 `db/schema.ts` defines Drizzle tables; `db/client.ts` opens the SQLite connection, runs pending migrations from `drizzle/`, and seeds empty tables (demo users; the catalog in all three locales from `db/seed/`). Routes import `db` and the table objects directly (see `routes/api/users/`) — no repository layer.
@@ -74,7 +85,7 @@ The storefront runs in `en_US`, `ja_JP` or `zh_CN`; the default is deployment co
 - `bun run db:generate` — after editing `db/schema.ts`, generates a new migration into `drizzle/` (via `drizzle-kit`, config in `drizzle.config.ts`)
 - `bun run db:studio` — browse the db in Drizzle Studio
 - The db file itself is `sqlite.db` at the project root (gitignored, created on first run); `drizzle/` migrations are committed
-- Entities: `users`; `profiles` (one per user, `preferredLanguage` default `en_US`); catalog `category`, `product`, `item`, each with a `*_details` table keyed `(id, locale)` — target shape in [architecture/schema.sql](./architecture/schema.sql). A row missing in a locale means the entity does not exist in that locale; queries never fall back.
+- Entities: `users`; `profiles` (one per user, `preferredLanguage` default `en_US`); catalog `category`, `product`, `item`, each with a `*_details` table keyed `(id, locale)` — target shape in [architecture/schema.sql](./architecture/schema.sql). A row missing in a locale means the entity does not exist in that locale; queries never fall back. Supplier orders: `supplier_orders` with `supplier_contacts`, `supplier_addresses` and `supplier_line_items` (money in integer minor units). Messaging: `outbox_messages` and `outbox_deliveries` (one row per message and subscriber).
 - Under Vitest (`VITEST=true`), `db/client.ts` swaps in an in-memory db instead, so tests never touch the dev database
 
 ## Testing
@@ -94,3 +105,5 @@ Four tiers, one worked example each. Commands and how to extend: [README.md](./R
 - **One locale model.** Supported locales, the default and identifier parsing come only from `lib/locale/model.ts`; no capability keeps its own list or parser. The legacy system had four diverging copies. Authored in change `swhr-i-0003-localization` (design D1, P1).
 - **The server owns the locale.** The session locale is set and read server-side (`event.context.locale`); the SPA never chooses a locale on its own, so pages, cart and business operations agree. Authored in change `swhr-i-0003-localization` (design D2, P2).
 - **Locale-keyed data, no fallback.** Localized content and prices are rows keyed by locale, stored as integer minor units; a missing row is "not found", never English. Page copy is the only thing that falls back to `en_US`. Authored in change `swhr-i-0003-localization` (design D3, D4, P3, P4).
+- **One outbox for every asynchronous hop.** Checkout, approval, fulfilment, supplier inventory and notifications enqueue on `lib/messaging/`, inside the transaction that changes state, and never add a second queue. Delivery is tracked per subscriber. A failed handler retries until `OUTBOX_MAX_ATTEMPTS` (default 10), then its delivery is marked `dead` and kept. This replaces five legacy JMS destinations with one mechanism. Authored in change `swhr-i-0004-partner-document-exchange` (design P4, P5).
+- **XML is validated against XSD only.** Validation uses `xmllint-wasm`, which cannot validate DTDs under Bun. Each DTD therefore ships with an equivalent XSD, and DTD-form documents are validated against it. A new document type adds both files. Authored in change `swhr-i-0004-partner-document-exchange` (design P1).

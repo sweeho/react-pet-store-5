@@ -96,3 +96,215 @@ Disputed and low-confidence items, for a human to rule on. The spec states obser
 - Q1. Does any partner still send version 1.0 documents (R10)?
 - Q2. Should schema-invalid documents other than supplier orders be rejected in the rebuild (R2)? Supplier-order intake is resolved by SME ruling: reject without persisting.
 - Q3. Is `Country` required on inbound addresses (R1)?
+
+## Planning (SWHR-S-0003)
+
+Added at sprint planning (SWHR-T-0025). Everything above this heading is the adopted specification and is unchanged; this section records what the repository actually contains, the decisions that make the spec buildable on it, and how the work is phased. Implementation agents read this section before their `PLAN.md`.
+
+### Codebase findings
+
+- **No XML, orders, supplier or messaging code exists.** `package.json` has no XML library. `db/schema.ts` has `users`, `profiles` and the locale-keyed catalog only. `lib/` has `locale`, `catalog`, `email`, `orders/locale.ts` (the order-locale default from swhr-i-0003) and nothing else. There is no outbox, queue or background worker.
+- **No legacy schema sources.** No `.dtd`, `.xsd` or `.xsl` file is in the repository. The only wire-format source is `specs/b2b-document-exchange/spec.md` plus the trace table in D3 above.
+- **Toolchain probe (Bun 1.4.2, linux-arm64, 2026-09-28).** `@xmldom/xmldom` 0.9 parses and serializes, keeps `doctype.publicId`/`systemId`, and throws through its `onError` hook on a malformed document. `xmllint-wasm` 5.3 validates against XSD (an `xs:unique` duplicate and a `positiveInteger` of 0 were both rejected) but its build has no `--valid`/`--dtdvalid`, so it cannot validate against a DTD. `libxmljs` and `libxmljs2` fail to build under Bun. No system `xmllint` is installed.
+- **Test harness.** `lib/**/*.test.ts` already run in the Vitest `server` project (node environment, under `bun --bun`), and `tsconfig.node.json` includes `lib`. A new top-level `plugins/` directory is not in `tsconfig.node.json`'s `include` yet.
+- **CI.** `.github/workflows/ci.yml` triggers on push and pull request to `vortex/**`, `dev` and `main`. No change is needed.
+- **Later changes already on disk.** order-fulfillment (swhr-i-0011) design D1 defines `supplier_orders`, `supplier_contacts`, `supplier_addresses` and `supplier_line_items` (money as integer cents, status CHECK over four values, F6), and D3 defines the same outbox-and-dispatcher mechanism. supplier-inventory (swhr-i-0012) D3 writes invoices to that outbox. `architecture/rebuild-guidance.md` §3.2 recommends one outbox, and §1 forbids XML-over-POST in the rebuild's HTTP API.
+
+### Planning decisions
+
+- **P1. XML toolchain.** `@xmldom/xmldom` for parsing, DOM building and serialization; `xmllint-wasm` for validation, which is asynchronous (it runs in a worker). Because DTD validation is unavailable (finding above), every DTD is bundled together with an equivalent XSD (`<Name>.dtd.xsd`), and DTD-form documents are validated against that equivalent. The `.dtd` files are still bundled and served to partners. D2 above allows this.
+- **P2. Money in documents is a decimal string.** Document types carry `unitPrice` and `totalPrice` as decimal strings, written exactly as given with no float round-trip (R8). Conversion to integer minor units happens only where a document is persisted (`supplier_line_items`), with exact string arithmetic.
+- **P3. Document dates.** `yyyy-MM-dd` in the server's local time zone, matching the legacy formatter (R3). Parsing a missing or invalid date yields `null`; the document reader then substitutes "now" from an injectable clock.
+- **P4. Outbox.** Two tables: `outbox_messages` (id, channel, payload, created_at) and `outbox_deliveries` (message id, consumer, status `pending`/`delivered`/`dead`, attempts, last_error, next_attempt_at). Each channel has a fixed subscriber list, so a message gets one delivery row per subscriber at enqueue time: `supplier.purchase-order` → `supplier-intake`; `opc.invoice` → `order-fulfillment` and `customer-notification`. A handler has two phases: an async prepare step (parse, validate) and a synchronous commit step that receives the transaction. The dispatcher runs the commit and marks the delivery delivered inside one `db.transaction()`. Any throw rolls back, increments `attempts` and schedules a retry. After `OUTBOX_MAX_ATTEMPTS` failed attempts (default 10) the delivery becomes `dead` and is kept for inspection. A delivery with no registered handler stays `pending`, so nothing is lost before fulfilment and notifications exist. A Nitro server plugin polls every `OUTBOX_POLL_MS` (default 1000 ms) and is inactive under Vitest. Checkout, fulfilment, supplier-inventory and notifications reuse this outbox rather than adding their own.
+- **P5. Supplier-order tables are built here, in order-fulfillment D1's shape.** `SWHR-R-0047` and `SWHR-R-0050` need "recorded / not recorded", so this change creates `supplier_orders` (status CHECK over `PENDING`, `APPROVED`, `DENIED`, `COMPLETED`, created `PENDING`), `supplier_contacts`, `supplier_addresses` and `supplier_line_items` (integer-cent `unit_price`, `quantity_shipped` default 0). order-fulfillment extends these tables and must not recreate them.
+- **P6. Seams, not callers.** Order approval, stock updates, fulfilment and notifications are later capabilities. This change exposes the functions they will call and tests the scenarios through them: `sendSupplierPurchaseOrders` (one message per approved order), `publishInvoices` (one message per shipment), the supplier-intake handler with an injected `shipOnReceipt` hook (default: ships nothing), and consumer registration for the two invoice subscribers.
+- **P7. Configuration.** Environment variables, read in one module: `B2B_VALIDATE_PURCHASE_ORDER`, `B2B_VALIDATE_ORDER_APPROVAL`, `B2B_VALIDATE_INVOICE` and `B2B_VALIDATE_SUPPLIER_ORDER` (each on unless set to `false`); `B2B_SCHEMA_FORM` (`dtd` by default, or `xsd`); and `B2B_ENTITY_CATALOG` (the path to a deployment catalog that overrides the bundled mappings).
+- **P8. HTTP surface.** Only `GET /api/b2b/entity-catalog`, which publishes the identifier-to-URL mappings, and `GET /api/b2b/schemas/:file`, which serves a bundled schema. There is no XML-over-POST intake (rebuild-guidance §1); the channels are in-process.
+- **P9. Public identifiers.** The spec gives two full identifiers (PurchaseOrder 1.1, SupplierOrder 1.1). The rest follow the same Blueprints pattern and are defined once in the bundled catalog: `-//Sun Microsystems, Inc. - J2EE Blueprints Group//DTD <Name> <version>//EN` for ContactInfo, Address, CreditCard and LineItem 1.1; TPA-SupplierOrder, TPA-Invoice and TPA-LineItem 1.0; and PurchaseOrder 1.0.
+
+### Spec discrepancies
+
+Recorded here and on the planning ticket; the delta spec is not edited.
+
+- **SD-1. Wire formats cannot be checked against legacy files.** No DTD, XSD or XSL is in the repository, and the full public identifiers of the element and TPA documents are not stated (P9 assumes them). Schemas are authored from the spec text, so "byte-compatible" means compatible with the spec, not verified against the legacy files. Confidence: medium.
+- **SD-2. DTD validation is not available** in any XML library that works under Bun here. P1 substitutes DTD-equivalent XSDs.
+- **SD-3. Upstream and downstream capabilities do not exist.** "Approved order", "stock arrival", "order fulfilment" and "customer notification" in `SWHR-R-0035`, `SWHR-R-0049` and `SWHR-R-0051` are exercised through the P6 seams, with test consumers.
+- **SD-4. Supplier-order persistence belongs to order-fulfillment** (rebuild-guidance §3.1, fulfilment D1). It is built here in that shape (P5) because this change's scenarios need it.
+- **SD-5. The outbox is built earlier than rebuild-guidance §3.2 suggests** ("when checkout first needs it"): b2b-document-exchange is build order 2 and needs it first. P4 covers what fulfilment D3 asks for, including the retry cap it leaves open.
+- **SD-6. The version 1.0 element names are not recoverable.** `SWHR-R-0052` lists the fields only, and the 1.0 DTD is not in the repository. The 1.0 reader defines its element names from the 1.1 and TPA conventions, and its test fixture is authored to match. Confidence: low. Ruling requested in SWHR-T-0035 (Q1).
+- **SD-7. The order-approval validation switch has nothing to validate.** `SWHR-R-0044` names an order-approval document switch, but no order-approval document requirement exists in this change. The switch is configuration only.
+- **SD-8. Tests have their own task group (7).** Each implementing TASK still writes the approved test cases (`SWHR-C-*` in `test-cases.md`) for the scenarios it implements, named with their ids. SWHR-T-0034 audits that every case is covered, and adds the cross-module flow test.
+- **SD-9. "Reported as invalid" is not "rejected".** `SWHR-R-0024.03`, `SWHR-R-0039.02` and `SWHR-R-0044.01` observe validation results. Rejection happens only for malformed XML (`SWHR-R-0046.01`) and invalid supplier orders (`SWHR-R-0047`). Every other schema violation is logged and processing continues (`SWHR-R-0046.02`, Q2).
+
+### Phases
+
+| Phase                                     | Ticket      | Group | Depends on               |
+| ----------------------------------------- | ----------- | ----- | ------------------------ |
+| 1. XML infrastructure                     | SWHR-T-0028 | 1     | —                        |
+| 2. Shared elements                        | SWHR-T-0029 | 2     | SWHR-T-0028              |
+| 3. Order documents                        | SWHR-T-0030 | 3     | SWHR-T-0029              |
+| 4. Partner documents                      | SWHR-T-0031 | 4     | SWHR-T-0030              |
+| 5. Asynchronous exchange                  | SWHR-T-0033 | 5     | SWHR-T-0031              |
+| 6. Version 1.0 intake (parallel with 4–5) | SWHR-T-0032 | 6     | SWHR-T-0030              |
+| 7. Test suite                             | SWHR-T-0034 | 7     | SWHR-T-0033, SWHR-T-0032 |
+
+- **Test-harness phase.** No new harness is needed. Every test is a `lib/**/*.test.ts` in the Vitest `server` project; SWHR-T-0028 confirms that the `xmllint-wasm` worker runs under `bun --bun vitest`. There is no screen, so no Playwright spec is added. Validation's E2E run at integration QA covers the storefront regression suite unchanged.
+- **CI phase.** The existing workflow already runs lint, typecheck, unit and E2E on every `vortex/**` push and pull request. No workflow change is needed.
+- **tasks.md 5.1 and 6.1.** 5.1 (record the messaging decision) is done at planning: P4 is promoted to the ARCHITECTURE Key Decisions. 6.1 (obtain rulings) is raised as SWHR-T-0035. Both boxes carry their group's ticket key and are ticked when that ticket merges.
+
+### Interface contracts
+
+These are fixed at planning. Later tickets code against them, and a ticket may add exports but must not change these.
+
+```ts
+// lib/b2b/xml/*  (SWHR-T-0028)
+export interface DocTypeDecl {
+  name: string;
+  publicId: string;
+  systemId: string;
+}
+export function createDocument(rootName: string, namespace?: string): Document;
+export function appendTextElement(
+  parent: Element,
+  name: string,
+  value: string | null | undefined,
+  namespace?: string,
+): Element; // null/undefined -> MissingValueError naming `name`; "" -> empty element
+export function serializeDocument(doc: Document, doctype?: DocTypeDecl): string; // `<?xml version="1.0" encoding="UTF-8"?>`, indented
+export function parseDocument(xml: string): Document; // not well-formed -> MalformedDocumentError
+export function expectRoot(el: Element, name: string, namespace?: string): void; // -> DocumentReadError(`${name} element expected.`)
+export class ChildReader {
+  // positional, element children only
+  constructor(parent: Element);
+  text(name: string, opts?: { allowEmpty?: boolean }): string; // missing/out of order -> `${name} element expected.`; empty -> `${name} element: content expected.`
+  optionalText(name: string): string | null;
+  element(name: string): Element;
+  elements(name: string, min?: number): Element[];
+  end(): void; // unexpected trailing element -> DocumentReadError
+}
+export function checkDocumentType(doc: Document, expectedPublicId: string): void; // mismatch -> DocumentReadError("Document not of type ..."); no DOCTYPE -> passes
+export function formatDocumentDate(d: Date): string; // yyyy-MM-dd, local time zone
+export function parseDocumentDate(s: string | null): Date | null;
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+export function validateDocument(xml: string, schemaKey: string): Promise<ValidationResult>; // schemaKey = public id or namespace; resolved via resolveEntity
+export function resolveEntity(
+  publicId: string | null,
+  systemId: string | null,
+  opts?: { resolver?: EntityResolver },
+): ResolvedEntity | null;
+export class MissingValueError extends Error {}
+export class MalformedDocumentError extends Error {}
+export class DocumentReadError extends Error {}
+// lib/b2b/config.ts
+export type DocumentKind = "purchaseOrder" | "orderApproval" | "invoice" | "supplierOrder";
+export function isValidationEnabled(kind: DocumentKind): boolean;
+export function getSchemaForm(): "dtd" | "xsd";
+
+// lib/b2b/elements/*  (SWHR-T-0029) — writeX(parent, value) appends and returns the element; readX(el) throws DocumentReadError
+export interface Address {
+  streetName1: string;
+  streetName2?: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  country: string | null;
+}
+export interface ContactInfo {
+  familyName: string;
+  givenName: string;
+  address: Address;
+  email: string;
+  phone: string;
+}
+export interface CreditCard {
+  cardNumber: string;
+  cardType: string;
+  expiryDate: string;
+}
+export interface LineItem {
+  categoryId: string;
+  productId: string;
+  itemId: string;
+  lineNum: number;
+  quantity: number;
+  unitPrice: string;
+} // unitPrice decimal string (P2)
+export interface StoredLineItem extends LineItem {
+  quantityShipped: number;
+}
+export function toExportLineItem(line: StoredLineItem): LineItem;
+
+// lib/b2b/documents/*  (SWHR-T-0030; v1.0 reader SWHR-T-0032)
+export interface PurchaseOrder {
+  locale: string;
+  orderId: string;
+  userId: string;
+  emailId: string;
+  orderDate: Date;
+  shippingInfo: ContactInfo;
+  billingInfo: ContactInfo;
+  totalPrice: string;
+  creditCard: CreditCard;
+  lineItems: LineItem[];
+}
+export interface SupplierOrder {
+  orderId: string;
+  orderDate: Date;
+  shippingInfo: ContactInfo;
+  lineItems: LineItem[];
+}
+export interface ReadOptions {
+  validate?: boolean;
+  now?: () => Date;
+  log?: (msg: string) => void;
+}
+export function writePurchaseOrder(po: PurchaseOrder): string;
+export function readPurchaseOrder(xml: string, opts?: ReadOptions): Promise<PurchaseOrder>;
+export function writeSupplierOrder(so: SupplierOrder): string;
+export function readSupplierOrder(xml: string, opts?: ReadOptions): Promise<SupplierOrder>;
+export function readPurchaseOrderV1(xml: string, opts?: ReadOptions): Promise<PurchaseOrder>; // SWHR-T-0032
+
+// lib/b2b/partner/*  (SWHR-T-0031)
+export interface PartnerInvoice {
+  orderId: string;
+  userId: string;
+  orderDate: Date;
+  shippingDate: Date;
+  lineItems: LineItem[];
+}
+export function buildPartnerSupplierOrder(
+  order: SupplierOrder,
+  opts?: { form?: "dtd" | "xsd" },
+): string;
+export function buildPartnerInvoice(
+  invoice: PartnerInvoice,
+  opts?: { form?: "dtd" | "xsd" },
+): string;
+export function intakeSupplierOrder(xml: string, opts?: ReadOptions): Promise<SupplierOrder>; // TPA -> internal; SupplierOrder 1.1 passes through
+export function readPartnerInvoice(
+  xml: string,
+  opts?: ReadOptions,
+): Promise<{ orderId: string; shipped: Record<string, number> }>;
+export class DocumentInvalidError extends Error {
+  errors: string[];
+}
+
+// lib/messaging/outbox.ts  (SWHR-T-0033)
+export type Channel = "supplier.purchase-order" | "opc.invoice";
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Handler = (payload: string) => Promise<(tx: Tx) => void>; // async prepare, sync commit
+export function enqueue(tx: Tx, channel: Channel, payload: string): string;
+export function registerConsumer(channel: Channel, consumer: string, handler: Handler): void;
+export function dispatchPending(opts?: {
+  now?: Date;
+}): Promise<{ delivered: number; failed: number }>;
+// lib/b2b/exchange/*  (SWHR-T-0033)
+export function sendSupplierPurchaseOrders(tx: Tx, orders: SupplierOrder[]): void; // one message per order
+export function publishInvoices(tx: Tx, invoices: PartnerInvoice[]): void; // one message per shipment
+export function createSupplierIntakeHandler(opts?: {
+  shipOnReceipt?: (tx: Tx, order: SupplierOrder) => PartnerInvoice[];
+}): Handler;
+```
