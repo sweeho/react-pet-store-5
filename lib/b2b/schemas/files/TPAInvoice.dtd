@@ -1,0 +1,15 @@
+<!--
+  TPA-Invoice 1.0 (design.md P9, R5, SWHR-R-0037). `locale` defaults to
+  en_US in this DTD-declared form only — the XSD-declared form has no
+  locale attribute (R5). At least one LineItem is required, with no
+  wrapping element.
+-->
+<!ENTITY % TPALineItem SYSTEM "TPALineItem.dtd">
+%TPALineItem;
+
+<!ELEMENT Invoice (OrderId, UserId, OrderDate, ShippingDate, LineItem+)>
+<!ATTLIST Invoice locale CDATA "en_US">
+<!ELEMENT OrderId (#PCDATA)>
+<!ELEMENT UserId (#PCDATA)>
+<!ELEMENT OrderDate (#PCDATA)>
+<!ELEMENT ShippingDate (#PCDATA)>
