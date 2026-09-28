@@ -84,3 +84,20 @@ commands:
 # Turn this off and the project runs a byte-identical pipeline without any of it.
 specDriven:
   enabled: true
+
+# Official test evidence (architecture doc 43, FR-TT-56).
+#
+# `command` runs the client+server Vitest projects together — the same run
+# `test-unit` above triggers — with the built-in junit reporter added, so it
+# covers both the unit tests (src/**) and the integration tests (routes/**)
+# in one JUnit XML report. E2E (Playwright) has no separate report here: this
+# repo runs all three levels inside the single `build-and-test` CI job.
+testEvidence:
+  command: bun run test -- --reporter=junit --outputFile=.vortex-results/junit.xml
+  junitPath: .vortex-results/junit.xml
+  testGlobs: ["src/**/*.test.ts", "src/**/*.test.tsx", "routes/**/*.test.ts"]
+  stubSentinel: VortexNotImplemented
+  ciJobs:
+    unit: build-and-test
+    integration: build-and-test
+    e2e: build-and-test
