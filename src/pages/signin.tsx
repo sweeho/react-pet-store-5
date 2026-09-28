@@ -1,8 +1,10 @@
+import { EmptyState } from "@/components/state";
+
 export default function SignInPlaceholder() {
   return (
-    <div className="p-8">
+    <div className="flex flex-col gap-4 p-8">
       <h1 className="text-2xl font-bold">Sign in</h1>
-      <p className="text-muted-foreground-1 mt-2">Sign in is coming soon.</p>
+      <EmptyState title="Coming soon" description="Sign in is coming soon." />
     </div>
   );
 }

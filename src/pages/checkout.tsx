@@ -1,8 +1,10 @@
+import { EmptyState } from "@/components/state";
+
 export default function CheckoutPlaceholder() {
   return (
-    <div className="p-8">
+    <div className="flex flex-col gap-4 p-8">
       <h1 className="text-2xl font-bold">Checkout</h1>
-      <p className="text-muted-foreground-1 mt-2">Checkout is coming soon.</p>
+      <EmptyState title="Coming soon" description="Checkout is coming soon." />
     </div>
   );
 }
