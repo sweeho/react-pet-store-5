@@ -21,6 +21,7 @@
     "middleware",
     "db",
     "lib",
+    "plugins",
     "e2e"
   ]
 }
