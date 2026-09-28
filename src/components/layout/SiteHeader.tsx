@@ -2,15 +2,18 @@ import { LogIn, Menu, PawPrint, Search, ShoppingCart, User } from "lucide-react"
 import type { FormEvent } from "react";
 import { Link } from "react-router";
 
+import { useLocale } from "@/i18n/LocaleProvider";
+import { useScreen } from "@/i18n/screens";
 import { cn } from "@/utils";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-const LANGUAGES = [
-  { code: "en", label: "English", cjk: false },
-  { code: "ja", label: "日本語", cjk: true },
-  { code: "zh", label: "中文", cjk: true },
+// eslint-disable-next-line react-refresh/only-export-components
+export const LANGUAGES = [
+  { code: "en_US", label: "English", cjk: false },
+  { code: "ja_JP", label: "日本語", cjk: true },
+  { code: "zh_CN", label: "中文", cjk: true },
 ] as const;
 
 interface SiteHeaderProps {
@@ -27,6 +30,8 @@ interface SiteHeaderProps {
 export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
   const [keywords, setKeywords] = useState("");
   const navigate = useNavigate();
+  const { locale, changeLocale } = useLocale();
+  const t = useScreen("shell");
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,12 +43,13 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
     <>
       <div className="border-line-2 bg-background-1 text-muted-foreground-2 hidden items-center justify-between gap-4 border-b px-4 text-xs sm:flex sm:px-8">
         <div className="flex items-center gap-1">
-          <span className="text-muted-foreground-1 mr-1">Language</span>
+          <span className="text-muted-foreground-1 mr-1">{t.language}</span>
           {LANGUAGES.map((language) => (
             <button
               key={language.code}
               type="button"
-              aria-pressed={language.code === "en"}
+              aria-pressed={language.code === locale}
+              onClick={() => void changeLocale(language.code)}
               style={
                 language.cjk
                   ? { fontFamily: '"Noto Sans JP", "Noto Sans SC", sans-serif' }
@@ -52,7 +58,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
               className={cn(
                 "inline-flex h-8 items-center rounded-full px-2.5 font-medium",
                 FOCUS_RING,
-                language.code === "en"
+                language.code === locale
                   ? "border-line-2 bg-background text-foreground border"
                   : "hover:text-foreground",
               )}
@@ -62,15 +68,15 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span>Store staff:</span>
+          <span>{t.storeStaff}</span>
           <Link to="/admin" className={cn("font-medium hover:underline", FOCUS_RING, "rounded-sm")}>
-            Administration
+            {t.administration}
           </Link>
           <Link
             to="/supplier"
             className={cn("font-medium hover:underline", FOCUS_RING, "rounded-sm")}
           >
-            Supplier
+            {t.supplier}
           </Link>
         </div>
       </div>
@@ -93,7 +99,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
 
         <form role="search" onSubmit={handleSearch} className="hidden max-w-xl flex-1 md:flex">
           <label className="sr-only" htmlFor="global-search">
-            Search pets by name or description
+            {t.searchPlaceholder}
           </label>
           <span className="border-line-2 bg-background text-muted-foreground flex h-11 flex-1 items-center gap-2 rounded-l-md border border-r-0 px-3.5">
             <Search aria-hidden="true" className="size-4 shrink-0" />
@@ -103,7 +109,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
               type="search"
               value={keywords}
               onChange={(event) => setKeywords(event.target.value)}
-              placeholder="Search pets by name or description"
+              placeholder={t.searchPlaceholder}
               className="w-full bg-transparent text-sm outline-none"
             />
           </span>
@@ -114,7 +120,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
               FOCUS_RING,
             )}
           >
-            Search
+            {t.searchButton}
           </button>
         </form>
 
@@ -127,7 +133,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
             )}
           >
             <User aria-hidden="true" className="size-4.5" />
-            Account
+            {t.account}
           </Link>
           <Link
             to="/cart"
@@ -137,7 +143,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
             )}
           >
             <ShoppingCart aria-hidden="true" className="size-4.5" />
-            <span className="hidden sm:inline">Cart</span>
+            <span className="hidden sm:inline">{t.cart}</span>
           </Link>
           <Link
             to="/signin"
@@ -147,7 +153,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
             )}
           >
             <LogIn aria-hidden="true" className="size-4.5" />
-            Sign in
+            {t.signIn}
           </Link>
         </div>
 
@@ -159,7 +165,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
             FOCUS_RING,
           )}
         >
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">{t.openMenu}</span>
           <Menu aria-hidden="true" className="size-5" />
         </button>
       </div>

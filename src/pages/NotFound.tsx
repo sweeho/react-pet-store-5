@@ -1,12 +1,10 @@
 import { ErrorState } from "@/components/state";
+import { useScreen } from "@/i18n/screens";
 
 const NotFound = () => {
-  return (
-    <ErrorState
-      title="Page not found"
-      description="The page you're looking for doesn't exist or has moved."
-    />
-  );
+  const t = useScreen("not-found");
+
+  return <ErrorState title={t.title} description={t.description} />;
 };
 
 export default NotFound;

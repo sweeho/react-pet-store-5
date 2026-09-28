@@ -22,6 +22,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 ```
 .
 ├── src/
+│   ├── i18n/            # Locale provider, per-screen per-locale definitions (screens/*.ts), admin string catalogues
 │   ├── components/ui/   # shadcn/ui-style primitives (+ *.test.tsx)
 │   ├── components/layout/ # the site shell: header, Global navigation, footer
 │   ├── components/state/  # shared empty / error / loading frames, AsyncContent
@@ -32,6 +33,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 │   ├── index.css           # Tailwind v4 + design tokens
 │   └── main.tsx
 ├── routes/api/            # Backend routes, file-based (+ *.test.ts)
+├── lib/                    # Server and shared modules (locale model, session, catalog queries, e-mail) — not auto-registered by Nitro
 ├── middleware/             # Runs before every route handler
 ├── db/                      # Drizzle schema.ts + client.ts (sqlite connection, migrate, seed)
 ├── drizzle/                  # Generated SQL migrations (drizzle-kit generate), committed
@@ -50,19 +52,29 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 
 **Site shell**: `src/main.tsx` mounts every routed page inside one layout (header, the `Global` navigation, `main`, footer) with a shared loading fallback and error boundary. Pages render content only. Primary-area routes are `/category/:categoryId`, `/search`, `/cart`, `/checkout`, `/account`, `/signin`, `/admin`, `/supplier`, listed once in `src/constants/navigation.ts`; an area whose capability has not shipped is a placeholder page until it does.
 
-**Backend**: `routes/api/*.ts` → `/api/*`, `middleware/*.ts` runs first and can set `event.context`. Requires `nitro({ serverDir: "./" })` in `vite.config.ts` — default is `false` (no scanning). `*.test.ts` excluded via `nitro({ ignore })`.
+**Backend**: `routes/api/*.ts` → `/api/*`, `middleware/*.ts` runs first and can set `event.context`. Shared and server-only modules live in `lib/` (in `tsconfig.node.json`; `lib/**/*.test.ts` run in the Vitest `server` project) and are imported explicitly. Requires `nitro({ serverDir: "./" })` in `vite.config.ts` — default is `false` (no scanning). `*.test.ts` excluded via `nitro({ ignore })`.
 
 ## Data flow example
 
 `GET /api/hello`: `middleware/auth.ts` sets `event.context.user` → `routes/api/hello.ts` reads it and responds. `routes/api/users/[id].ts` shows the dynamic-route + `createError()` 404 pattern, backed by a real query against `db/client.ts`'s Drizzle instance.
 
+## Locale
+
+The storefront runs in `en_US`, `ja_JP` or `zh_CN`; the default is deployment configuration (`DEFAULT_LOCALE`, `en_US`). Spec: `openspec/specs/localization/` once change `swhr-i-0003-localization` archives.
+
+- **Model.** `lib/locale/model.ts` is the only list of supported locales and the only `language_COUNTRY` parser. Server and SPA both import it.
+- **Session.** `middleware/locale.ts` loads a sealed-cookie session (`SESSION_PASSWORD`), assigns the default when absent and sets `event.context.locale`. The session also holds the cart locale. The SPA reads the locale from `GET /api/locale` and changes it with `POST /api/locale`; sign-on and profile save apply the customer's preferred language through `lib/locale/preference.ts`.
+- **Screens.** Page copy lives in `src/i18n/screens/<screen>.ts`, one map per locale, found by an `import.meta.glob` registry. A missing locale or screen falls back to `en_US`; a screen defined nowhere is an error. A `?locale=` query overrides the session for that render only.
+- **Data.** Catalog, profile, order and e-mail content are keyed by locale. Prices are per-locale rows in integer minor units, formatted at display time and never converted.
+
 ## Database
 
-`db/schema.ts` defines Drizzle tables; `db/client.ts` opens the SQLite connection, runs pending migrations from `drizzle/`, and seeds two demo users if the table is empty. Routes import `db` and the table objects directly (see `routes/api/users/`) — no repository layer.
+`db/schema.ts` defines Drizzle tables; `db/client.ts` opens the SQLite connection, runs pending migrations from `drizzle/`, and seeds empty tables (demo users; the catalog in all three locales from `db/seed/`). Routes import `db` and the table objects directly (see `routes/api/users/`) — no repository layer.
 
 - `bun run db:generate` — after editing `db/schema.ts`, generates a new migration into `drizzle/` (via `drizzle-kit`, config in `drizzle.config.ts`)
 - `bun run db:studio` — browse the db in Drizzle Studio
 - The db file itself is `sqlite.db` at the project root (gitignored, created on first run); `drizzle/` migrations are committed
+- Entities: `users`; `profiles` (one per user, `preferredLanguage` default `en_US`); catalog `category`, `product`, `item`, each with a `*_details` table keyed `(id, locale)` — target shape in [architecture/schema.sql](./architecture/schema.sql). A row missing in a locale means the entity does not exist in that locale; queries never fall back.
 - Under Vitest (`VITEST=true`), `db/client.ts` swaps in an in-memory db instead, so tests never touch the dev database
 
 ## Testing
@@ -79,3 +91,6 @@ Four tiers, one worked example each. Commands and how to extend: [README.md](./R
 - **One shell, one navigation list.** Every page renders inside the shared layout and draws no chrome of its own; primary areas are added to `src/constants/navigation.ts`, never as a second menu. Keeps eleven capabilities looking like one shop. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.
 - **Shared state frames.** Pages show empty, error and loading states only through `src/components/state/` (`AsyncContent` for fetched data). One look and one retry behaviour across capabilities. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.
 - **Preline is the token source.** `design/tokens.theme.css` feeds `src/index.css`; shadcn names are aliases. The mockups are drawn on it and the only other guide's token files are not in the repository. Authored in change `swhr-i-0002-bootstrap-landing-page-and-s`.
+- **One locale model.** Supported locales, the default and identifier parsing come only from `lib/locale/model.ts`; no capability keeps its own list or parser. The legacy system had four diverging copies. Authored in change `swhr-i-0003-localization` (design D1, P1).
+- **The server owns the locale.** The session locale is set and read server-side (`event.context.locale`); the SPA never chooses a locale on its own, so pages, cart and business operations agree. Authored in change `swhr-i-0003-localization` (design D2, P2).
+- **Locale-keyed data, no fallback.** Localized content and prices are rows keyed by locale, stored as integer minor units; a missing row is "not found", never English. Page copy is the only thing that falls back to `en_US`. Authored in change `swhr-i-0003-localization` (design D3, D4, P3, P4).

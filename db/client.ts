@@ -4,7 +4,8 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
-import { users } from "./schema";
+import { category, profiles, users } from "./schema";
+import { seedCatalog } from "./seed/catalog";
 
 // Vitest sets VITEST=true in every worker; an in-memory db keeps route
 // integration tests isolated from the file-backed dev/prod db and from
@@ -17,7 +18,7 @@ const sqlite = new Database(
   process.env.VITEST ? ":memory:" : path.join(process.cwd(), "sqlite.db"),
 );
 
-export const db = drizzle(sqlite, { schema: { users } });
+export const db = drizzle(sqlite, { schema: { users, profiles } });
 
 migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
 
@@ -30,4 +31,9 @@ if (db.select().from(users).all().length === 0) {
       { name: "Jane Smith", email: "jane@example.com" },
     ])
     .run();
+}
+
+// Locale-keyed catalog data (design D4, P4), seeded once per fresh database.
+if (db.select().from(category).all().length === 0) {
+  seedCatalog(db);
 }

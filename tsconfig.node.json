@@ -20,6 +20,7 @@
     "routes",
     "middleware",
     "db",
+    "lib",
     "e2e"
   ]
 }

@@ -74,3 +74,61 @@ These records mark themselves `disputed` with reachability unresolved and no cal
 ## Migration Plan
 
 This is a greenfield rebuild with no data migration from the legacy datastore. The catalog seed data must be loaded per locale for all three locales.
+
+## Sprint plan (SWHR-S-0002)
+
+_Added by planning ticket SWHR-T-0010. Everything above this heading is the adopted specification and is unchanged._
+
+### Codebase findings
+
+- The repository is the bootstrap shell from change `swhr-i-0002-bootstrap-landing-page-and-s`: a routed SPA (`src/pages/`) with placeholder pages for cart, checkout, account, sign-in, admin and supplier, a shared layout (`src/components/layout/`), and a Nitro server with one demo middleware (`middleware/auth.ts`) and a demo `users` resource (`routes/api/users/`, `db/schema.ts`).
+- Nothing handles locale. `SiteHeader.tsx` already renders three language buttons (codes `en`/`ja`/`zh`, labels English/日本語/中文) with `aria-pressed` hard-wired to English and no handler. The strip is `hidden sm:flex`, and the mobile drawer in `GlobalNav.tsx` has no language control. `index.html` hard-codes `<html lang="en">`.
+- No catalog, cart, customer profile, purchase order, e-mail or admin client exists yet. Those capabilities are separate changes (`swhr-i-0005` … `swhr-i-0013`) not in this sprint. `architecture/rebuild-guidance.md` §3.7 makes localization "order 1": it owns the locale model that the others build on.
+- `architecture/schema.sql` gives the target catalog tables (`category`, `category_details`, `product`, `product_details`, `item`, `item_details`), each `*_details` keyed `(id, locale)`. `rebuild-guidance.md` requires prices as integer minor units.
+- There is no session mechanism. H3 2 ships `useSession` (sealed cookie).
+- Test placement is path-decided: `routes/**/*.test.ts` runs in the Vitest `server` project (node, `bun:sqlite` resolvable); everything else runs in jsdom. `tsconfig.node.json` covers `routes`, `middleware`, `db`, `configs`, `e2e`; `tsconfig.json` covers `src`.
+- CI (`.github/workflows/ci.yml`) already runs on `vortex/**` pushes and PRs: doc-links, typecheck, lint, unit tests with JUnit upload.
+
+### Implementation decisions
+
+- **P1. One locale module, in a new `lib/` tree.** Server-side and shared code lives under `lib/` (added to `tsconfig.node.json` and to the Vitest `server` project, so `lib/**/*.test.ts` can reach the database). `lib/locale/model.ts` is the only parser and the only list of supported locales; the SPA imports it too. Nitro scans `routes/`, `middleware/`, `plugins/`, `utils/` under `serverDir: "./"`, so `lib/` is not auto-registered.
+- **P2. Session locale is server-authoritative.** `middleware/locale.ts` loads an H3 sealed-cookie session, assigns the default locale when absent, and sets `event.context.locale` for every handler (this is how business operations "read" it, D2). The session holds `locale` and `cartLocale`. The SPA learns the locale from `GET /api/locale` and changes it with `POST /api/locale`; it never decides the locale itself.
+- **P3. Screen content is a per-screen, per-locale definition file.** `src/i18n/screens/<screen>.ts` each export `{ en_US, ja_JP?, zh_CN? }` string maps; a registry built with `import.meta.glob` finds them, so later tasks add screens without editing a shared file. `resolveScreen(screen, locale)` implements D3: requested locale → en_US definition → error `Definition for screen <name> not found`. A `?locale=` query parameter overrides the session locale for that render only.
+- **P4. Catalog tables are created here, locale-first.** The catalog capability has not been sprinted; its tables are created now exactly as `architecture/schema.sql` shapes them, with prices as integer minor units, so catalog-browsing extends them rather than re-keying them.
+- **P5. Cart locale lives in the session until a cart exists.** Shopping-cart will persist cart contents; the locale it prices by is `cartLocale` from the session, read through `lib/locale/session.ts`.
+- **P6. No purchase-order table in this sprint.** The order locale is delivered as `normaliseOrderLocale()` plus the locale column contract; checkout (swhr-i-0009) persists it.
+- **P7. E-mail templates are TypeScript render functions keyed `<kind>_<locale>`,** with a locale-neutral base per kind (D5), selected by `renderCustomerEmail()`; storefront and e-mail price formatting are separate functions because the spec gives them different rules (Q2).
+
+### Phases
+
+| Phase | Task        | Tasks.md group                                            | Depends on     |
+| ----- | ----------- | --------------------------------------------------------- | -------------- |
+| 1     | SWHR-T-0013 | 1. Locale model (also the test-harness wiring for `lib/`) | —              |
+| 2     | SWHR-T-0014 | 2. Session locale                                         | T-0013         |
+| 2     | SWHR-T-0015 | 6. Orders and emails                                      | T-0013         |
+| 2     | SWHR-T-0016 | 7. Forms, encoding and admin strings                      | T-0013         |
+| 3     | SWHR-T-0017 | 3. Preferred language                                     | T-0014         |
+| 3     | SWHR-T-0018 | 4. Page localization                                      | T-0014         |
+| 4     | SWHR-T-0019 | 5. Catalog and prices                                     | T-0017, T-0018 |
+| 4     | SWHR-T-0020 | 8. Locale selection screen                                | T-0018         |
+
+Dependencies exist wherever two tasks would touch the same file: `db/schema.ts` and `drizzle/` (T-0017 then T-0019), the screen registry and layout (T-0018 before T-0019/T-0020), `lib/locale/session.ts` (T-0014 before its consumers).
+
+**Test-harness phase (folded into SWHR-T-0013).** Add `lib` to `tsconfig.node.json` and route `lib/**/*.test.ts` to the Vitest `server` project; every later task's server tests sit beside their module under `lib/` or `routes/`. UI tests stay `*.test.tsx` in jsdom. Each UI-bearing task (T-0018, T-0019, T-0020) adds its own Playwright spec in `e2e/` and runs it.
+
+**CI phase.** The existing workflow already triggers on `vortex/**` pushes and pull requests and runs doc-links, typecheck, lint and the unit suite. No workflow change is needed; the Playwright tier runs at SPRINT_INTEGRATION_QA. A task that needs a new CI step (none planned) owns that change.
+
+## Spec discrepancies
+
+Each item is also posted as a comment on SWHR-T-0010. The delta spec is not edited.
+
+- **SD-1. The capabilities the spec localizes do not exist yet.** Catalog, cart, customer profile, sign-on, purchase order, notifications and the admin client are absent in this repository. The spec reads as if it modifies them. Resolution for this sprint: build the locale seams (P4–P7) and test each scenario at the seam; the owning changes wire them in.
+- **SD-2. D4 assigns catalog table files to the catalog change.** Localization is sprinted first (rebuild-guidance §3.7), so SWHR-T-0019 creates the catalog tables. The catalog-browsing change must extend, not recreate, them.
+- **SD-3. Locale selection screen vs. PRD.** PRODUCT.md Open question 4 and rebuild-guidance §3.8 treat the WAF demo screen (with German) as evidence of a switcher, "not a page to copy". The adopted spec requires the screen with four options including German. This sprint builds it as specified (SWHR-T-0020); a product decision may later drop it or the German option.
+- **SD-4. "Switch available on every page" is not true on small screens today.** The header language strip is hidden below the `sm` breakpoint and the mobile drawer has none. SWHR-T-0018 adds the switch to the drawer.
+- **SD-5. Admin "mnemonics".** The legacy admin is a Swing client with keyboard mnemonics and a JVM-default locale. The rebuild admin is an SPA page; mnemonics map to `accessKey`, and the catalogue is chosen from the browser language (the JVM-default analogue), falling back to English.
+- **SD-6. No purchase order to record a locale on.** Checkout (swhr-i-0009) owns the order table; this sprint verifies the order-locale scenario through `normaliseOrderLocale()`.
+- **SD-7. No account-creation endpoint.** The UTF-8 scenario is verified through the demo `users` resource, the only account-shaped write path in the repository.
+- **SD-8. Price storage.** `architecture/schema.sql` uses `decimal(10,2)`; rebuild-guidance requires integer minor units. Integer minor units are used; display is unaffected.
+- **SD-9. zh_CN e-mail currency (Q2).** The storefront mockup shows zh_CN prices as `¥120.00` while the spec keeps the legacy `$#,##0.00` e-mail pattern for zh_CN. Both are built as specified; the e-mail pattern awaits the Q2 decision.
+- **SD-10. Page-level "request locale" in an SPA.** Legacy screens took `?locale=` per request. The SPA honours `?locale=` on the URL for that render and never persists it (P3).
