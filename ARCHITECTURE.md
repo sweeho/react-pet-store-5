@@ -35,6 +35,8 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 │   └── main.tsx
 ├── routes/api/            # Backend routes, file-based (+ *.test.ts)
 ├── lib/                    # Server and shared modules (locale model, session, catalog queries, e-mail) — not auto-registered by Nitro
+│   ├── auth/               # Credentials, per-realm sessions, the protected-page gate, roles
+│   ├── cart/               # Session cart lines
 │   ├── b2b/                # Partner XML documents: xml/ infrastructure, elements/, documents/, partner/, exchange/, schemas/ (bundled DTD/XSD + catalog)
 │   └── messaging/          # The one outbox and dispatcher every asynchronous hop uses
 ├── middleware/             # Runs before every route handler
@@ -42,7 +44,8 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 ├── db/                      # Drizzle schema.ts + client.ts (sqlite connection, migrate, seed)
 ├── drizzle/                  # Generated SQL migrations (drizzle-kit generate), committed
 ├── e2e/                     # Playwright specs + global-setup.ts
-├── configs/, scripts/
+├── configs/                 # Fonts; signon-config.json (sign-on page, error page, protected pages)
+├── scripts/
 ├── server.ts                # Nitro server entry
 ├── vite.config.ts, vitest.config.ts, playwright.config.ts, drizzle.config.ts
 ├── tsconfig.json             # src
@@ -60,16 +63,28 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 
 ## Data flow example
 
-`GET /api/hello`: `middleware/auth.ts` sets `event.context.user` → `routes/api/hello.ts` reads it and responds. `routes/api/users/[id].ts` shows the dynamic-route + `createError()` 404 pattern, backed by a real query against `db/client.ts`'s Drizzle instance.
+`GET /api/hello`: `middleware/auth.ts` (a boilerplate example that authenticates nothing) sets `event.context.user` → `routes/api/hello.ts` reads it and responds. `routes/api/catalog/products/[productId].ts` shows the dynamic-route + `createError()` 404 pattern, backed by a real query against `db/client.ts`'s Drizzle instance.
 
 ## Locale
 
 The storefront runs in `en_US`, `ja_JP` or `zh_CN`; the default is deployment configuration (`DEFAULT_LOCALE`, `en_US`). Spec: `openspec/specs/localization/` once change `swhr-i-0003-localization` archives.
 
 - **Model.** `lib/locale/model.ts` is the only list of supported locales and the only `language_COUNTRY` parser. Server and SPA both import it.
-- **Session.** `middleware/locale.ts` loads a sealed-cookie session (`SESSION_PASSWORD`), assigns the default when absent and sets `event.context.locale`. The session also holds the cart locale. The SPA reads the locale from `GET /api/locale` and changes it with `POST /api/locale`; sign-on and profile save apply the customer's preferred language through `lib/locale/preference.ts`.
+- **Session.** `middleware/locale.ts` loads the sealed-cookie session (`SESSION_PASSWORD`), assigns the default when absent and sets `event.context.locale`. The cookie also holds the cart locale and the ids of the sign-on sessions (see [Sign-on and access](#sign-on-and-access)). The locale is stored nowhere else, so it survives sign-out. The SPA reads the locale from `GET /api/locale` and changes it with `POST /api/locale`; sign-on and profile save apply the customer's preferred language through `lib/locale/preference.ts`.
 - **Screens.** Page copy lives in `src/i18n/screens/<screen>.ts`, one map per locale, found by an `import.meta.glob` registry. A missing locale or screen falls back to `en_US`; a screen defined nowhere is an error. A `?locale=` query overrides the session for that render only.
 - **Data.** Catalog, profile, order and e-mail content are keyed by locale. Prices are per-locale rows in integer minor units, formatted at display time and never converted.
+
+## Sign-on and access
+
+Shoppers sign on only for account, account change, checkout and the sign-on welcome page. Administration and supplier inventory have their own staff sign-in and admit only the `administrator` role. Spec: `openspec/specs/sign-on/` once change `swhr-i-0005-sign-on-and-access-control` archives.
+
+- **Credentials.** `users` holds a user id (at most 25 characters, no `%` or `*`) and a `Bun.password` hash. Storefront and staff principals share it. `lib/auth/credentials.ts` owns the rules, creation and authentication. No code path logs a password.
+- **Sessions.** There is one server-side `sessions` row per realm (`storefront`, `admin`, `supplier`), found through ids in the sealed cookie. The realms are independent, so there is no single sign-on. A row idle past its realm's limit (15 minutes storefront, 54 minutes staff) is replaced by a fresh anonymous one. Ending a storefront session also deletes its cart lines. `lib/auth/session.ts` is the only way in.
+- **Protected pages.** `configs/signon-config.json` (path overridable by `SIGNON_CONFIG_PATH`) names the sign-on page, the error page and the protected storefront pages by exact path. One function, `checkGate`, decides and records the page to return to. Three callers use it:
+  - the SPA's `SignOnGate`, which asks before rendering a protected route
+  - `middleware/signon.ts`, for document requests
+  - `requireSignOn`, for the API routes behind protected pages
+- **Roles.** `role_assignments` grants a role per realm to a user or a group, and `group_members` holds group membership. `requireRole(event, realm, "administrator")` guards staff routes. Staff users are seeded outside production only.
 
 ## Partner documents and messaging
 
@@ -80,12 +95,12 @@ The order centre and the supplier exchange XML documents in the legacy trading-p
 
 ## Database
 
-`db/schema.ts` defines Drizzle tables; `db/client.ts` opens the SQLite connection, runs pending migrations from `drizzle/`, and seeds empty tables (demo users; the catalog in all three locales from `db/seed/`). Routes import `db` and the table objects directly (see `routes/api/users/`) — no repository layer.
+`db/schema.ts` defines Drizzle tables; `db/client.ts` opens the SQLite connection, runs pending migrations from `drizzle/`, and seeds empty tables (the catalog in all three locales from `db/seed/`; staff users outside production). Routes import `db` and the table objects directly (see `routes/api/catalog/`) — no repository layer.
 
 - `bun run db:generate` — after editing `db/schema.ts`, generates a new migration into `drizzle/` (via `drizzle-kit`, config in `drizzle.config.ts`)
 - `bun run db:studio` — browse the db in Drizzle Studio
-- The db file itself is `sqlite.db` at the project root (gitignored, created on first run); `drizzle/` migrations are committed
-- Entities: `users`; `profiles` (one per user, `preferredLanguage` default `en_US`); catalog `category`, `product`, `item`, each with a `*_details` table keyed `(id, locale)` — target shape in [architecture/schema.sql](./architecture/schema.sql). A row missing in a locale means the entity does not exist in that locale; queries never fall back. Supplier orders: `supplier_orders` with `supplier_contacts`, `supplier_addresses` and `supplier_line_items` (money in integer minor units). Messaging: `outbox_messages` and `outbox_deliveries` (one row per message and subscriber).
+- The db file itself is `sqlite.db` at the project root (gitignored, created on first run). `SQLITE_PATH` points elsewhere, which Playwright uses to get a fresh database per run. `drizzle/` migrations are committed
+- Entities: `users` (credentials, keyed by user id); `sessions` (one row per realm session); `role_assignments` and `group_members`; `customers` and `profiles` (one per user id, `preferredLanguage` default `en_US`); `cart_lines` (one per session and item); catalog `category`, `product`, `item`, each with a `*_details` table keyed `(id, locale)` — target shape in [architecture/schema.sql](./architecture/schema.sql). A row missing in a locale means the entity does not exist in that locale; queries never fall back. Supplier orders: `supplier_orders` with `supplier_contacts`, `supplier_addresses` and `supplier_line_items` (money in integer minor units). Messaging: `outbox_messages` and `outbox_deliveries` (one row per message and subscriber).
 - Under Vitest (`VITEST=true`), `db/client.ts` swaps in an in-memory db instead, so tests never touch the dev database
 
 ## Testing
@@ -106,4 +121,6 @@ Four tiers, one worked example each. Commands and how to extend: [README.md](./R
 - **The server owns the locale.** The session locale is set and read server-side (`event.context.locale`); the SPA never chooses a locale on its own, so pages, cart and business operations agree. Authored in change `swhr-i-0003-localization` (design D2, P2).
 - **Locale-keyed data, no fallback.** Localized content and prices are rows keyed by locale, stored as integer minor units; a missing row is "not found", never English. Page copy is the only thing that falls back to `en_US`. Authored in change `swhr-i-0003-localization` (design D3, D4, P3, P4).
 - **One outbox for every asynchronous hop.** Checkout, approval, fulfilment, supplier inventory and notifications enqueue on `lib/messaging/`, inside the transaction that changes state, and never add a second queue. Delivery is tracked per subscriber. A failed handler retries until `OUTBOX_MAX_ATTEMPTS` (default 10), then its delivery is marked `dead` and kept. This replaces five legacy JMS destinations with one mechanism. Authored in change `swhr-i-0004-partner-document-exchange` (design P4, P5).
+- **Sessions are server-side and per realm; access checks live in the caller.** Every capability reads sign-on state through `lib/auth/session.ts` and guards with `checkGate`, `requireSignOn` or `requireRole`. Data-layer functions never check roles or sessions. This gives one revocable session store and one place where access is decided. Authored in change `swhr-i-0005-sign-on-and-access-control` (design P4, P6, P10).
+- **Protected pages are configuration.** A page becomes protected through an entry in `configs/signon-config.json`, matched by exact path, never through code in the page. The operator can change protection without a release, as the legacy deployment descriptors allowed. Authored in change `swhr-i-0005-sign-on-and-access-control` (design P5, P6).
 - **XML is validated against XSD only.** Validation uses `xmllint-wasm`, which cannot validate DTDs under Bun. Each DTD therefore ships with an equivalent XSD, and DTD-form documents are validated against it. A new document type adds both files. Authored in change `swhr-i-0004-partner-document-exchange` (design P1).

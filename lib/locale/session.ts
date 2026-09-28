@@ -14,7 +14,10 @@ interface LocaleSessionData {
 // production, when the deployment hasn't set SESSION_PASSWORD yet.
 const DEV_SESSION_PASSWORD = "dev-only-insecure-session-password-swhr";
 
-function sessionPassword(): string {
+// Exported for lib/auth/session.ts (design.md P4): the realm session ids
+// live in this same sealed cookie, next to the locale, so both modules
+// must seal/unseal with the same password.
+export function sessionPassword(): string {
   const configured = process.env.SESSION_PASSWORD;
   if (configured) {
     return configured;

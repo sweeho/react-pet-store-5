@@ -43,6 +43,18 @@ Pages never hand-roll "nothing here", "something went wrong" or "loading" markup
 
 A page that fetches wraps its content in `AsyncContent`, which chooses between the three.
 
+A page whose whole job is to report a failed action (a rejected sign-in, a refused request) uses the Error frame too, with a link back to the form instead of **Try again**.
+
+## Forms
+
+Text fields use the one input primitive in `src/components/ui/`; forms do not style raw `<input>` elements.
+
+- **Labels are always visible** above the field. A placeholder is an example, never the label. Helper text sits under the field in `text-muted-foreground-1`.
+- **Required fields are checked before submit.** When a required field is empty the form does not submit and shows one message per empty field, naming it ("Password is empty."). The messages sit in one live region (`role="alert"`), and the first empty field receives focus. The server applies the same rules again and never trusts the check.
+- **Server rejections** that concern the whole form rather than one field go to a result page in the Error frame (see State frames).
+- **Credential forms** never pre-fill a password and never pre-fill demo or staff credentials. A remembered user name is the only value a sign-in form may fill in.
+- **Two forms on one page**, such as returning customer and new account, sit side by side from `md` up and stack below it. Each form has its own heading and submit button.
+
 ## Components
 
 Pattern (see `src/components/ui/button.tsx` + `button-variants.ts`):
@@ -52,7 +64,7 @@ Pattern (see `src/components/ui/button.tsx` + `button-variants.ts`):
 - Polymorphism via Radix `Slot` (`asChild` prop)
 - Variants exported from a separate `*-variants.ts` file, not the component file (avoids an `eslint-plugin-react-refresh` warning)
 
-Shared primitives go in `src/components/ui/`, shell pieces in `src/components/layout/`, state frames in `src/components/state/`. Each follows this pattern and gets a `*.test.tsx`.
+Shared primitives (button, input) go in `src/components/ui/`, shell pieces in `src/components/layout/`, state frames in `src/components/state/`. Each follows this pattern and gets a `*.test.tsx`.
 
 ## Icons
 

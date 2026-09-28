@@ -8,13 +8,12 @@ import { setSessionLocale } from "./session";
 
 /**
  * Sign-on (D2): a customer's stored preferred language becomes the session
- * and cart locale. A sign-on account with no profile yet (SD-1 seam — the
- * sign-on capability doesn't exist in this sprint) leaves the locale
- * untouched and must not fail.
+ * and cart locale. A signed-on user with no profile yet (registration step
+ * 2 hasn't run) leaves the locale untouched and must not fail.
  */
 export async function applyPreferredLanguageOnSignOn(
   event: H3Event,
-  userId: number,
+  userId: string,
 ): Promise<void> {
   const profile = db.select().from(profiles).where(eq(profiles.userId, userId)).get();
   if (!profile) {

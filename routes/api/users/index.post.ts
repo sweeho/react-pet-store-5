@@ -1,22 +1,31 @@
-import { createError, defineHandler, readBody } from "nitro/h3";
+import { defineHandler, readBody } from "nitro/h3";
 
-import { db } from "../../../db/client";
-import { users } from "../../../db/schema";
+import type { CredentialError } from "../../../lib/auth/credentials";
+import { createCredential } from "../../../lib/auth/credentials";
+import { updateAuthSession } from "../../../lib/auth/session";
+
+// SWHR-R-0069: needs no prior sign-on — never calls requireSignOn.
+const RULE_ERRORS = new Set<CredentialError>([
+  "missing",
+  "user-id-too-long",
+  "user-id-wildcard",
+  "password-too-long",
+]);
 
 export default defineHandler(async (event) => {
-  const body = await readBody<{ name?: unknown; email?: unknown }>(event);
-  const name = typeof body?.name === "string" ? body.name : "";
-  const email = typeof body?.email === "string" ? body.email : "";
+  const body = await readBody<{ userId?: unknown; password?: unknown }>(event);
+  const userId = typeof body?.userId === "string" ? body.userId : "";
+  const password = typeof body?.password === "string" ? body.password : "";
 
-  if (!name || !email) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "name and email are required",
-    });
+  const created = await createCredential(userId, password);
+  if (!created.ok) {
+    event.res.status = RULE_ERRORS.has(created.error) ? 400 : 409;
+    return { redirect: "/user-creation-error", error: created.error };
   }
 
-  const user = db.insert(users).values({ name, email }).returning().get();
+  // Pending registration (design.md P7/P8): userId set, not yet signed on.
+  await updateAuthSession(event, "storefront", { userId, signedOn: false });
 
   event.res.status = 201;
-  return user;
+  return { redirect: "/register" };
 });

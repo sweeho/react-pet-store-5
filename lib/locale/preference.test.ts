@@ -12,16 +12,16 @@ import { getCartLocale, getSessionLocale } from "./session";
  *
  * Exercises lib/locale/preference.ts against the real (in-memory under
  * Vitest) database and real H3 sessions — the seam the sign-on and account
- * capabilities will call (SD-1; those capabilities don't exist yet).
+ * capabilities call.
  */
-function createUser(email: string): number {
-  const user = db.insert(users).values({ name: "Test User", email }).returning().get();
-  return user.id;
+function createUser(userId: string): string {
+  const user = db.insert(users).values({ userId, passwordHash: "hash" }).returning().get();
+  return user.userId;
 }
 
 describe("applyPreferredLanguageOnSignOn", () => {
   it("[AC-1] switches the session locale and the cart locale to the customer's Japanese preference", async () => {
-    const userId = createUser("ja-preference@example.com");
+    const userId = createUser("ja-preference-user");
     db.insert(profiles).values({ userId, preferredLanguage: "ja_JP" }).run();
 
     const event = new H3Event(new Request("http://localhost/"));
@@ -34,7 +34,7 @@ describe("applyPreferredLanguageOnSignOn", () => {
   });
 
   it("[AC-3] succeeds and leaves the session locale unchanged for a user with no profile", async () => {
-    const userId = createUser("no-profile@example.com");
+    const userId = createUser("no-profile-user");
 
     const event = new H3Event(new Request("http://localhost/"));
     await expect(getSessionLocale(event)).resolves.toBe("en_US");
@@ -59,7 +59,7 @@ describe("applyPreferredLanguageOnProfileSave", () => {
 
 describe("profiles.preferredLanguage default", () => {
   it("[AC-4] defaults to en_US when a profile is created without a language", () => {
-    const userId = createUser("default-language@example.com");
+    const userId = createUser("default-language-user");
 
     db.insert(profiles).values({ userId }).run();
 

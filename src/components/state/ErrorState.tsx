@@ -7,6 +7,14 @@ export interface ErrorStateProps {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  /**
+   * A page whose whole job is to report a failed action (a rejected
+   * sign-in, a refused request) uses this frame with a link back to the
+   * form instead of a retry callback (DESIGN.md §Forms). Takes precedence
+   * over `onRetry` when both are given.
+   */
+  primaryAction?: { label: string; to: string };
+  secondaryLabel?: string;
 }
 
 const FOCUS_RING =
@@ -26,6 +34,8 @@ export default function ErrorState({
   title = DEFAULT_TITLE,
   description = DEFAULT_DESCRIPTION,
   onRetry,
+  primaryAction,
+  secondaryLabel = "Back to Home",
 }: ErrorStateProps) {
   return (
     <div
@@ -39,7 +49,17 @@ export default function ErrorState({
       <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
       <p className="text-muted-foreground-2 max-w-md">{description}</p>
       <div className="mt-3 flex gap-2.5">
-        {onRetry ? (
+        {primaryAction ? (
+          <Link
+            to={primaryAction.to}
+            className={cn(
+              "bg-primary text-primary-foreground hover:bg-primary-hover inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-semibold",
+              FOCUS_RING,
+            )}
+          >
+            {primaryAction.label}
+          </Link>
+        ) : onRetry ? (
           <button
             type="button"
             onClick={onRetry}
@@ -59,7 +79,7 @@ export default function ErrorState({
             FOCUS_RING,
           )}
         >
-          Back to Home
+          {secondaryLabel}
         </Link>
       </div>
     </div>

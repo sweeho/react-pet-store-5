@@ -1,16 +1,26 @@
 import { sql } from "drizzle-orm";
-import { check, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
+// Sign-on (design.md P1): the credential table. `users` was the boilerplate
+// id/name/email example; it now holds only the sign-on identity, keyed by
+// the user-chosen id, and every foreign key onto it is that text id
+// (SWHR-R-0068 — storefront and staff principals share this one table).
 export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  userId: text("userId").primaryKey(),
+  passwordHash: text("passwordHash").notNull(),
 });
 
 export const profiles = sqliteTable("profiles", {
-  userId: integer("userId")
+  userId: text("userId")
     .primaryKey()
-    .references(() => users.id),
+    .references(() => users.userId),
   preferredLanguage: text("preferredLanguage").notNull().default("en_US"),
 });
 
@@ -81,6 +91,86 @@ export const itemDetails = sqliteTable(
     unitCost: integer("unitCost").notNull(),
   },
   (table) => [primaryKey({ columns: [table.itemId, table.locale] })],
+);
+
+// Sign-on (design.md P4): one server-side session row per realm, keyed by a
+// random id carried in the sealed locale cookie (lib/auth/session.ts,
+// SWHR-T-0044). A row idle past IDLE_TIMEOUT_MS[realm] is deleted with its
+// cart lines rather than read; each realm is independent, so there is no
+// single sign-on across storefront/admin/supplier.
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    realm: text("realm").notNull(),
+    userId: text("userId").references(() => users.userId),
+    signedOn: integer("signedOn", { mode: "boolean" }).notNull().default(false),
+    originalUrl: text("originalUrl"),
+    lastSeenAt: integer("lastSeenAt", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    check("sessions_realm_check", sql`${table.realm} IN ('storefront', 'admin', 'supplier')`),
+  ],
+);
+
+// Sign-on (design.md P8): registration step 2 creates this row and a
+// `profiles` row in one transaction (SWHR-T-0045). customer-account
+// (swhr-i-0007) extends it and must not recreate it.
+export const customers = sqliteTable("customers", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.userId),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+});
+
+// Sign-on (design.md P9): the anonymous-cart seam, in shopping-cart's
+// (swhr-i-0008) shape — one line per item per session; ending a storefront
+// session deletes its lines. Remove/update/subtotal remain that change's.
+export const cartLines = sqliteTable(
+  "cartLines",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("sessionId")
+      .notNull()
+      .references(() => sessions.id),
+    itemId: text("itemId")
+      .notNull()
+      .references(() => item.id),
+    quantity: integer("quantity").notNull().default(1),
+    addedAt: integer("addedAt", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [uniqueIndex("cartLines_session_item_unique").on(table.sessionId, table.itemId)],
+);
+
+// Sign-on (design.md P10): staff role grants, mirroring `sun-j2ee-ri.xml`.
+// A principal is either a userId (principalType 'user') or a group name
+// (principalType 'group', resolved through `groupMembers`). Never read on
+// the storefront (SWHR-R-0068) — only the admin/supplier realms consult it.
+export const roleAssignments = sqliteTable(
+  "roleAssignments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    realm: text("realm").notNull(),
+    role: text("role").notNull(),
+    principalType: text("principalType").notNull(),
+    principal: text("principal").notNull(),
+  },
+  (table) => [
+    check("roleAssignments_realm_check", sql`${table.realm} IN ('admin', 'supplier')`),
+    check("roleAssignments_principalType_check", sql`${table.principalType} IN ('user', 'group')`),
+  ],
+);
+
+export const groupMembers = sqliteTable(
+  "groupMembers",
+  {
+    groupName: text("groupName").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.userId),
+  },
+  (table) => [primaryKey({ columns: [table.groupName, table.userId] })],
 );
 
 // Messaging (design.md P4): one SQLite outbox for every asynchronous hop.
