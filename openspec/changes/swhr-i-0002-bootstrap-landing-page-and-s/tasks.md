@@ -12,8 +12,8 @@
 
 ## 3. Site shell
 
-- [ ] 3.1 Add the shared page layout with header and footer (SWHR-T-0006)
-- [ ] 3.2 Add the global navigation with one entry per primary area and a link to the landing page (SWHR-T-0006)
+- [x] 3.1 Add the shared page layout with header and footer (SWHR-T-0006)
+- [x] 3.2 Add the global navigation with one entry per primary area and a link to the landing page (SWHR-T-0006)
 
 ## 4. Shared frames
 
