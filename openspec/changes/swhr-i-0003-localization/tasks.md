@@ -6,12 +6,12 @@
 
 ## 2. Session locale
 
-- [ ] 2.1 Add server middleware that assigns the default locale to a session with none before the request is handled (SWHR-T-0014)
-- [ ] 2.2 Implement the locale-change endpoint that validates the identifier and updates the session locale (SWHR-T-0014)
-- [ ] 2.3 Return the "Unable to change language to <identifier>" error and leave the session untouched on a rejected change (SWHR-T-0014)
-- [ ] 2.4 Set the cart locale on every successful locale change (SWHR-T-0014)
-- [ ] 2.5 Expose the session locale to server-side business operations for the visitor (SWHR-T-0014)
-- [ ] 2.6 Integration-test default assignment, successful change and rejected change (SWHR-T-0014)
+- [x] 2.1 Add server middleware that assigns the default locale to a session with none before the request is handled (SWHR-T-0014)
+- [x] 2.2 Implement the locale-change endpoint that validates the identifier and updates the session locale (SWHR-T-0014)
+- [x] 2.3 Return the "Unable to change language to <identifier>" error and leave the session untouched on a rejected change (SWHR-T-0014)
+- [x] 2.4 Set the cart locale on every successful locale change (SWHR-T-0014)
+- [x] 2.5 Expose the session locale to server-side business operations for the visitor (SWHR-T-0014)
+- [x] 2.6 Integration-test default assignment, successful change and rejected change (SWHR-T-0014)
 
 ## 3. Preferred language
 
