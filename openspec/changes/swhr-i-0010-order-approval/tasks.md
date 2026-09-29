@@ -6,9 +6,9 @@
 
 ## 2. Automatic approval
 
-- [ ] 2.1 Implement the auto-approval check on order intake with strict less-than and no currency conversion (SWHR-T-0120)
-- [ ] 2.2 Route auto-approvals through the same decision-processing path as administrator decisions (SWHR-T-0120)
-- [ ] 2.3 Unit-test threshold boundaries for en_US, ja_JP and zh_CN (SWHR-T-0120)
+- [x] 2.1 Implement the auto-approval check on order intake with strict less-than and no currency conversion (SWHR-T-0120)
+- [x] 2.2 Route auto-approvals through the same decision-processing path as administrator decisions (SWHR-T-0120)
+- [x] 2.3 Unit-test threshold boundaries for en_US, ja_JP and zh_CN (SWHR-T-0120)
 
 ## 3. Decision processing
 
