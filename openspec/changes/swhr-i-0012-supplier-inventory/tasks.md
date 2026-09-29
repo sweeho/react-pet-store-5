@@ -34,9 +34,9 @@
 
 ## 6. Screens
 
-- [ ] 6.1 Build the supplier home page with the back-order explanation, Display Inventory and Logout actions (SWHR-T-0152)
-- [ ] 6.2 Build the inventory update page with Item Id, Existing Quantity, New Quantity and Update columns and one Submit control (SWHR-T-0152)
-- [ ] 6.3 Build the inventory unavailable state for empty inventory and failed lookup (SWHR-T-0152)
-- [ ] 6.4 Build the update confirmation page with Display Inventory and Logout actions (SWHR-T-0152)
-- [ ] 6.5 UI tests for each page and state (SWHR-T-0152)
-- [ ] 6.6 Playwright spec covering home, edit, submit and confirmation (SWHR-T-0152)
+- [x] 6.1 Build the supplier home page with the back-order explanation, Display Inventory and Logout actions (SWHR-T-0152)
+- [x] 6.2 Build the inventory update page with Item Id, Existing Quantity, New Quantity and Update columns and one Submit control (SWHR-T-0152)
+- [x] 6.3 Build the inventory unavailable state for empty inventory and failed lookup (SWHR-T-0152)
+- [x] 6.4 Build the update confirmation page with Display Inventory and Logout actions (SWHR-T-0152)
+- [x] 6.5 UI tests for each page and state (SWHR-T-0152)
+- [x] 6.6 Playwright spec covering home, edit, submit and confirmation (SWHR-T-0152)
