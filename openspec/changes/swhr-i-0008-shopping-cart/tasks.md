@@ -7,17 +7,17 @@
 
 ## 2. Cart service
 
-- [ ] 2.1 Implement get-or-create cart for the current session (SWHR-T-0097)
-- [ ] 2.2 Implement add item with quantity 1, resetting an existing line to 1 (or per the OQ-1 decision) (SWHR-T-0097)
-- [ ] 2.3 Implement remove item as a no-op when the item is absent (SWHR-T-0097)
-- [ ] 2.4 Implement batch quantity update: remove when quantity is 0 or less, set or insert when positive (SWHR-T-0097)
-- [ ] 2.5 Implement quantity parsing that maps any non-whole-number input to 0 (SWHR-T-0097)
-- [ ] 2.6 Implement item count as the number of distinct stored lines (SWHR-T-0097)
-- [ ] 2.7 Implement read-time catalog resolution of each line in the cart locale, skipping unresolvable items (SWHR-T-0097)
-- [ ] 2.8 Implement subtotal over resolved lines with the decided rounding rule (SWHR-T-0097)
-- [ ] 2.9 Implement empty cart and expose it to checkout for use after order placement (SWHR-T-0097)
-- [ ] 2.10 Discard the session's cart on sign-out (SWHR-T-0097)
-- [ ] 2.11 Return lines in insertion order (OQ-6) (SWHR-T-0097)
+- [x] 2.1 Implement get-or-create cart for the current session (SWHR-T-0097)
+- [x] 2.2 Implement add item with quantity 1, resetting an existing line to 1 (or per the OQ-1 decision) (SWHR-T-0097)
+- [x] 2.3 Implement remove item as a no-op when the item is absent (SWHR-T-0097)
+- [x] 2.4 Implement batch quantity update: remove when quantity is 0 or less, set or insert when positive (SWHR-T-0097)
+- [x] 2.5 Implement quantity parsing that maps any non-whole-number input to 0 (SWHR-T-0097)
+- [x] 2.6 Implement item count as the number of distinct stored lines (SWHR-T-0097)
+- [x] 2.7 Implement read-time catalog resolution of each line in the cart locale, skipping unresolvable items (SWHR-T-0097)
+- [x] 2.8 Implement subtotal over resolved lines with the decided rounding rule (SWHR-T-0097)
+- [x] 2.9 Implement empty cart and expose it to checkout for use after order placement (SWHR-T-0097)
+- [x] 2.10 Discard the session's cart on sign-out (SWHR-T-0097)
+- [x] 2.11 Return lines in insertion order (OQ-6) (SWHR-T-0097)
 
 ## 3. API routes
 
