@@ -68,7 +68,7 @@ describe("CheckoutPage", () => {
 
     renderCheckout();
 
-    await waitFor(() => expect(screen.getAllByRole("region")).toHaveLength(2));
+    await waitFor(() => expect(screen.queryAllByRole("region")).toHaveLength(2));
     for (const name of ["Billing Information", "Shipping Information"]) {
       const section = screen.getByRole("region", { name });
       const q = within(section);
