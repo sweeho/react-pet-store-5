@@ -14,6 +14,12 @@ export default defineHandler(async (event) => {
   const session = await getAuthSession(event, "storefront");
   addCartItem(session.id, itemId);
 
-  const { lines } = await getCart(event, session.id);
-  return { lines };
+  const cart = await getCart(event, session.id);
+  // Legacy shape (nested `item`) until SWHR-T-0098/0099 move the page to CartView.
+  return {
+    lines: cart.lines.map((line) => ({
+      ...line,
+      item: { name: line.name, listPrice: line.unitCost },
+    })),
+  };
 });

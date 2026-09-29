@@ -10,4 +10,6 @@ Decisions:
 - Cases SWHR-C-0248/0249 are covered at service level (`updateCartQuantities`); the PATCH route arrives in SWHR-T-0098. SWHR-C-0256 is covered through `emptyCart`, since no order placement exists yet.
 - Unresolvable items are tested with an `item` row that has no `itemDetails` (P6).
 
-Verification: `bun run lint`, `bun run typecheck`, `bun run test` (150 files, 747 tests) all pass; E2E result is in the work log.
+Verification: `bun run lint`, `bun run typecheck`, `bun run test` (150 files, 747 tests) all pass; `bun run test:e2e` (59 passed).
+
+Deviation: the two route handlers keep answering the legacy `{ lines }` with a nested `item: { name, listPrice }` mapped from `CartView`, because the current cart page and existing e2e specs read it; SWHR-T-0098 replaces this with the `CartView` answer.

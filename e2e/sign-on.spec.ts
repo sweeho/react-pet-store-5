@@ -190,7 +190,7 @@ test.describe("Sign-on journeys", () => {
     // switch above means the product page renders in Japanese from here on.
     await addToCart(page, "K9-BD-01", "オス成犬ブルドッグ");
     await addToCart(page, "K9-BD-01", "メス子犬ブルドッグ");
-    await addToCart(page, "K9-PO-02");
+    await addToCart(page, "K9-RT-01", "メス成犬ゴールデンレトリバー");
     await page.goto("/cart");
     await expect(page.getByText("数量: 1")).toHaveCount(3);
 
