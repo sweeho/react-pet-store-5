@@ -1,13 +1,13 @@
 ## 1. Data model
 
-- [ ] 1.1 Define the customers table keyed by unique user id in db/schema.ts (SWHR-T-0080)
-- [ ] 1.2 Define the accounts table with status ("active" / "disabled") and one-to-one links to contact information and credit card (SWHR-T-0080)
-- [ ] 1.3 Define the contact_infos table (given name, family name, telephone, email) with a one-to-one owned postal address (SWHR-T-0080)
-- [ ] 1.4 Define the addresses table with six text fields and a system-generated key (SWHR-T-0080)
-- [ ] 1.5 Define the credit_cards table (number, type, expiry) with a system-generated key, not keyed by card number (SWHR-T-0080)
-- [ ] 1.6 Define the profiles table with preferred language, nullable favourite category and non-null My List and banner flags (SWHR-T-0080)
-- [ ] 1.7 Configure cascading deletion customer→account/profile, account→contact/card, contact→address (SWHR-T-0080)
-- [ ] 1.8 Generate and commit the drizzle migration (SWHR-T-0080)
+- [x] 1.1 Define the customers table keyed by unique user id in db/schema.ts (SWHR-T-0080)
+- [x] 1.2 Define the accounts table with status ("active" / "disabled") and one-to-one links to contact information and credit card (SWHR-T-0080)
+- [x] 1.3 Define the contact_infos table (given name, family name, telephone, email) with a one-to-one owned postal address (SWHR-T-0080)
+- [x] 1.4 Define the addresses table with six text fields and a system-generated key (SWHR-T-0080)
+- [x] 1.5 Define the credit_cards table (number, type, expiry) with a system-generated key, not keyed by card number (SWHR-T-0080)
+- [x] 1.6 Define the profiles table with preferred language, nullable favourite category and non-null My List and banner flags (SWHR-T-0080)
+- [x] 1.7 Configure cascading deletion customer→account/profile, account→contact/card, contact→address (SWHR-T-0080)
+- [x] 1.8 Generate and commit the drizzle migration (SWHR-T-0080)
 
 ## 2. Account domain services
 
