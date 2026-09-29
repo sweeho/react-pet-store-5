@@ -17,13 +17,6 @@ export const users = sqliteTable("users", {
   passwordHash: text("passwordHash").notNull(),
 });
 
-export const profiles = sqliteTable("profiles", {
-  userId: text("userId")
-    .primaryKey()
-    .references(() => users.userId),
-  preferredLanguage: text("preferredLanguage").notNull().default("en_US"),
-});
-
 // Catalog (design D4, P4; target shape architecture/schema.sql). Every
 // `*Details` table is keyed (entityId, locale) with no unique-per-entity
 // constraint on the base table's own columns beyond its id — a row missing
@@ -179,6 +172,70 @@ export const customers = sqliteTable("customers", {
     .primaryKey()
     .references(() => users.userId),
   createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+});
+
+// Customer account (swhr-i-0007 design.md P1, P2): `profiles` extends the
+// sign-on row and now hangs off `customers`, so deleting a customer removes
+// it. The account graph keeps foreign keys on the child side with unique
+// owner columns (one contact, one card per account, one address per
+// contact); the owner is nullable so a record can exist before it is
+// attached. Every ownership FK cascades.
+export const profiles = sqliteTable("profiles", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => customers.userId, { onDelete: "cascade" }),
+  preferredLanguage: text("preferredLanguage").notNull().default("en_US"),
+  favoriteCategory: text("favoriteCategory"),
+  myListPreference: integer("myListPreference", { mode: "boolean" }).notNull().default(true),
+  bannerPreference: integer("bannerPreference", { mode: "boolean" }).notNull().default(true),
+});
+
+export const accounts = sqliteTable(
+  "accounts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("userId")
+      .notNull()
+      .unique()
+      .references(() => customers.userId, { onDelete: "cascade" }),
+    status: text("status").notNull().default("active"),
+  },
+  (table) => [check("accounts_status_check", sql`${table.status} IN ('active', 'disabled')`)],
+);
+
+export const contactInfos = sqliteTable("contactInfos", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountId: integer("accountId")
+    .unique()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  givenName: text("givenName").notNull().default(""),
+  familyName: text("familyName").notNull().default(""),
+  telephone: text("telephone").notNull().default(""),
+  email: text("email").notNull().default(""),
+});
+
+export const addresses = sqliteTable("addresses", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contactInfoId: integer("contactInfoId")
+    .unique()
+    .references(() => contactInfos.id, { onDelete: "cascade" }),
+  streetName1: text("streetName1").notNull().default(""),
+  streetName2: text("streetName2"),
+  city: text("city").notNull().default(""),
+  state: text("state").notNull().default(""),
+  zipCode: text("zipCode").notNull().default(""),
+  country: text("country").notNull().default(""),
+});
+
+// P3: the full card number is never stored — only its last four digits.
+export const creditCards = sqliteTable("creditCards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountId: integer("accountId")
+    .unique()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  cardLastFour: text("cardLastFour").notNull().default(""),
+  cardType: text("cardType").notNull().default(""),
+  expiryDate: text("expiryDate"),
 });
 
 // Sign-on (design.md P9): the anonymous-cart seam, in shopping-cart's
