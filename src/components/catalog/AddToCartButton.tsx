@@ -10,11 +10,14 @@ export interface AddToCartButtonProps {
 }
 
 async function postAddToCart(itemId: string): Promise<void> {
-  await fetch("/api/cart/items", {
+  const response = await fetch("/api/cart/items", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ itemId }),
   });
+  if (response.ok) {
+    window.dispatchEvent(new Event("cart:changed"));
+  }
 }
 
 /**

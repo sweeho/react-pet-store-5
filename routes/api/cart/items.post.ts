@@ -1,7 +1,7 @@
 import { createError, defineHandler, readBody } from "nitro/h3";
 
 import { getAuthSession } from "../../../lib/auth/session";
-import { addCartItem, getCartWithDetails } from "../../../lib/cart/lines";
+import { addCartItem, getCart } from "../../../lib/cart/lines";
 
 // Never gated (SWHR-R-0070): adding to the cart requires no sign-on.
 export default defineHandler(async (event) => {
@@ -12,8 +12,9 @@ export default defineHandler(async (event) => {
   }
 
   const session = await getAuthSession(event, "storefront");
-  addCartItem(session.id, itemId);
+  if (!addCartItem(session.id, itemId)) {
+    throw createError({ statusCode: 404, statusMessage: `Item ${itemId} not found` });
+  }
 
-  const lines = await getCartWithDetails(event, session.id);
-  return { lines };
+  return getCart(event, session.id);
 });

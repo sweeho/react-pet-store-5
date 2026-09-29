@@ -4,3 +4,4 @@ export { useCatalogCategories } from "./useCatalogCategories";
 export type { CatalogCategoriesState } from "./useCatalogCategories";
 export { useAccount } from "./useAccount";
 export type { AccountState } from "./useAccount";
+export { useCartCount } from "./useCartCount";
