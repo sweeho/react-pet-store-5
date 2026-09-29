@@ -6,8 +6,8 @@
 
 ## 2. Development server runs under Bun
 
-- [ ] 2.1 Make the dev script force the Bun runtime (SWHR-T-0050)
-- [ ] 2.2 Start the Playwright web server through the dev script so DB-backed E2E specs cover it (SWHR-T-0050)
+- [x] 2.1 Make the dev script force the Bun runtime (SWHR-T-0050)
+- [x] 2.2 Start the Playwright web server through the dev script so DB-backed E2E specs cover it (SWHR-T-0050)
 
 ## 3. Stub-sentinel false positives (repo-side mitigation)
 
