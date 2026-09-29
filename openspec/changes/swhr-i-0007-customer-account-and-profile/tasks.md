@@ -11,14 +11,14 @@
 
 ## 2. Account domain services
 
-- [ ] 2.1 Implement atomic customer creation (customer, active account, empty contact, empty address, empty card, default profile) in one transaction (SWHR-T-0081)
-- [ ] 2.2 Implement profile defaults (en_US, no favourite category, My List on, banner on) (SWHR-T-0081)
-- [ ] 2.3 Implement account creation with supplied status, contact information and card (SWHR-T-0081)
-- [ ] 2.4 Implement the three contact-information creation paths (empty, from complete value with address copy, from fields plus existing address) (SWHR-T-0081)
-- [ ] 2.5 Implement field-level read/update and detached whole-value read for contact, card, profile and status (SWHR-T-0081)
-- [ ] 2.6 Implement customer lookup by user id and list-all (SWHR-T-0081)
-- [ ] 2.7 Implement card expiry composition (MM/YYYY) and month/year derivation with the 01/2010 fallback (SWHR-T-0081)
-- [ ] 2.8 Implement customer deletion relying on the cascade (SWHR-T-0081)
+- [x] 2.1 Implement atomic customer creation (customer, active account, empty contact, empty address, empty card, default profile) in one transaction (SWHR-T-0081)
+- [x] 2.2 Implement profile defaults (en_US, no favourite category, My List on, banner on) (SWHR-T-0081)
+- [x] 2.3 Implement account creation with supplied status, contact information and card (SWHR-T-0081)
+- [x] 2.4 Implement the three contact-information creation paths (empty, from complete value with address copy, from fields plus existing address) (SWHR-T-0081)
+- [x] 2.5 Implement field-level read/update and detached whole-value read for contact, card, profile and status (SWHR-T-0081)
+- [x] 2.6 Implement customer lookup by user id and list-all (SWHR-T-0081)
+- [x] 2.7 Implement card expiry composition (MM/YYYY) and month/year derivation with the 01/2010 fallback (SWHR-T-0081)
+- [x] 2.8 Implement customer deletion relying on the cascade (SWHR-T-0081)
 
 ## 3. Server routes and validation
 
