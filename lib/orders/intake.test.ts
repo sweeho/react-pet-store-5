@@ -6,6 +6,7 @@ import { orderWorkflow, outboxDeliveries, outboxMessages, purchaseOrders } from 
 import { type PurchaseOrder, writePurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { dispatchPending } from "../messaging/dispatcher";
 import * as outbox from "../messaging/outbox";
+import * as approvalPolicy from "./approvalPolicy";
 import { shouldAutoApprove } from "./approvalPolicy";
 import { createOrderApprovalHandler } from "./approval";
 import { createOrderIntakeHandler } from "./intake";
@@ -113,6 +114,22 @@ describe("order intake", () => {
     send("AFTER-FAILURE");
     await dispatchPending();
     expect(getStoredOrder("AFTER-FAILURE")).not.toBeNull();
+  });
+
+  it("[SWHR-C-0362] order 1001 is stored as PENDING before approval is evaluated", async () => {
+    let statusAtEvaluation: string | undefined;
+    let storedAtEvaluation = false;
+    vi.spyOn(approvalPolicy, "shouldAutoApprove").mockImplementation(() => {
+      storedAtEvaluation = getStoredOrder("1001") !== null;
+      statusAtEvaluation = statusOf("1001");
+      return false;
+    });
+    send("1001");
+    await dispatchPending();
+
+    expect(storedAtEvaluation).toBe(true);
+    expect(statusAtEvaluation).toBe("PENDING");
+    expect(statusOf("1001")).toBe("PENDING");
   });
 
   it("stores a committed order once and a redelivery is a no-op", async () => {
