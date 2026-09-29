@@ -6,6 +6,7 @@ import { outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schem
 import { type PurchaseOrder, writePurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { dispatchPending } from "../messaging/dispatcher";
 import * as outbox from "../messaging/outbox";
+import { shouldAutoApprove } from "./approvalPolicy";
 import { createOrderApprovalHandler } from "./approval";
 import { createOrderIntakeHandler } from "./intake";
 import { getStoredOrder } from "./store";
@@ -53,7 +54,7 @@ function order(orderId: string, locale = "en_US", totalPrice = "51.50"): Purchas
         itemId: "EST-1",
         lineNum: 1,
         quantity: 2,
-        unitPrice: "20.00",
+        unitPrice: locale === "ja_JP" ? "20" : "20.00",
       },
     ],
   };
@@ -145,6 +146,7 @@ describe("order intake", () => {
     });
 
     it("[SWHR-C-0288] leaves an en_US order of exactly 500.00 PENDING", async () => {
+      expect(shouldAutoApprove("en_US", 50000)).toBe(false);
       send("A2", "en_US", "500.00");
       await intake();
       expect(statusOf("A2")).toBe("PENDING");
@@ -158,12 +160,14 @@ describe("order intake", () => {
     });
 
     it("[SWHR-C-0290] leaves a ja_JP order of 50000 PENDING", async () => {
+      expect(shouldAutoApprove("ja_JP", 50000)).toBe(false);
       send("A4", "ja_JP", "50000");
       await intake();
       expect(statusOf("A4")).toBe("PENDING");
     });
 
     it("[SWHR-C-0291] leaves a zh_CN order of 1.00 PENDING and listed", async () => {
+      expect(shouldAutoApprove("zh_CN", 100)).toBe(false);
       send("A5", "zh_CN", "1.00");
       await intake();
       const pending = db
