@@ -20,6 +20,14 @@ async function launchWorkspace(page: Page) {
   await expect(page.getByRole("heading", { name: "Pet Store Administration" })).toBeVisible();
 }
 
+/** Intake stores the order asynchronously, so refresh until it is listed as pending. */
+async function waitForPending(admin: Page, orderId: string) {
+  await expect(async () => {
+    await admin.getByRole("button", { name: "Refresh" }).click();
+    await expect(admin.getByLabel(`Status of order ${orderId}`)).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 /** A fresh browser context signs in as the administrator, so the shopper session is untouched. */
 async function adminPage(page: Page): Promise<Page> {
   const admin = await page.context().browser()!.newPage();
@@ -52,6 +60,7 @@ test.describe("Order approval journeys", () => {
     const orderId = await placeZhCnOrder(page, userFor("pending-shopper", testInfo.retry));
     const admin = await adminPage(page);
     await launchWorkspace(admin);
+    await waitForPending(admin, orderId);
 
     await admin.getByLabel(`Status of order ${orderId}`).selectOption("APPROVED");
     await admin.getByRole("button", { name: "Exit" }).click();
@@ -67,6 +76,7 @@ test.describe("Order approval journeys", () => {
     const orderId = await placeZhCnOrder(page, userFor("approve-shopper", testInfo.retry));
     const admin = await adminPage(page);
     await launchWorkspace(admin);
+    await waitForPending(admin, orderId);
 
     await admin.getByLabel(`Status of order ${orderId}`).selectOption("APPROVED");
     await admin.getByRole("button", { name: "Commit decisions" }).click();
@@ -77,7 +87,7 @@ test.describe("Order approval journeys", () => {
       await expect(admin.getByLabel(`Status of order ${orderId}`)).toHaveCount(0, {
         timeout: 1_000,
       });
-    }).toPass({ timeout: 30_000 });
+    }).toPass({ timeout: 20_000 });
 
     await admin.getByRole("tab", { name: /View Non-Pending Orders/ }).click();
     const row = admin.getByRole("row", { name: `Order ${orderId}` });
@@ -96,8 +106,13 @@ test.describe("Order approval journeys", () => {
     await admin.getByRole("tab", { name: "Bar Chart" }).click();
     await admin.getByLabel("Start Date").fill("01/01/2001");
     await admin.getByLabel("End Date").fill("12/31/2099");
-    await admin.getByRole("button", { name: "Get Data" }).click();
-    await expect(admin.getByRole("cell", { name: "Fish", exact: true })).toBeVisible();
+    // Intake is asynchronous: reload the range until the order's category shows.
+    await expect(async () => {
+      await admin.getByRole("button", { name: "Get Data" }).click();
+      await expect(admin.getByRole("cell", { name: "Fish", exact: true })).toBeVisible({
+        timeout: 1_000,
+      });
+    }).toPass({ timeout: 20_000 });
 
     await admin.getByLabel("Start Date").fill("2001-01-01");
     await admin.getByRole("button", { name: "Get Data" }).click();

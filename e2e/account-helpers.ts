@@ -30,8 +30,12 @@ export async function signUp(page: Page, userId: string, password: string) {
 
 /** Signs in to the administration realm as the seeded administrator and lands on the console. */
 export async function signInAsAdmin(page: Page): Promise<void> {
-  void page;
-  throw new Error("VortexNotImplemented");
+  await page.goto("/admin/console");
+  await expect(page).toHaveURL("/admin/signin");
+  await page.getByLabel("User ID", { exact: true }).fill("admin_member");
+  await page.getByLabel("Password", { exact: true }).fill("admin_member");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL("/admin/console");
 }
 
 /**
@@ -40,7 +44,28 @@ export async function signInAsAdmin(page: Page): Promise<void> {
  * new order id.
  */
 export async function placeZhCnOrder(page: Page, userId: string): Promise<string> {
-  void page;
-  void userId;
-  throw new Error("VortexNotImplemented");
+  for (const itemId of ["EST-6", "EST-1"]) {
+    const response = await page.request.post("/api/cart/items", { data: { itemId } });
+    expect(response.ok()).toBe(true);
+  }
+  await page.goto("/cart");
+  await page.getByRole("link", { name: /Check Out/ }).click();
+  await expect(page).toHaveURL("/signin");
+  await signUp(page, userId, "Secret1");
+  await expect(page).toHaveURL("/checkout");
+
+  const switched = await page.request.post("/api/locale", { data: { locale: "zh_CN" } });
+  expect(switched.ok()).toBe(true);
+  await page.goto("/checkout");
+  // Intake rejects a blank e-mail, which would leave the order unstored.
+  const emailFields = page.getByLabel("电子邮件");
+  await expect(emailFields).toHaveCount(2);
+  for (const field of await emailFields.all()) {
+    await field.fill(`${userId}@example.com`);
+  }
+  await page.getByRole("button", { name: "提交" }).click();
+  await expect(page).toHaveURL("/order-complete");
+
+  const last = (await (await page.request.get("/api/orders/last")).json()) as { orderId: string };
+  return last.orderId;
 }
