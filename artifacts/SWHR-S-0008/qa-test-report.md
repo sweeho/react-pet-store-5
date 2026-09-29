@@ -14,7 +14,7 @@ downstream: [artifacts/SWHR-S-0008/sprint-summary.md]
 
 ## Executive Summary
 
-**Verdict: PASS.** The integrated sprint branch (HEAD ddc8c6d) builds, passes `bun run verify` (706 unit tests) and passes the full Chromium E2E suite (59 passed, 0 failed, 0 skipped), including the account, personalisation and sign-on-to-account journeys. All 41 scenarios of the `customer-account` delta spec have a verdict below. No defects found.
+**Verdict: PASS.** The integrated sprint branch (HEAD ddc8c6d) builds, passes `bun run verify` (706 unit tests) and passes the full Chromium E2E suite (59 passed, 0 failed, 0 skipped), including the account, personalisation and sign-on-to-account journeys. All 39 scenarios of the `customer-account` delta spec have a verdict below. No defects found.
 
 The stock `test:e2e` preflight rejected this container's Chromium revision (1223 vs expected 1155); the run used the installed browser through a temp `PLAYWRIGHT_BROWSERS_PATH` with no repo change. That is an environment mismatch, recorded in `integration-test-result.md`.
 
