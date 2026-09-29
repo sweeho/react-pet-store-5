@@ -8,6 +8,7 @@ import {
   categoryDetails,
   outboxDeliveries,
   outboxMessages,
+  orderWorkflow,
   purchaseOrders,
   orderContacts,
   sessions,
@@ -15,6 +16,7 @@ import {
 import type { PurchaseOrder } from "../../../lib/b2b/documents/purchaseOrder";
 import { updateAuthSession } from "../../../lib/auth/session";
 import { persistPurchaseOrder } from "../../../lib/orders/store";
+import { updateStatus, type OrderStatus } from "../../../lib/orders/workflow";
 import orderData from "./order-data.post";
 
 const SESSION_TIMED_OUT_ERROR =
@@ -23,6 +25,7 @@ const SESSION_TIMED_OUT_ERROR =
 beforeEach(() => {
   db.delete(outboxDeliveries).run();
   db.delete(outboxMessages).run();
+  db.delete(orderWorkflow).run();
   db.delete(purchaseOrders).run();
   db.delete(sessions).run();
   db.delete(categoryDetails).where(eq(categoryDetails.locale, "en_US")).run();
@@ -40,7 +43,7 @@ type Line = { categoryId: string; itemId: string; quantity: number; unitPrice: s
 function seed(
   orderId: string,
   opts: {
-    status?: string;
+    status?: OrderStatus;
     date?: Date;
     total?: string;
     locale?: string;
@@ -78,10 +81,7 @@ function seed(
   };
   db.transaction((tx) => persistPurchaseOrder(tx, po));
   if (opts.status) {
-    db.update(purchaseOrders)
-      .set({ status: opts.status })
-      .where(eq(purchaseOrders.orderId, orderId))
-      .run();
+    updateStatus(db, orderId, opts.status);
   }
 }
 
@@ -202,7 +202,7 @@ describe("POST /api/admin/order-data", () => {
       expect(docs).toHaveLength(1);
       expect(docs[0]).toContain("1001");
       expect(docs[0]).toContain("1002");
-      const rows = db.select().from(purchaseOrders).all();
+      const rows = db.select().from(orderWorkflow).all();
       expect(rows.map((r) => r.status)).toEqual(["PENDING", "PENDING"]);
     });
 

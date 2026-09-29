@@ -344,7 +344,7 @@ export const supplierOrders = sqliteTable(
 export const supplierContacts = sqliteTable("supplierContacts", {
   orderId: text("orderId")
     .primaryKey()
-    .references(() => supplierOrders.orderId),
+    .references(() => supplierOrders.orderId, { onDelete: "cascade" }),
   familyName: text("familyName").notNull(),
   givenName: text("givenName").notNull(),
   email: text("email").notNull(),
@@ -354,7 +354,7 @@ export const supplierContacts = sqliteTable("supplierContacts", {
 export const supplierAddresses = sqliteTable("supplierAddresses", {
   orderId: text("orderId")
     .primaryKey()
-    .references(() => supplierOrders.orderId),
+    .references(() => supplierOrders.orderId, { onDelete: "cascade" }),
   streetName1: text("streetName1").notNull(),
   streetName2: text("streetName2"),
   city: text("city").notNull(),
@@ -367,7 +367,7 @@ export const supplierLineItems = sqliteTable("supplierLineItems", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: text("orderId")
     .notNull()
-    .references(() => supplierOrders.orderId),
+    .references(() => supplierOrders.orderId, { onDelete: "cascade" }),
   categoryId: text("categoryId").notNull(),
   productId: text("productId").notNull(),
   itemId: text("itemId").notNull(),
@@ -390,25 +390,15 @@ export const counters = sqliteTable(
   (table) => [check("counters_name_check", sql`length(${table.name}) <= 255`)],
 );
 
-export const purchaseOrders = sqliteTable(
-  "purchaseOrders",
-  {
-    orderId: text("orderId").primaryKey(),
-    userId: text("userId").notNull(),
-    emailId: text("emailId").notNull(),
-    orderDate: integer("orderDate", { mode: "timestamp_ms" }).notNull(),
-    locale: text("locale").notNull(),
-    totalValue: integer("totalValue").notNull(),
-    status: text("status").notNull().default("PENDING"),
-    createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => [
-    check(
-      "purchaseOrders_status_check",
-      sql`${table.status} IN ('PENDING', 'APPROVED', 'DENIED', 'SHIPPED_PART', 'COMPLETED')`,
-    ),
-  ],
-);
+export const purchaseOrders = sqliteTable("purchaseOrders", {
+  orderId: text("orderId").primaryKey(),
+  userId: text("userId").notNull(),
+  emailId: text("emailId").notNull(),
+  orderDate: integer("orderDate", { mode: "timestamp_ms" }).notNull(),
+  locale: text("locale").notNull(),
+  totalValue: integer("totalValue").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+});
 
 export const orderContacts = sqliteTable("orderContacts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -459,6 +449,30 @@ export const orderLines = sqliteTable(
     itemId: text("itemId").notNull(),
     quantity: integer("quantity").notNull(),
     unitPrice: integer("unitPrice").notNull(),
+    quantityShipped: integer("quantityShipped").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.orderId, table.lineNum] })],
 );
+
+// Order fulfilment (swhr-i-0011 P1): the workflow status lives apart from the
+// order and has no foreign key, so tracking can start before or without a
+// stored order.
+export const orderWorkflow = sqliteTable(
+  "orderWorkflow",
+  {
+    orderId: text("orderId").primaryKey(),
+    status: text("status").notNull(),
+  },
+  (table) => [
+    check(
+      "orderWorkflow_status_check",
+      sql`${table.status} IN ('PENDING', 'APPROVED', 'DENIED', 'SHIPPED_PART', 'COMPLETED')`,
+    ),
+  ],
+);
+
+// Supplier stock, in the shape supplier-inventory D1 prescribes.
+export const supplierInventory = sqliteTable("supplierInventory", {
+  itemId: text("itemId").primaryKey(),
+  quantity: integer("quantity").notNull(),
+});

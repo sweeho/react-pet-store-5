@@ -57,6 +57,20 @@
       "when": 1790707959678,
       "tag": "0007_tiresome_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790718474183,
+      "tag": "0008_lazy_jimmy_woo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790719521119,
+      "tag": "0009_shallow_rick_jones",
+      "breakpoints": true
     }
   ]
 }

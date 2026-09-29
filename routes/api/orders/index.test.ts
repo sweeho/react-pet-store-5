@@ -141,13 +141,7 @@ describe("POST /api/orders", () => {
     expect(result).toMatchObject({ orderId: "10011", email: "bill@example.com" });
     expect(queued()).toHaveLength(1);
     expect(queued()[0].channel).toBe("opc.purchase-order");
-    expect(
-      db
-        .select()
-        .from(purchaseOrders)
-        .all()
-        .filter((o) => o.status === "APPROVED"),
-    ).toEqual([]);
+    expect(db.select().from(purchaseOrders).all()).toEqual([]);
   });
 
   it("[SWHR-C-0260] keeps billing city and ships to San Jose", async () => {

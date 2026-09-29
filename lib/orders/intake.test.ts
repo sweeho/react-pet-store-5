@@ -2,14 +2,18 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../db/client";
-import { outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schema";
+import { orderWorkflow, outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schema";
+import { writeOrderApproval } from "../b2b/documents/orderApproval";
 import { type PurchaseOrder, writePurchaseOrder } from "../b2b/documents/purchaseOrder";
+import * as supplierChannel from "../b2b/exchange/supplierChannel";
 import { dispatchPending } from "../messaging/dispatcher";
 import * as outbox from "../messaging/outbox";
+import * as approvalPolicy from "./approvalPolicy";
 import { shouldAutoApprove } from "./approvalPolicy";
 import { createOrderApprovalHandler } from "./approval";
 import { createOrderIntakeHandler } from "./intake";
 import { getStoredOrder } from "./store";
+import { getStatus, listOrderIdsByStatus } from "./workflow";
 
 const { enqueue, registerConsumer } = outbox;
 
@@ -17,6 +21,7 @@ beforeEach(() => {
   vi.restoreAllMocks();
   db.delete(outboxDeliveries).run();
   db.delete(outboxMessages).run();
+  db.delete(orderWorkflow).run();
   db.delete(purchaseOrders).run();
   registerConsumer("opc.purchase-order", "order-intake", createOrderIntakeHandler());
   registerConsumer("opc.order-approval", "order-approval", createOrderApprovalHandler());
@@ -65,8 +70,7 @@ const send = (orderId: string, locale?: string, totalPrice?: string) =>
     enqueue(tx, "opc.purchase-order", writePurchaseOrder(order(orderId, locale, totalPrice))),
   );
 
-const statusOf = (orderId: string) =>
-  db.select().from(purchaseOrders).where(eq(purchaseOrders.orderId, orderId)).get()?.status;
+const statusOf = (orderId: string) => getStatus(db, orderId);
 const approvalMessages = () =>
   db.select().from(outboxMessages).where(eq(outboxMessages.channel, "opc.order-approval")).all();
 
@@ -114,6 +118,43 @@ describe("order intake", () => {
     expect(getStoredOrder("AFTER-FAILURE")).not.toBeNull();
   });
 
+  it("[SWHR-C-0362] order 1001 is stored as PENDING before approval is evaluated", async () => {
+    let statusAtEvaluation: string | undefined;
+    let storedAtEvaluation = false;
+    vi.spyOn(approvalPolicy, "shouldAutoApprove").mockImplementation(() => {
+      storedAtEvaluation = getStoredOrder("1001") !== null;
+      statusAtEvaluation = statusOf("1001");
+      return false;
+    });
+    send("1001");
+    await dispatchPending();
+
+    expect(storedAtEvaluation).toBe(true);
+    expect(statusAtEvaluation).toBe("PENDING");
+    expect(statusOf("1001")).toBe("PENDING");
+
+    // A failing approval step is reported as a workflow step failure.
+    vi.spyOn(supplierChannel, "sendSupplierPurchaseOrders").mockImplementationOnce(() => {
+      throw new Error("send failed");
+    });
+    db.transaction((tx) =>
+      enqueue(
+        tx,
+        "opc.order-approval",
+        writeOrderApproval([{ orderId: "1001", status: "APPROVED" }]),
+      ),
+    );
+    await dispatchPending();
+    expect(statusOf("1001")).toBe("PENDING");
+    expect(
+      db
+        .select()
+        .from(outboxDeliveries)
+        .all()
+        .map((d) => d.lastError),
+    ).toContain('workflow step "order-approval" failed');
+  });
+
   it("stores a committed order once and a redelivery is a no-op", async () => {
     send("ONCE");
     await dispatchPending();
@@ -140,9 +181,7 @@ describe("order intake", () => {
       send("A1", "en_US", "499.99");
       await intake();
       expect(statusOf("A1")).toBe("APPROVED");
-      expect(
-        db.select().from(purchaseOrders).where(eq(purchaseOrders.status, "PENDING")).all(),
-      ).toEqual([]);
+      expect(listOrderIdsByStatus(db, "PENDING")).toEqual([]);
     });
 
     it("[SWHR-C-0288] leaves an en_US order of exactly 500.00 PENDING", async () => {
@@ -170,12 +209,7 @@ describe("order intake", () => {
       expect(shouldAutoApprove("zh_CN", 100)).toBe(false);
       send("A5", "zh_CN", "1.00");
       await intake();
-      const pending = db
-        .select()
-        .from(purchaseOrders)
-        .where(eq(purchaseOrders.status, "PENDING"))
-        .all();
-      expect(pending.map((o) => o.orderId)).toEqual(["A5"]);
+      expect(listOrderIdsByStatus(db, "PENDING")).toEqual(["A5"]);
     });
 
     it("a redelivered purchase order enqueues no second approval", async () => {

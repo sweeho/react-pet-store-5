@@ -163,4 +163,91 @@ describe("migrateDatabase", () => {
     expect(row.n).toBeGreaterThan(0);
     expect(sqlite.query("PRAGMA foreign_key_check").all()).toEqual([]);
   });
+
+  it("upgrades a 0007 database through 0008 keeping every order and supplier order row", () => {
+    const folder07 = path.join(tmp, "drizzle-0007");
+    fs.cpSync(realFolder, folder07, { recursive: true });
+    const journalPath = path.join(folder07, "meta", "_journal.json");
+    const journal = JSON.parse(fs.readFileSync(journalPath, "utf8")) as Journal;
+    journal.entries = journal.entries.filter((e) => e.idx <= 7);
+    fs.writeFileSync(journalPath, JSON.stringify(journal));
+
+    const first = open();
+    migrateDatabase(first, folder07);
+    first.exec(`
+      INSERT INTO purchaseOrders (orderId, userId, emailId, orderDate, locale, totalValue, createdAt)
+        VALUES ('10001', 'u', 'a@b.c', 0, 'en_US', 100, 0);
+      INSERT INTO orderLines (orderId, lineNum, categoryId, productId, itemId, quantity, unitPrice)
+        VALUES ('10001', 0, 'FISH', 'FI-1', 'EST-1', 2, 10);
+      INSERT INTO supplierOrders (orderId, orderDate, createdAt) VALUES ('S1', 0, 0);
+      INSERT INTO supplierContacts (orderId, familyName, givenName, email, phone)
+        VALUES ('S1', 'B', 'A', 'a@b.c', '555');
+      INSERT INTO supplierAddresses (orderId, streetName1, city, state, zipCode, country)
+        VALUES ('S1', '1 Main', 'X', 'CA', '94303', 'US');
+      INSERT INTO supplierLineItems (orderId, categoryId, productId, itemId, lineNum, quantity, unitPrice)
+        VALUES ('S1', 'FISH', 'FI-1', 'EST-1', 0, 1, 10);
+    `);
+    first.close();
+
+    const sqlite = open();
+    migrateDatabase(sqlite, realFolder);
+
+    const n = (t: string) =>
+      (sqlite.query(`SELECT count(*) AS n FROM "${t}"`).get() as { n: number }).n;
+    for (const t of [
+      "purchaseOrders",
+      "orderLines",
+      "supplierOrders",
+      "supplierContacts",
+      "supplierAddresses",
+      "supplierLineItems",
+    ]) {
+      expect(n(t), t).toBe(1);
+    }
+    expect(sqlite.query("SELECT quantityShipped FROM orderLines").get()).toEqual({
+      quantityShipped: 0,
+    });
+    expect(sqlite.query("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(
+      (sqlite.query("PRAGMA foreign_keys").get() as { foreign_keys: number }).foreign_keys,
+    ).toBe(1);
+  });
+
+  it("upgrades a 0008 database through 0009 moving every order status into orderWorkflow", () => {
+    const folder08 = path.join(tmp, "drizzle-0008");
+    fs.cpSync(realFolder, folder08, { recursive: true });
+    const journalPath = path.join(folder08, "meta", "_journal.json");
+    const journal = JSON.parse(fs.readFileSync(journalPath, "utf8")) as Journal;
+    journal.entries = journal.entries.filter((e) => e.idx <= 8);
+    fs.writeFileSync(journalPath, JSON.stringify(journal));
+
+    const first = open();
+    migrateDatabase(first, folder08);
+    first.exec(`
+      INSERT INTO purchaseOrders (orderId, userId, emailId, orderDate, locale, totalValue, status, createdAt)
+        VALUES ('1001', 'u', 'a@b.c', 0, 'en_US', 100, 'PENDING', 0),
+               ('1002', 'u', 'a@b.c', 0, 'en_US', 100, 'APPROVED', 0),
+               ('1003', 'u', 'a@b.c', 0, 'en_US', 100, 'SHIPPED_PART', 0),
+               ('1004', 'u', 'a@b.c', 0, 'en_US', 100, 'DENIED', 0);
+      INSERT INTO orderLines (orderId, lineNum, categoryId, productId, itemId, quantity, unitPrice)
+        VALUES ('1002', 0, 'FISH', 'FI-1', 'EST-1', 2, 10);
+    `);
+    first.close();
+
+    const sqlite = open();
+    migrateDatabase(sqlite, realFolder);
+
+    expect(
+      sqlite.query("SELECT orderId, status FROM orderWorkflow ORDER BY orderId").all(),
+    ).toEqual([
+      { orderId: "1001", status: "PENDING" },
+      { orderId: "1002", status: "APPROVED" },
+      { orderId: "1003", status: "SHIPPED_PART" },
+      { orderId: "1004", status: "DENIED" },
+    ]);
+    const columns = sqlite.query("PRAGMA table_info(purchaseOrders)").all() as { name: string }[];
+    expect(columns.map((c) => c.name)).not.toContain("status");
+    expect(sqlite.query("SELECT count(*) AS n FROM orderLines").get()).toEqual({ n: 1 });
+    expect(sqlite.query("PRAGMA foreign_key_check").all()).toEqual([]);
+  });
 });
