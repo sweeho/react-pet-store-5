@@ -230,7 +230,7 @@ describe("createPurchaseOrder", () => {
         expiryDate: "12/2030",
       },
     });
-    expect(() => createPurchaseOrder(db, bad)).toThrow();
+    expect(() => createPurchaseOrder(db, bad)).toThrow(/NOT NULL/i);
     const { purchaseOrders } = tables();
     expect(
       db.select().from(purchaseOrders).where(eq(purchaseOrders.orderId, "1005")).all(),
