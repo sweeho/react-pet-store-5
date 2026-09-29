@@ -68,9 +68,9 @@ function seedRows(sqlite: Database): void {
     INSERT INTO productDetails (productId, locale, name, image, description)
       VALUES ('FI-1', 'en_US', 'Angelfish', 'a.gif', 'Salt'), ('DO-1', 'ja_JP', 'Bulldog', NULL, NULL);
     INSERT INTO item (id, productId) VALUES ('EST-1', 'FI-1'), ('EST-2', 'DO-1');
-    INSERT INTO itemDetails (itemId, locale, name, description, image, listPrice, unitCost, attr1)
-      VALUES ('EST-1', 'en_US', 'Large', 'Big', 'l.gif', 1650, 1000, 'Adult'),
-             ('EST-2', 'ja_JP', 'Small', 'Tiny', 's.gif', 1800, 900, NULL);
+    INSERT INTO itemDetails (itemId, locale, name, description, image, listPrice, unitCost)
+      VALUES ('EST-1', 'en_US', 'Large', 'Big', 'l.gif', 1650, 1000),
+             ('EST-2', 'ja_JP', 'Small', 'Tiny', 's.gif', 1800, 900);
   `);
 }
 
