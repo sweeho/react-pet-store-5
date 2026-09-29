@@ -1,4 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stubs, replaced by the implementation */
+import { eq } from "drizzle-orm";
+
+import { db } from "../../db/client";
+import { supplierInventory } from "../../db/schema";
 import type { Executor } from "../account/types";
 import type { Tx } from "../messaging/outbox";
 
@@ -7,14 +10,23 @@ export interface StockRecord {
   quantity: number;
 }
 
-export function listStockRecords(_executor?: Executor): StockRecord[] {
-  throw new Error("VortexNotImplemented");
+/** Every stock record, in natural item-id order (EST-2 before EST-10). */
+export function listStockRecords(executor: Executor = db): StockRecord[] {
+  return executor
+    .select()
+    .from(supplierInventory)
+    .all()
+    .sort((a, b) => a.itemId.localeCompare(b.itemId, undefined, { numeric: true }));
 }
 
-export function getStockRecord(_itemId: string, _executor?: Executor): StockRecord | null {
-  throw new Error("VortexNotImplemented");
+export function getStockRecord(itemId: string, executor: Executor = db): StockRecord | null {
+  return (
+    executor.select().from(supplierInventory).where(eq(supplierInventory.itemId, itemId)).get() ??
+    null
+  );
 }
 
-export function createStockRecord(_tx: Tx, _record: StockRecord): void {
-  throw new Error("VortexNotImplemented");
+/** Plain insert: the primary key and NOT NULL refuse a duplicate id or a missing quantity. */
+export function createStockRecord(tx: Tx, record: StockRecord): void {
+  tx.insert(supplierInventory).values(record).run();
 }
