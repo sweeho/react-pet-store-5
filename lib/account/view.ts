@@ -1,5 +1,4 @@
-import { maskCardNumber } from "./cardNumber";
-import { expiryMonth, expiryYear } from "./expiry";
+/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stub */
 import type { AccountStatus, ContactInfoValue, CustomerAccount, ProfileValue } from "./types";
 
 // Client-safe (no db import): the shape GET/PUT /api/account return. The
@@ -17,18 +16,6 @@ export interface AccountView {
   profile: ProfileValue;
 }
 
-export function toAccountView(account: CustomerAccount): AccountView {
-  const { cardLastFour, cardType, expiryDate } = account.creditCard;
-  return {
-    userId: account.userId,
-    status: account.status,
-    contactInfo: account.contactInfo,
-    creditCard: {
-      cardNumberMasked: maskCardNumber(cardLastFour),
-      cardType,
-      expiryMonth: expiryMonth(expiryDate),
-      expiryYear: expiryYear(expiryDate),
-    },
-    profile: account.profile,
-  };
+export function toAccountView(_account: CustomerAccount): AccountView {
+  throw new Error("VortexNotImplemented");
 }

@@ -4,12 +4,33 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
 import { customers, groupMembers, profiles, sessions, users } from "../../db/schema";
+import type { AccountFormInput } from "../../lib/account/form";
 import { createCredential } from "../../lib/auth/credentials";
 import { ACCOUNT_CHANGE_PATH } from "../../lib/auth/protection";
 import { getAuthSession, updateAuthSession } from "../../lib/auth/session";
 import { getCustomerAccount } from "../../lib/account/customer";
-import { validForm } from "../../lib/account/form.fixture";
 import postCustomers from "./customers.post";
+
+const validForm: AccountFormInput = {
+  givenName: "ABC",
+  familyName: "XYZ",
+  telephone: "555-555-5555",
+  email: "abc@xyz.com",
+  streetName1: "1 Main",
+  streetName2: "Apt 2",
+  city: "Palo Alto",
+  state: "California",
+  zipCode: "94303",
+  country: "United States",
+  cardNumber: "4111-1111-1111-1111",
+  cardType: "Duke Express",
+  expiryMonth: "03",
+  expiryYear: "2005",
+  preferredLanguage: "en_US",
+  favoriteCategory: "DOGS",
+  myListPreference: true,
+  bannerPreference: true,
+};
 
 beforeEach(() => {
   db.delete(customers).run();
