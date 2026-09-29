@@ -33,6 +33,18 @@ const SECONDARY_NAV_AREAS = PRIMARY_AREAS.filter(
   (area) => !PET_CATEGORIES.some((category) => category.id === area.id) && area.id !== "SIGNIN",
 );
 
+// PRIMARY_AREAS carries only id/href (design.md §D1) — every area's label
+// comes from the `shell` screen, keyed by area id, so the header and this
+// nav show the same word for the same concept.
+const AREA_LABEL_SHELL_KEYS: Record<string, string> = {
+  SEARCH: "searchButton",
+  CART: "cart",
+  CHECKOUT: "checkout",
+  ACCOUNT: "account",
+  ADMIN: "administration",
+  SUPPLIER: "supplier",
+};
+
 /**
  * The shell's one navigation landmark. Wraps SiteHeader's visual content
  * (header actions) and the pet-category / primary-area links in a single
@@ -70,7 +82,7 @@ export default function GlobalNav() {
                 FOCUS_RING,
               )}
             >
-              {area.label}
+              {t[AREA_LABEL_SHELL_KEYS[area.id]]}
             </Link>
           ))}
         </div>
@@ -179,7 +191,7 @@ export default function GlobalNav() {
                   FOCUS_RING,
                 )}
               >
-                {area.label}
+                {t[AREA_LABEL_SHELL_KEYS[area.id]]}
               </Link>
             ))}
             {signedOn ? (

@@ -36,7 +36,7 @@ no separate approved case id applies.
 `NODE_ENV=test bun --bun vitest run lib/messaging lib/b2b/exchange plugins`, with every implementation
 file this ticket adds (`lib/messaging/{outbox,dispatcher}.ts`,
 `lib/b2b/exchange/{supplierChannel,invoiceChannel,supplierIntake}.ts`,
-`plugins/outbox-dispatcher.ts`) swapped for a stub throwing `VortexNotImplemented` (types/exports kept,
+`plugins/outbox-dispatcher.ts`) swapped for a stub throwing the configured stub sentinel (types/exports kept,
 so only behaviour — not imports — was missing):
 
 ```

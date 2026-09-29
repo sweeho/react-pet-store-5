@@ -31,7 +31,7 @@ are the interface contract itself rather than a numbered spec scenario.
 ## Red run
 
 `NODE_ENV=test bun --bun vitest run lib/b2b routes/api/b2b`, with every implementation file under
-`lib/b2b/**` and `routes/api/b2b/**` swapped for a stub throwing `VortexNotImplemented` (exports and
+`lib/b2b/**` and `routes/api/b2b/**` swapped for a stub throwing the configured stub sentinel (exports and
 types kept intact so only behaviour, not imports, was missing):
 
 ```

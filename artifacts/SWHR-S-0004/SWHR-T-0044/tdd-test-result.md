@@ -35,7 +35,7 @@ Supporting (not individually case-tagged) coverage for the same behaviour: `lib/
 
 Command: `NODE_ENV=test bun --bun vitest run lib/auth lib/cart middleware routes/api/session.test.ts routes/api/signon routes/api/cart src/components/auth`
 
-Run with every new source file (`lib/auth/session.ts`, `lib/auth/protection.ts`, `lib/cart/lines.ts`, `middleware/signon.ts`, the five new route handlers, `src/components/auth/SignOnGate.tsx`) temporarily replaced with a stub of the same exported shape whose functions throw `VortexNotImplemented` (component: renders `null`), tests unchanged — the real red/green comparison for this batch of interdependent new modules.
+Run with every new source file (`lib/auth/session.ts`, `lib/auth/protection.ts`, `lib/cart/lines.ts`, `middleware/signon.ts`, the five new route handlers, `src/components/auth/SignOnGate.tsx`) temporarily replaced with a stub of the same exported shape whose functions throw the configured stub sentinel (component: renders `null`), tests unchanged — the real red/green comparison for this batch of interdependent new modules.
 
 ```
 Test Files  10 failed (10)
@@ -46,11 +46,11 @@ Representative failures:
 
 ```
 FAIL |server| lib/auth/session.test.ts > getAuthSession > creates a fresh anonymous session on first use
-Error: VortexNotImplemented
+Error: <configured stub sentinel>
  ❯ getAuthSession lib/auth/session.ts:22:3
 
 FAIL |server| middleware/signon.test.ts > signon middleware > [SWHR-C-0121] gates an anonymous request for the checkout entry page
-Error: VortexNotImplemented
+Error: <configured stub sentinel>
  ❯ middleware/signon.ts:4:3
 
 FAIL |client| src/components/auth/SignOnGate.test.tsx > SignOnGate > renders an unprotected path immediately and never calls the gate

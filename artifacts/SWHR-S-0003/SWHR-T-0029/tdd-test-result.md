@@ -39,7 +39,7 @@ the four element types against its bundled `.dtd.xsd`, and one structural violat
 ## Red run
 
 `NODE_ENV=test bun --bun vitest run lib/b2b/elements`, with `address.ts`/`contactInfo.ts`/`creditCard.ts`/`lineItem.ts`
-swapped for stubs throwing `VortexNotImplemented` (exported interfaces and function signatures kept intact so
+swapped for stubs throwing the configured stub sentinel (exported interfaces and function signatures kept intact so
 only behaviour, not imports or types, was missing):
 
 ```
@@ -47,7 +47,7 @@ Test Files  4 failed (4)
      Tests  20 failed (20)
 ```
 
-All 20 tests in the four new element test files failed — 3 against `writeAddress`/`readAddress`-shaped VortexNotImplemented
+All 20 tests in the four new element test files failed — 3 against `writeAddress`/`readAddress`-shaped stub-sentinel
 throws, and so on for ContactInfo, CreditCard and LineItem — reproduced on this run (a single execution; no flake
 observed). The schema-validation test file (`elements.dtd.xsd.test.ts`) was not part of this stub swap since it
 exercises the schema files, not the element reader/writer code — it was green throughout.

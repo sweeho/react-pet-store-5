@@ -26,7 +26,7 @@ from SWHR-T-0028, the same tolerance `readPurchaseOrder` already has).
 ## Red run
 
 `NODE_ENV=test bun --bun vitest run lib/b2b/documents/purchaseOrderV1.test.ts`, with
-`purchaseOrderV1.ts` swapped for a stub throwing `VortexNotImplemented` (the exported
+`purchaseOrderV1.ts` swapped for a stub throwing the configured stub sentinel (the exported
 `PURCHASE_ORDER_V1_PUBLIC_ID` constant and `readPurchaseOrderV1`'s signature kept intact so only
 behaviour, not imports or types, was missing):
 
@@ -35,9 +35,9 @@ Test Files  1 failed (1)
      Tests  4 failed (4)
 ```
 
-All 4 tests failed — 3 on the `VortexNotImplemented` throw directly, and the "rejects a node that is
+All 4 tests failed — 3 on the stub-sentinel throw directly, and the "rejects a node that is
 not a PurchaseOrder element" test on an assertion mismatch (expected message `PurchaseOrder element
-expected.`, got `VortexNotImplemented`) — reproduced on this run (a single execution; no flake
+expected.`, got the configured stub sentinel) — reproduced on this run (a single execution; no flake
 observed).
 
 ## Green run

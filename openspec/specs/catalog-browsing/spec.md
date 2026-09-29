@@ -436,6 +436,14 @@ ID: SWHR-R-0104.01
 - **WHEN** any storefront page is displayed
 - **THEN** a "Pets" menu lists Birds, Cats, Dogs, Fish and Reptiles, and selecting Cats opens the Cats product listing
 
+#### Scenario: Menu in Japanese
+
+ID: SWHR-R-0104.02
+
+- **GIVEN** the seeded catalog and a session whose locale is `ja_JP`
+- **WHEN** the user opens the menu on a narrow screen
+- **THEN** its pet entries read 鳥, 猫, 犬, 魚 and 爬虫類, and none reads Birds, Cats, Dogs, Fish or Reptiles
+
 ### Requirement: Category product listing page
 
 ID: SWHR-R-0105
@@ -457,6 +465,14 @@ ID: SWHR-R-0105.02
 - **GIVEN** the category page of "DOGS" is displayed
 - **WHEN** the shopper selects Bulldog
 - **THEN** the item listing of Bulldog is shown
+
+#### Scenario: Category heading in Japanese
+
+ID: SWHR-R-0105.03
+
+- **GIVEN** the seeded catalog and a session whose locale is `ja_JP`
+- **WHEN** the category page of "DOGS" is opened
+- **THEN** the page heading reads 犬
 
 ### Requirement: Product item listing page
 

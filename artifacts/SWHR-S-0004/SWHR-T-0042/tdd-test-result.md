@@ -23,14 +23,14 @@ upstream: [artifacts/SWHR-S-0004/SWHR-T-0042/PLAN.md]
 
 ## Red run
 
-`NODE_ENV=test bun --bun vitest run lib/b2b/exchange/supplierOrders.test.ts`, with `getSupplierOrder`/`listSupplierOrders` stubbed to `throw new Error("VortexNotImplemented")`:
+`NODE_ENV=test bun --bun vitest run lib/b2b/exchange/supplierOrders.test.ts`, with `getSupplierOrder`/`listSupplierOrders` stubbed to `throw new Error(<configured stub sentinel>)`:
 
 ```
  ❯ |server| lib/b2b/exchange/supplierOrders.test.ts (3 tests | 3 failed) 6ms
      × [SWHR-C-0131] returns the order with no role or session argument in its signature
      × returns null for an order that does not exist
      × returns every persisted supplier order
-Error: VortexNotImplemented
+Error: <configured stub sentinel>
  ❯ getSupplierOrder lib/b2b/exchange/supplierOrders.ts:20:3
 
  Test Files  1 failed (1)
