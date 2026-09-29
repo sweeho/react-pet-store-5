@@ -27,14 +27,14 @@
 
 ## 4. Storefront screens
 
-- [ ] 4.1 Build the home page category picture map linking to the five category listings (SWHR-T-0060)
-- [ ] 4.2 Build the Pets category navigation menu shown on every storefront page (SWHR-T-0060)
-- [ ] 4.3 Build the category product listing page with Previous and Next links (SWHR-T-0060)
-- [ ] 4.4 Build the product item listing page with list price, Add to Cart and Previous and Next links (SWHR-T-0060)
-- [ ] 4.5 Build the item detail page with image, List Price, Your Price and Add to Cart (SWHR-T-0060)
-- [ ] 4.6 Build the search results page with the matching-keywords header, result rows, paging and the no-results message (SWHR-T-0060)
-- [ ] 4.7 Wire every Add to Cart control to the shopping-cart capability (SWHR-T-0060)
-- [ ] 4.8 Add UI tests for each screen and a Playwright spec for home to category to product to item navigation (SWHR-T-0060)
+- [x] 4.1 Build the home page category picture map linking to the five category listings (SWHR-T-0060)
+- [x] 4.2 Build the Pets category navigation menu shown on every storefront page (SWHR-T-0060)
+- [x] 4.3 Build the category product listing page with Previous and Next links (SWHR-T-0060)
+- [x] 4.4 Build the product item listing page with list price, Add to Cart and Previous and Next links (SWHR-T-0060)
+- [x] 4.5 Build the item detail page with image, List Price, Your Price and Add to Cart (SWHR-T-0060)
+- [x] 4.6 Build the search results page with the matching-keywords header, result rows, paging and the no-results message (SWHR-T-0060)
+- [x] 4.7 Wire every Add to Cart control to the shopping-cart capability (SWHR-T-0060)
+- [x] 4.8 Add UI tests for each screen and a Playwright spec for home to category to product to item navigation (SWHR-T-0060)
 
 ## 5. Caching and seed data
 
