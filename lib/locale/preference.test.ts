@@ -3,7 +3,7 @@ import { H3Event } from "nitro/h3";
 import { describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
-import { profiles, users } from "../../db/schema";
+import { customers, profiles, users } from "../../db/schema";
 import { applyPreferredLanguageOnProfileSave, applyPreferredLanguageOnSignOn } from "./preference";
 import { getCartLocale, getSessionLocale } from "./session";
 
@@ -22,6 +22,7 @@ function createUser(userId: string): string {
 describe("applyPreferredLanguageOnSignOn", () => {
   it("[AC-1] switches the session locale and the cart locale to the customer's Japanese preference", async () => {
     const userId = createUser("ja-preference-user");
+    db.insert(customers).values({ userId, createdAt: new Date() }).run();
     db.insert(profiles).values({ userId, preferredLanguage: "ja_JP" }).run();
 
     const event = new H3Event(new Request("http://localhost/"));
@@ -61,6 +62,7 @@ describe("profiles.preferredLanguage default", () => {
   it("[AC-4] defaults to en_US when a profile is created without a language", () => {
     const userId = createUser("default-language-user");
 
+    db.insert(customers).values({ userId, createdAt: new Date() }).run();
     db.insert(profiles).values({ userId }).run();
 
     const profile = db.select().from(profiles).where(eq(profiles.userId, userId)).get();
