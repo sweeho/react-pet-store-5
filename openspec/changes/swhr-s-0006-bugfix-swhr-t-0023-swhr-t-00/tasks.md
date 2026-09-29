@@ -11,5 +11,5 @@
 
 ## 3. Stub-sentinel false positives (repo-side mitigation)
 
-- [ ] 3.1 Declare the stub sentinel in config without its literal text and reword literal mentions in historical test-result artifacts (SWHR-T-0064)
-- [ ] 3.2 Add the "do not quote the sentinel literally" note for agents (SWHR-T-0064)
+- [x] 3.1 Declare the stub sentinel in config without its literal text and reword literal mentions in historical test-result artifacts (SWHR-T-0064)
+- [x] 3.2 Add the "do not quote the sentinel literally" note for agents (SWHR-T-0064)
