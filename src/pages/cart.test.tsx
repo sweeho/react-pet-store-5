@@ -79,7 +79,7 @@ describe("CartPage", () => {
     renderCart();
 
     await waitFor(() =>
-      expect(screen.queryByText("Your Shopping Cart is Empty.")).toBeInTheDocument(),
+      expect(screen.queryAllByText("Your Shopping Cart is Empty.")).toHaveLength(1),
     );
     expect(screen.queryByRole("row")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Update Cart" })).not.toBeInTheDocument();
@@ -96,10 +96,11 @@ describe("CartPage", () => {
     renderCart();
 
     await waitFor(() =>
-      expect(screen.queryByRole("link", { name: "Male Adult Bulldog" })).toHaveAttribute(
-        "href",
-        "/item/EST-6",
-      ),
+      expect(screen.queryAllByRole("link", { name: "Male Adult Bulldog" })).toHaveLength(1),
+    );
+    expect(screen.getByRole("link", { name: "Male Adult Bulldog" })).toHaveAttribute(
+      "href",
+      "/item/EST-6",
     );
     expect(screen.getByRole("link", { name: "Large Angelfish" })).toHaveAttribute(
       "href",
