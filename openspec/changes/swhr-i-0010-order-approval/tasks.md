@@ -19,12 +19,12 @@
 
 ## 4. Administrator API
 
-- [ ] 4.1 Add a GET route listing orders by status with distinct orders, total count and M/D/YYYY dates (SWHR-T-0122)
-- [ ] 4.2 Add a POST route accepting approve/deny decisions, validating the body, skipping entries without id or status, and returning success once persisted (SWHR-T-0122)
-- [ ] 4.3 Add revenue and order-count report routes with inclusive date window and optional category grouping by item (SWHR-T-0122)
-- [ ] 4.4 Reject unknown request shapes and malformed bodies with descriptive errors (SWHR-T-0122)
-- [ ] 4.5 Restrict all administrator routes to the administrator role (SWHR-T-0122)
-- [ ] 4.6 Integration-test each route with a real H3Event (SWHR-T-0122)
+- [x] 4.1 Add a GET route listing orders by status with distinct orders, total count and M/D/YYYY dates (SWHR-T-0122)
+- [x] 4.2 Add a POST route accepting approve/deny decisions, validating the body, skipping entries without id or status, and returning success once persisted (SWHR-T-0122)
+- [x] 4.3 Add revenue and order-count report routes with inclusive date window and optional category grouping by item (SWHR-T-0122)
+- [x] 4.4 Reject unknown request shapes and malformed bodies with descriptive errors (SWHR-T-0122)
+- [x] 4.5 Restrict all administrator routes to the administrator role (SWHR-T-0122)
+- [x] 4.6 Integration-test each route with a real H3Event (SWHR-T-0122)
 
 ## 5. Administrator screens
 
