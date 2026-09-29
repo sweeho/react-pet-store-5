@@ -25,9 +25,9 @@
 
 ## 4. Asynchronous hand-off
 
-- [ ] 4.1 Implement the outbox consumer that delivers each committed order document to order processing exactly once (SWHR-T-0110)
-- [ ] 4.2 Ensure an uncommitted or rolled-back order never reaches the consumer (SWHR-T-0110)
-- [ ] 4.3 Release messaging resources and surface delivery errors rather than dropping messages (SWHR-T-0110)
+- [x] 4.1 Implement the outbox consumer that delivers each committed order document to order processing exactly once (SWHR-T-0110)
+- [x] 4.2 Ensure an uncommitted or rolled-back order never reaches the consumer (SWHR-T-0110)
+- [x] 4.3 Release messaging resources and surface delivery errors rather than dropping messages (SWHR-T-0110)
 
 ## 5. Screens
 
