@@ -45,5 +45,5 @@
 
 ## 7. Open questions
 
-- [ ] 7.1 Resolve OQ-1 (credit card source) and OQ-5 (persisting billing contact separately) with product (SWHR-T-0113)
-- [ ] 7.2 Resolve OQ-3 (money representation and rounding) and record it in ARCHITECTURE.md Key Decisions (SWHR-T-0113)
+- [x] 7.1 Resolve OQ-1 (credit card source) and OQ-5 (persisting billing contact separately) with product (SWHR-T-0113)
+- [x] 7.2 Resolve OQ-3 (money representation and rounding) and record it in ARCHITECTURE.md Key Decisions (SWHR-T-0113)
