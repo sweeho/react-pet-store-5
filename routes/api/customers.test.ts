@@ -7,6 +7,8 @@ import { customers, groupMembers, profiles, sessions, users } from "../../db/sch
 import { createCredential } from "../../lib/auth/credentials";
 import { ACCOUNT_CHANGE_PATH } from "../../lib/auth/protection";
 import { getAuthSession, updateAuthSession } from "../../lib/auth/session";
+import { getCustomerAccount } from "../../lib/account/customer";
+import { validForm } from "../../lib/account/form.fixture";
 import postCustomers from "./customers.post";
 
 beforeEach(() => {
@@ -46,7 +48,7 @@ describe("POST /api/customers", () => {
   it("[SWHR-C-0133] redirects to the home page when the originally requested page was the account-change action", async () => {
     const pending = await pendingRegistration("carol", ACCOUNT_CHANGE_PATH);
 
-    const event = new H3Event(postRequest({ preferredLanguage: "en_US" }, cookieFrom(pending)));
+    const event = new H3Event(postRequest(validForm, cookieFrom(pending)));
     const result = await postCustomers(event);
 
     expect(result).toEqual({ redirect: "/" });
@@ -56,7 +58,7 @@ describe("POST /api/customers", () => {
   it("signs the session on as the registering user and returns to checkout", async () => {
     const pending = await pendingRegistration("dave", "/checkout");
 
-    const event = new H3Event(postRequest({ preferredLanguage: "en_US" }, cookieFrom(pending)));
+    const event = new H3Event(postRequest(validForm, cookieFrom(pending)));
     const result = await postCustomers(event);
 
     expect(result).toEqual({ redirect: "/checkout" });
@@ -72,7 +74,7 @@ describe("POST /api/customers", () => {
     const pending = await pendingRegistration("dave", "/checkout");
 
     await postCustomers(
-      new H3Event(postRequest({ preferredLanguage: "ja_JP" }, cookieFrom(pending))),
+      new H3Event(postRequest({ ...validForm, preferredLanguage: "ja_JP" }, cookieFrom(pending))),
     );
 
     expect(db.select().from(customers).where(eq(customers.userId, "dave")).all()).toHaveLength(1);
@@ -81,8 +83,49 @@ describe("POST /api/customers", () => {
     ).toBe("ja_JP");
   });
 
+  it("[SWHR-C-0217] stores every submitted value on the new customer", async () => {
+    const pending = await pendingRegistration("erin", "/checkout");
+
+    await postCustomers(new H3Event(postRequest(validForm, cookieFrom(pending))));
+
+    expect(getCustomerAccount("erin")).toMatchObject({
+      status: "active",
+      contactInfo: {
+        givenName: "ABC",
+        familyName: "XYZ",
+        telephone: "555-555-5555",
+        email: "abc@xyz.com",
+        address: {
+          streetName1: "1 Main",
+          streetName2: "Apt 2",
+          city: "Palo Alto",
+          state: "California",
+          zipCode: "94303",
+          country: "United States",
+        },
+      },
+      creditCard: { cardLastFour: "1111", cardType: "Duke Express", expiryDate: "03/2005" },
+      profile: {
+        preferredLanguage: "en_US",
+        favoriteCategory: "DOGS",
+        myListPreference: true,
+        bannerPreference: true,
+      },
+    });
+  });
+
+  it("rejects an incomplete form with 400, creates nothing and keeps the registration pending", async () => {
+    const pending = await pendingRegistration("finn", "/checkout");
+
+    await expect(
+      postCustomers(new H3Event(postRequest({ preferredLanguage: "en_US" }, cookieFrom(pending)))),
+    ).rejects.toMatchObject({ status: 400, data: { missing: expect.arrayContaining(["city"]) } });
+
+    expect(db.select().from(customers).where(eq(customers.userId, "finn")).all()).toHaveLength(0);
+  });
+
   it("rejects a request with no pending registration", async () => {
-    const event = new H3Event(postRequest({ preferredLanguage: "en_US" }));
+    const event = new H3Event(postRequest(validForm));
 
     await expect(postCustomers(event)).rejects.toMatchObject({ status: 401 });
   });
