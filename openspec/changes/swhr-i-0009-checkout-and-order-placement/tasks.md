@@ -7,9 +7,9 @@
 
 ## 2. Identifier generation
 
-- [ ] 2.1 Implement get-or-create of a per-prefix counter starting at 0, failing with an error that names the prefix when creation fails (SWHR-T-0108)
-- [ ] 2.2 Implement increment-and-format (prefix followed by the decimal value, no padding) in a single transaction joining the caller's transaction (SWHR-T-0108)
-- [ ] 2.3 Add unit tests for first id "10011", counter-at-7 giving "10018", a new prefix, and a concurrent-issuance uniqueness check (SWHR-T-0108)
+- [x] 2.1 Implement get-or-create of a per-prefix counter starting at 0, failing with an error that names the prefix when creation fails (SWHR-T-0108)
+- [x] 2.2 Implement increment-and-format (prefix followed by the decimal value, no padding) in a single transaction joining the caller's transaction (SWHR-T-0108)
+- [x] 2.3 Add unit tests for first id "10011", counter-at-7 giving "10018", a new prefix, and a concurrent-issuance uniqueness check (SWHR-T-0108)
 
 ## 3. Order placement service
 
