@@ -27,6 +27,10 @@ function stubFetch(categoryHandler: (url: URL) => Response) {
       if (url.pathname === "/api/catalog/categories") {
         return Promise.resolve(jsonResponse({ categories: MENU_CATEGORIES }));
       }
+      if (url.pathname === "/api/account") {
+        // The Pets menu's My List panel asks who is signed on; anonymous here.
+        return Promise.resolve(jsonResponse({}, 401));
+      }
       return Promise.resolve(categoryHandler(url));
     }),
   );

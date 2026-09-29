@@ -1,6 +1,7 @@
 import { LogIn, Shield, Truck, User } from "lucide-react";
 import { Link } from "react-router";
 
+import PetTipsBanner from "@/components/account/PetTipsBanner";
 import { getCategoryIcon } from "@/components/catalog/categoryIcons";
 import PetsMenu from "@/components/layout/PetsMenu";
 import { useCatalogCategories } from "@/hooks";
@@ -58,6 +59,8 @@ const Home = () => {
             </div>
           </div>
         </section>
+
+        <PetTipsBanner />
 
         <div className="border-line-2 bg-card flex flex-col gap-5 rounded-xl border p-5">
           <div className="flex items-baseline justify-between">
