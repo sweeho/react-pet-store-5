@@ -12,14 +12,9 @@ export default defineHandler(async (event) => {
   }
 
   const session = await getAuthSession(event, "storefront");
-  addCartItem(session.id, itemId);
+  if (!addCartItem(session.id, itemId)) {
+    throw createError({ statusCode: 404, statusMessage: `Item ${itemId} not found` });
+  }
 
-  const cart = await getCart(event, session.id);
-  // Legacy shape (nested `item`) until SWHR-T-0098/0099 move the page to CartView.
-  return {
-    lines: cart.lines.map((line) => ({
-      ...line,
-      item: { name: line.name, listPrice: line.unitCost },
-    })),
-  };
+  return getCart(event, session.id);
 });

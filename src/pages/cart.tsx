@@ -2,25 +2,17 @@ import { PawPrint } from "lucide-react";
 
 import PetTipsBanner from "@/components/account/PetTipsBanner";
 import { AsyncContent, EmptyState } from "@/components/state";
-import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
 
-import type { ItemView } from "../../lib/catalog/queries";
+import type { CartLine, CartView } from "../../lib/cart/types";
 import { formatPrice } from "../../lib/locale/money";
 
-interface CartLine {
-  itemId: string;
-  quantity: number;
-  item: ItemView;
-}
-
-async function loadCart(): Promise<CartLine[]> {
+async function loadCart(): Promise<CartView> {
   const response = await fetch("/api/cart");
   if (!response.ok) {
     throw new Error("Failed to load cart");
   }
-  const data = (await response.json()) as { lines: CartLine[] };
-  return data.lines;
+  return (await response.json()) as CartView;
 }
 
 /**
@@ -30,7 +22,6 @@ async function loadCart(): Promise<CartLine[]> {
  * quantities.
  */
 export default function CartPage() {
-  const { locale } = useLocale();
   const t = useScreen("cart");
 
   return (
@@ -39,12 +30,12 @@ export default function CartPage() {
       <PetTipsBanner />
       <AsyncContent
         load={loadCart}
-        isEmpty={(lines) => lines.length === 0}
+        isEmpty={(view) => view.count === 0}
         empty={<EmptyState title={t.emptyTitle} description={t.emptyDescription} />}
       >
-        {(lines) => (
+        {(view) => (
           <ul className="flex flex-col gap-4">
-            {lines.map((line) => (
+            {view.lines.map((line: CartLine) => (
               <li
                 key={line.itemId}
                 className="border-line-2 bg-background flex items-center gap-4 rounded-xl border p-5"
@@ -53,15 +44,13 @@ export default function CartPage() {
                   <PawPrint aria-hidden="true" className="size-8" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">{line.item.name}</p>
+                  <p className="font-semibold">{line.name}</p>
                   <p className="text-muted-foreground-2 text-sm">
                     {t.quantityLabel}: {line.quantity}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-semibold">
-                    {formatPrice(line.item.listPrice, locale)}
-                  </p>
+                  <p className="text-lg font-semibold">{formatPrice(line.unitCost, view.locale)}</p>
                 </div>
               </li>
             ))}
