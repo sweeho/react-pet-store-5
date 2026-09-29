@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "bun --bun ./node_modules/vite/bin/vite.js",
     "prebuild": "node scripts/ensure-generated-files.mjs",
     "build": "tsc --build && vite build",
     "pretypecheck": "node scripts/ensure-generated-files.mjs",
