@@ -84,12 +84,14 @@ describe("nextId", () => {
 
   test("[SWHR-C-0279] counter increment is rolled back with the caller's transaction", () => {
     db.insert(counters).values({ name: "1001", value: 5 }).run();
+    let issued: string | undefined;
     expect(() =>
       db.transaction((tx) => {
-        expect(nextId("1001", tx)).toBe("10016");
+        issued = nextId("1001", tx);
         tx.rollback();
       }),
     ).toThrow();
+    expect(issued).toBe("10016");
     expect(counterValue("1001")).toBe(5);
   });
 });
