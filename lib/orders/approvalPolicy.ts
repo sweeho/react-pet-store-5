@@ -6,3 +6,7 @@ export const AUTO_APPROVAL_THRESHOLDS: Record<LocaleId, number | null> = {
   ja_JP: 50000,
   zh_CN: null,
 };
+
+export function shouldAutoApprove(): boolean {
+  throw new Error("VortexNotImplemented");
+}

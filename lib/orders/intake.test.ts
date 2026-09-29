@@ -6,6 +6,7 @@ import { outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schem
 import { type PurchaseOrder, writePurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { dispatchPending } from "../messaging/dispatcher";
 import * as outbox from "../messaging/outbox";
+import { createOrderApprovalHandler } from "./approval";
 import { createOrderIntakeHandler } from "./intake";
 import { getStoredOrder } from "./store";
 
@@ -17,9 +18,10 @@ beforeEach(() => {
   db.delete(outboxMessages).run();
   db.delete(purchaseOrders).run();
   registerConsumer("opc.purchase-order", "order-intake", createOrderIntakeHandler());
+  registerConsumer("opc.order-approval", "order-approval", createOrderApprovalHandler());
 });
 
-function order(orderId: string): PurchaseOrder {
+function order(orderId: string, locale = "en_US", totalPrice = "51.50"): PurchaseOrder {
   const contact = {
     familyName: "XYZ",
     givenName: "ABC",
@@ -35,14 +37,14 @@ function order(orderId: string): PurchaseOrder {
     },
   };
   return {
-    locale: "en_US",
+    locale,
     orderId,
     userId: "j2ee",
     emailId: "abc@example.com",
     orderDate: new Date("2026-01-02T03:04:05Z"),
     shippingInfo: contact,
     billingInfo: contact,
-    totalPrice: "51.50",
+    totalPrice,
     creditCard: { cardNumber: "•••• •••• •••• 4242", cardType: "Visa", expiryDate: "12/2030" },
     lineItems: [
       {
@@ -57,8 +59,21 @@ function order(orderId: string): PurchaseOrder {
   };
 }
 
-const send = (orderId: string) =>
-  db.transaction((tx) => enqueue(tx, "opc.purchase-order", writePurchaseOrder(order(orderId))));
+const send = (orderId: string, locale?: string, totalPrice?: string) =>
+  db.transaction((tx) =>
+    enqueue(tx, "opc.purchase-order", writePurchaseOrder(order(orderId, locale, totalPrice))),
+  );
+
+const statusOf = (orderId: string) =>
+  db.select().from(purchaseOrders).where(eq(purchaseOrders.orderId, orderId)).get()?.status;
+const approvalMessages = () =>
+  db.select().from(outboxMessages).where(eq(outboxMessages.channel, "opc.order-approval")).all();
+
+// Delivers the purchase order, then the approval it may have enqueued.
+async function intake(): Promise<void> {
+  await dispatchPending();
+  await dispatchPending();
+}
 
 describe("order intake", () => {
   it("[SWHR-C-0271] a message enqueued in a rolled-back unit of work is not delivered", async () => {
@@ -117,5 +132,57 @@ describe("order intake", () => {
 
     expect(result).toEqual({ delivered: 0, failed: 1 });
     expect(db.select().from(outboxDeliveries).get()?.status).not.toBe("delivered");
+  });
+
+  describe("automatic approval", () => {
+    it("[SWHR-C-0287] approves an en_US order of 499.99 and it is not pending", async () => {
+      send("A1", "en_US", "499.99");
+      await intake();
+      expect(statusOf("A1")).toBe("APPROVED");
+      expect(
+        db.select().from(purchaseOrders).where(eq(purchaseOrders.status, "PENDING")).all(),
+      ).toEqual([]);
+    });
+
+    it("[SWHR-C-0288] leaves an en_US order of exactly 500.00 PENDING", async () => {
+      send("A2", "en_US", "500.00");
+      await intake();
+      expect(statusOf("A2")).toBe("PENDING");
+      expect(approvalMessages()).toHaveLength(0);
+    });
+
+    it("[SWHR-C-0289] approves a ja_JP order of 49999", async () => {
+      send("A3", "ja_JP", "49999");
+      await intake();
+      expect(statusOf("A3")).toBe("APPROVED");
+    });
+
+    it("[SWHR-C-0290] leaves a ja_JP order of 50000 PENDING", async () => {
+      send("A4", "ja_JP", "50000");
+      await intake();
+      expect(statusOf("A4")).toBe("PENDING");
+    });
+
+    it("[SWHR-C-0291] leaves a zh_CN order of 1.00 PENDING and listed", async () => {
+      send("A5", "zh_CN", "1.00");
+      await intake();
+      const pending = db
+        .select()
+        .from(purchaseOrders)
+        .where(eq(purchaseOrders.status, "PENDING"))
+        .all();
+      expect(pending.map((o) => o.orderId)).toEqual(["A5"]);
+    });
+
+    it("a redelivered purchase order enqueues no second approval", async () => {
+      send("A6", "en_US", "10.00");
+      await intake();
+      db.update(outboxDeliveries)
+        .set({ status: "pending" })
+        .where(eq(outboxDeliveries.consumer, "order-intake"))
+        .run();
+      await intake();
+      expect(approvalMessages()).toHaveLength(1);
+    });
   });
 });
