@@ -86,9 +86,9 @@ describe("SearchPage", () => {
     renderSearch("/search?keywords=bulldog");
 
     await waitFor(() => {
-      expect(screen.queryByText(/Items matching any of:/)).not.toBeNull();
+      expect(screen.queryByTestId("search-keywords")).not.toBeNull();
     });
-    expect(screen.getByText(/Items matching any of:/)).toHaveTextContent(
+    expect(screen.getByTestId("search-keywords")).toHaveTextContent(
       "Items matching any of: bulldog",
     );
     const row = screen.getByRole("link", { name: /Male Adult Bulldog/ });

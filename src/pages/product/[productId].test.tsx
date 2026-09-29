@@ -222,7 +222,7 @@ describe("ProductPage", () => {
     expect(maleLink).toHaveAttribute("href", "/item/EST-6");
     const maleRow = maleLink.closest("li");
     expect(maleRow).not.toBeNull();
-    expect(within(maleRow!).getByText("Friendly dog from England.")).toBeInTheDocument();
+    expect(within(maleRow!).getByText("Friendly dog from England")).toBeInTheDocument();
     expect(within(maleRow!).getByText("$18.50")).toBeInTheDocument();
     expect(within(maleRow!).getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
 

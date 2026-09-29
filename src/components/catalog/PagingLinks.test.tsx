@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 
+import { LocaleProvider } from "@/i18n/LocaleProvider";
+
 import type { PageInfo } from "../../../lib/catalog/paging";
 import PagingLinks from "./PagingLinks";
 
@@ -17,6 +19,16 @@ function paging(overrides: Partial<PageInfo>): PageInfo {
   };
 }
 
+function renderPaging(pagingInfo: PageInfo, makeHref: (start: number) => string) {
+  return render(
+    <MemoryRouter>
+      <LocaleProvider fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}>
+        <PagingLinks paging={pagingInfo} makeHref={makeHref} />
+      </LocaleProvider>
+    </MemoryRouter>,
+  );
+}
+
 /**
  * UI / COMPONENT TEST
  *
@@ -26,13 +38,9 @@ function paging(overrides: Partial<PageInfo>): PageInfo {
  */
 describe("PagingLinks", () => {
   it("renders only Next on a fresh listing (hasNext, no hasPrevious)", () => {
-    render(
-      <MemoryRouter>
-        <PagingLinks
-          paging={paging({ hasNext: true, nextStart: 2 })}
-          makeHref={(start) => `/category/DOGS?start=${start}&count=2`}
-        />
-      </MemoryRouter>,
+    renderPaging(
+      paging({ hasNext: true, nextStart: 2 }),
+      (start) => `/category/DOGS?start=${start}&count=2`,
     );
 
     expect(screen.getByRole("link", { name: /Next/ })).toHaveAttribute(
@@ -43,13 +51,9 @@ describe("PagingLinks", () => {
   });
 
   it("renders both Previous and Next on a middle page", () => {
-    render(
-      <MemoryRouter>
-        <PagingLinks
-          paging={paging({ hasNext: true, nextStart: 4, hasPrevious: true, previousStart: 0 })}
-          makeHref={(start) => `/product/K9-BD-01?start=${start}&count=2`}
-        />
-      </MemoryRouter>,
+    renderPaging(
+      paging({ hasNext: true, nextStart: 4, hasPrevious: true, previousStart: 0 }),
+      (start) => `/product/K9-BD-01?start=${start}&count=2`,
     );
 
     expect(screen.getByRole("link", { name: /Previous/ })).toHaveAttribute(
@@ -63,13 +67,9 @@ describe("PagingLinks", () => {
   });
 
   it("renders only Previous on the last page (no hasNext)", () => {
-    render(
-      <MemoryRouter>
-        <PagingLinks
-          paging={paging({ hasPrevious: true, previousStart: 2 })}
-          makeHref={(start) => `/search?start=${start}`}
-        />
-      </MemoryRouter>,
+    renderPaging(
+      paging({ hasPrevious: true, previousStart: 2 }),
+      (start) => `/search?start=${start}`,
     );
 
     expect(screen.getByRole("link", { name: /Previous/ })).toBeInTheDocument();
@@ -79,7 +79,11 @@ describe("PagingLinks", () => {
   it("renders nothing when there is no previous and no next page", () => {
     const { container } = render(
       <MemoryRouter>
-        <PagingLinks paging={paging({})} makeHref={() => "/x"} />
+        <LocaleProvider
+          fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}
+        >
+          <PagingLinks paging={paging({})} makeHref={() => "/x"} />
+        </LocaleProvider>
       </MemoryRouter>,
     );
 

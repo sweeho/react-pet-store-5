@@ -94,7 +94,7 @@ describe("ItemPage", () => {
   it("shows the not-found frame for an item missing in this locale, without a partial page", async () => {
     stubFetch(() => jsonResponse({ message: "not found" }, 404));
 
-    renderItem("/item/EST-15?locale=ja_JP");
+    renderItem("/item/EST-15");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Item not found");
   });

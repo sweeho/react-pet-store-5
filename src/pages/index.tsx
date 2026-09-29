@@ -1,19 +1,30 @@
-import { Bird, Cat, Dog, Fish, LogIn, Shield, Truck, Turtle, User } from "lucide-react";
+import { LogIn, Shield, Truck, User } from "lucide-react";
 import { Link } from "react-router";
 
-import { PET_CATEGORIES, type PetCategoryId } from "@/constants/navigation";
+import { getCategoryIcon } from "@/components/catalog/categoryIcons";
+import { useCatalogCategories } from "@/hooks";
 import { useScreen } from "@/i18n/screens";
 
-const CATEGORY_ICONS: Record<PetCategoryId, typeof Bird> = {
-  BIRDS: Bird,
-  CATS: Cat,
-  DOGS: Dog,
-  FISH: Fish,
-  REPTILES: Turtle,
+interface HomeMapRegion {
+  area: string;
+  large?: boolean;
+}
+
+// The home map's fixed picture region per legacy category id (design.md
+// P5) — a region whose category the API doesn't return for this locale is
+// simply not rendered (the grid area is left empty).
+const HOME_MAP_REGIONS: Record<string, HomeMapRegion> = {
+  BIRDS: { area: "b" },
+  DOGS: { area: "d", large: true },
+  CATS: { area: "c" },
+  FISH: { area: "f" },
+  REPTILES: { area: "r" },
 };
 
 const Home = () => {
   const t = useScreen("home");
+  const { categories } = useCatalogCategories();
+  const regions = categories.filter((category) => HOME_MAP_REGIONS[category.categoryId]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,36 +56,44 @@ const Home = () => {
         </div>
       </section>
 
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xl font-semibold">{t.shopByPetHeading}</h2>
-        <span className="text-muted-foreground-1 text-sm">
-          {PET_CATEGORIES.length} {t.categoriesLabel}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {PET_CATEGORIES.map((category) => {
-          const Icon = CATEGORY_ICONS[category.id];
-          return (
-            <Link
-              key={category.id}
-              to={category.href}
-              className="border-line-2 bg-card flex flex-col overflow-hidden rounded-xl border"
-            >
-              <div className="bg-background-2 text-muted-foreground-2 flex h-21 items-center justify-center">
-                <Icon aria-hidden="true" className="size-8" />
-              </div>
-              <div className="flex flex-col gap-1 p-4">
-                <span className="font-semibold">{category.label}</span>
-                <span className="text-muted-foreground-1 line-clamp-2 text-sm">
-                  {category.sampleBreeds}
+      <div className="border-line-2 bg-card flex flex-col gap-5 rounded-xl border p-5">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-lg font-semibold">{t.pictureMapHeading}</h2>
+          <span className="text-muted-foreground-1 text-sm">{t.pictureMapHelp}</span>
+        </div>
+        <div
+          role="group"
+          aria-label={t.pictureMapHeading}
+          className="from-primary-50 to-background-1 grid h-105 gap-4 rounded-2xl bg-gradient-to-b p-5"
+          style={{
+            gridTemplateColumns: "1fr 1.3fr 1fr",
+            gridTemplateRows: "1fr 1fr",
+            gridTemplateAreas: `"b d c" "f d r"`,
+          }}
+        >
+          {regions.map((category) => {
+            const region = HOME_MAP_REGIONS[category.categoryId]!;
+            const Icon = getCategoryIcon(category.categoryId);
+
+            return (
+              <Link
+                key={category.categoryId}
+                to={`/category/${category.categoryId}`}
+                style={{ gridArea: region.area }}
+                className="border-primary-100 bg-background text-primary-700 flex flex-col items-center justify-center gap-3 rounded-2xl border"
+              >
+                <Icon
+                  aria-hidden="true"
+                  className={region.large ? "size-30" : "size-16"}
+                  strokeWidth={1.3}
+                />
+                <span className="border-line-2 bg-background text-foreground rounded-full border px-3.5 py-1 text-sm font-semibold">
+                  {category.name} →
                 </span>
-                <span className="text-primary mt-1 text-sm font-semibold">
-                  {t.browseLabel} {category.label} →
-                </span>
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
