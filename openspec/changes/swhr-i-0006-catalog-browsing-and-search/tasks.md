@@ -44,5 +44,5 @@
 
 ## 6. Open decisions
 
-- [ ] 6.1 Record the decisions on search case handling and category-name matching (Q1) (SWHR-T-0062)
-- [ ] 6.2 Record the decisions on product listing price, previous-page offset, page sizes and result ordering (Q3, Q4, Q7, Q8) (SWHR-T-0062)
+- [x] 6.1 Record the decisions on search case handling and category-name matching (Q1) (SWHR-T-0062)
+- [x] 6.2 Record the decisions on product listing price, previous-page offset, page sizes and result ordering (Q3, Q4, Q7, Q8) (SWHR-T-0062)
