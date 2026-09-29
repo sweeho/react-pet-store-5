@@ -39,8 +39,8 @@
 
 ## 5. Personalisation
 
-- [ ] 5.1 Build the My List panel listing up to 10 favourite-category products with product links, shown only when My List is on (SWHR-T-0084)
-- [ ] 5.2 Build the pet-tips banner chosen case-insensitively by favourite category with the dogs fallback, on home and cart only when banner is on (SWHR-T-0084)
+- [x] 5.1 Build the My List panel listing up to 10 favourite-category products with product links, shown only when My List is on (SWHR-T-0084)
+- [x] 5.2 Build the pet-tips banner chosen case-insensitively by favourite category with the dogs fallback, on home and cart only when banner is on (SWHR-T-0084)
 
 ## 6. Open questions
 
