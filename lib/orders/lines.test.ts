@@ -2,13 +2,22 @@ import { and, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, test } from "vitest";
 
 import { db } from "../../db/client";
-import { orderLines, purchaseOrders } from "../../db/schema";
+import { orderLines, orderWorkflow, purchaseOrders } from "../../db/schema";
+import type { Executor } from "../account/types";
 import type { PurchaseOrder } from "../b2b/documents/purchaseOrder";
 import * as lines from "./lines";
 import { copyLine, setShippedQuantity } from "./lines";
-import { createPurchaseOrder, getStoredOrder } from "./store";
+import { createPurchaseOrder as storeOrder, getStoredOrder } from "./store";
+import { startTracking } from "./workflow";
+
+// A stored order is read back with its workflow status, so tracking starts with it.
+const createPurchaseOrder = (tx: Executor, po: PurchaseOrder): void => {
+  storeOrder(tx, po);
+  startTracking(tx, po.orderId);
+};
 
 beforeEach(() => {
+  db.delete(orderWorkflow).run();
   db.delete(purchaseOrders).run();
 });
 

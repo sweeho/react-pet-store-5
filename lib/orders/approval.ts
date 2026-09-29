@@ -1,6 +1,3 @@
-import { and, eq } from "drizzle-orm";
-
-import { purchaseOrders } from "../../db/schema";
 import {
   type ApprovalEntry,
   readOrderApproval,
@@ -11,6 +8,7 @@ import { sendSupplierPurchaseOrders } from "../b2b/exchange/supplierChannel";
 import { enqueue, type Handler, type Tx } from "../messaging/outbox";
 import { minorToDecimal } from "./money";
 import { getStoredOrder } from "./store";
+import { transition } from "./workflow";
 
 function supplierOrderFor(tx: Tx, orderId: string): SupplierOrder {
   const stored = getStoredOrder(orderId, tx);
@@ -45,13 +43,7 @@ function supplierOrderFor(tx: Tx, orderId: string): SupplierOrder {
 export function applyApprovalBatch(tx: Tx, entries: ApprovalEntry[]): string[] {
   const changed: ApprovalEntry[] = [];
   for (const entry of entries) {
-    const row = tx
-      .update(purchaseOrders)
-      .set({ status: entry.status })
-      .where(and(eq(purchaseOrders.orderId, entry.orderId), eq(purchaseOrders.status, "PENDING")))
-      .returning({ orderId: purchaseOrders.orderId })
-      .get();
-    if (!row) continue;
+    if (!transition(tx, entry.orderId, entry.status)) continue;
     changed.push(entry);
     if (entry.status === "APPROVED") {
       sendSupplierPurchaseOrders(tx, [supplierOrderFor(tx, entry.orderId)]);

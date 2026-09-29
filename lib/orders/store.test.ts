@@ -12,10 +12,18 @@ import {
   users,
 } from "../../db/schema";
 import { createCustomer, replaceCustomerAccount, getCustomerAccount } from "../account/customer";
+import type { Executor } from "../account/types";
 import type { PurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { DuplicateOrderError } from "./errors";
 import { setShippedQuantity } from "./lines";
-import { createPurchaseOrder, getStoredOrder, persistPurchaseOrder } from "./store";
+import { createPurchaseOrder as storeOrder, getStoredOrder, persistPurchaseOrder } from "./store";
+import { startTracking } from "./workflow";
+
+// A stored order is read back with its workflow status, so tracking starts with it.
+const createPurchaseOrder = (tx: Executor, po: PurchaseOrder): void => {
+  storeOrder(tx, po);
+  startTracking(tx, po.orderId);
+};
 
 // The checkout tables are addressed through the namespace so a missing table
 // fails an assertion here rather than erroring at import.
@@ -28,6 +36,7 @@ function tables() {
 
 beforeEach(() => {
   const { counters, purchaseOrders } = tables();
+  db.delete(schema.orderWorkflow).run();
   db.delete(purchaseOrders).run();
   db.delete(counters).run();
   db.delete(customers).run();

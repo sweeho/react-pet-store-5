@@ -212,4 +212,42 @@ describe("migrateDatabase", () => {
       (sqlite.query("PRAGMA foreign_keys").get() as { foreign_keys: number }).foreign_keys,
     ).toBe(1);
   });
+
+  it("upgrades a 0008 database through 0009 moving every order status into orderWorkflow", () => {
+    const folder08 = path.join(tmp, "drizzle-0008");
+    fs.cpSync(realFolder, folder08, { recursive: true });
+    const journalPath = path.join(folder08, "meta", "_journal.json");
+    const journal = JSON.parse(fs.readFileSync(journalPath, "utf8")) as Journal;
+    journal.entries = journal.entries.filter((e) => e.idx <= 8);
+    fs.writeFileSync(journalPath, JSON.stringify(journal));
+
+    const first = open();
+    migrateDatabase(first, folder08);
+    first.exec(`
+      INSERT INTO purchaseOrders (orderId, userId, emailId, orderDate, locale, totalValue, status, createdAt)
+        VALUES ('1001', 'u', 'a@b.c', 0, 'en_US', 100, 'PENDING', 0),
+               ('1002', 'u', 'a@b.c', 0, 'en_US', 100, 'APPROVED', 0),
+               ('1003', 'u', 'a@b.c', 0, 'en_US', 100, 'SHIPPED_PART', 0),
+               ('1004', 'u', 'a@b.c', 0, 'en_US', 100, 'DENIED', 0);
+      INSERT INTO orderLines (orderId, lineNum, categoryId, productId, itemId, quantity, unitPrice)
+        VALUES ('1002', 0, 'FISH', 'FI-1', 'EST-1', 2, 10);
+    `);
+    first.close();
+
+    const sqlite = open();
+    migrateDatabase(sqlite, realFolder);
+
+    expect(
+      sqlite.query("SELECT orderId, status FROM orderWorkflow ORDER BY orderId").all(),
+    ).toEqual([
+      { orderId: "1001", status: "PENDING" },
+      { orderId: "1002", status: "APPROVED" },
+      { orderId: "1003", status: "SHIPPED_PART" },
+      { orderId: "1004", status: "DENIED" },
+    ]);
+    const columns = sqlite.query("PRAGMA table_info(purchaseOrders)").all() as { name: string }[];
+    expect(columns.map((c) => c.name)).not.toContain("status");
+    expect(sqlite.query("SELECT count(*) AS n FROM orderLines").get()).toEqual({ n: 1 });
+    expect(sqlite.query("PRAGMA foreign_key_check").all()).toEqual([]);
+  });
 });
