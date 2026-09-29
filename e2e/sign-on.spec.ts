@@ -221,6 +221,8 @@ test.describe("Sign-on journeys", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page).toHaveURL("/admin/console");
-    await expect(page.getByRole("heading", { name: "Administration console" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Welcome to Pet Store Administration" }),
+    ).toBeVisible();
   });
 });
