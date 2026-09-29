@@ -80,7 +80,10 @@ describe("Home page", () => {
   it("[SWHR-C-0182] the picture map offers exactly five regions: Birds, Cats, Dogs, Fish and Reptiles", async () => {
     renderHome();
 
-    const map = await screen.findByRole("group", { name: "Choose a pet to start" });
+    await waitFor(() => {
+      expect(screen.queryByRole("group", { name: "Choose a pet to start" })).not.toBeNull();
+    });
+    const map = screen.getByRole("group", { name: "Choose a pet to start" });
     const links = within(map).getAllByRole("link");
 
     expect(links).toHaveLength(5);

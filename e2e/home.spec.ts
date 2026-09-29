@@ -16,12 +16,13 @@ test.describe("Home page", () => {
     await expect(page).toHaveURL("/");
   });
 
-  test("the picture map offers a region for every pet category", async ({ page }) => {
+  test("links to every pet category", async ({ page }) => {
     await page.goto("/");
 
-    const map = page.getByRole("group", { name: "Choose a pet to start" });
     for (const category of ["Birds", "Cats", "Dogs", "Fish", "Reptiles"]) {
-      await expect(map.getByRole("link", { name: new RegExp(category) })).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: new RegExp(`Browse ${category}`) }),
+      ).toBeVisible();
     }
   });
 });

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -208,8 +208,13 @@ describe("ProductPage", () => {
     );
 
     renderProduct("/product/K9-BD-01", "en_US");
-    await screen.findByRole("heading", { level: 1, name: "Bulldog" });
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { level: 1, name: "Bulldog" })).not.toBeNull();
+    });
 
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: /Male Adult Bulldog/ })).not.toBeNull();
+    });
     const maleLink = screen.getByRole("link", { name: /Male Adult Bulldog/ });
     expect(maleLink).toHaveAttribute("href", "/item/EST-6");
     const maleRow = maleLink.closest("li");
