@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Shopping cart — after Update Cart</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:13px/1.45 system-ui,sans-serif;color:#27272a;background:#fff;width:720px}
+a{color:inherit}
+.util{height:26px;border-bottom:1px solid #e4e4e7;background:#fafafa;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:#71717a}
+.util .lang span{border:1px solid #d4d4d8;border-radius:10px;padding:1px 8px;margin-left:4px}
+.util .lang span.on{background:#fff;color:#27272a;font-weight:600}
+header{height:52px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;gap:14px;padding:0 16px}
+.logo{display:flex;align-items:center;gap:6px;font-weight:700}
+.logo i{width:22px;height:22px;background:#a1a1aa;border-radius:5px;display:inline-block}
+.search{flex:1;display:flex;max-width:280px}
+.search div{flex:1;height:30px;border:1px solid #d4d4d8;border-radius:6px 0 0 6px;padding:6px 8px;color:#a1a1aa;font-size:11px}
+.search b{height:30px;border:1px solid #71717a;background:#71717a;color:#fff;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px}
+.acts{margin-left:auto;display:flex;gap:10px;align-items:center;font-weight:500}
+.acts .cur{border-bottom:2px solid #52525b}
+.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:8px;background:#52525b;color:#fff;font-size:10px;text-align:center}
+.btn{display:inline-block;border:1px solid #71717a;border-radius:6px;padding:6px 12px;background:#fff;font-weight:600;text-decoration:none;min-height:32px}
+.btn.primary{background:#52525b;border-color:#52525b;color:#fff}
+.layout{display:flex;gap:16px;padding:16px;background:#fafafa;min-height:440px}
+aside{width:132px;flex:none;border:1px solid #e4e4e7;border-radius:8px;background:#fff;padding:6px;align-self:flex-start}
+aside h4{font-size:10px;letter-spacing:.06em;color:#71717a;padding:4px 6px}
+aside a{display:block;padding:6px;text-decoration:none;border-radius:5px}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px;font-weight:700}
+.crumb{font-size:11px;color:#71717a}
+.card{border:1px solid #d4d4d8;border-radius:8px;background:#fff}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:#71717a;text-align:left;padding:8px 12px;border-bottom:1px solid #e4e4e7;background:#f4f4f5}
+td{padding:10px 12px;border-bottom:1px solid #f4f4f5;vertical-align:middle}
+th.r,td.r{text-align:right}
+.item a{font-weight:600;text-decoration:underline}
+.item small{display:block;color:#71717a;font-size:11px}
+.qty{width:64px;height:32px;border:1px solid #a1a1aa;border-radius:6px;padding:6px 8px;text-align:right;font-family:ui-monospace,monospace}
+.rm{font-size:12px;text-decoration:underline;color:#52525b}
+.foot{display:flex;align-items:center;justify-content:space-between;padding:12px}
+.total{display:flex;align-items:center;gap:14px}
+.total .amt{background:#f4f4f5;border:1px solid #d4d4d8;border-radius:6px;padding:6px 12px;font-weight:700;font-size:15px;font-family:ui-monospace,monospace}
+.hint{font-size:11px;color:#71717a}
+.cmp{display:flex;gap:10px;align-items:stretch}
+.cmp .box{flex:1;border:1px dashed #d4d4d8;border-radius:6px;padding:8px;font-size:11px;color:#52525b;background:#fff}
+.cmp .box b{display:block;font-size:10px;letter-spacing:.06em;color:#71717a;margin-bottom:4px}
+.cmp .arrow{align-self:center;color:#a1a1aa}
+.note{font-size:10px;color:#a1a1aa;border:1px dashed #d4d4d8;border-radius:6px;padding:6px 8px}
+footer{height:40px;border-top:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:#71717a}
+</style></head><body>
+<div class="util"><div class="lang">Language <span class="on">English</span><span>日本語</span><span>中文</span></div><div>Store staff: Administration · Supplier</div></div>
+<header><a class="logo" href="#"><i></i>Pet Store</a>
+<div class="search"><div>Search pets by name or description</div><b>Search</b></div>
+<div class="acts"><a href="#">Account</a><a class="cur" href="#">Cart <span class="badge">1</span></a><a class="btn" href="#">Sign in</a></div></header>
+<div class="layout">
+<aside><h4>PETS</h4><a href="#">Birds</a><a href="#">Cats</a><a href="#">Dogs</a><a href="#">Fish</a><a href="#">Reptiles</a></aside>
+<main>
+<div class="crumb"><a href="#">Home</a> / Shopping cart</div>
+<h1>Shopping cart</h1>
+<div class="cmp">
+<div class="box"><b>SUBMITTED</b>Adult Male Bulldog: 2 → 5<br>Large Angelfish: 1 → 0</div>
+<div class="arrow">→</div>
+<div class="box"><b>RESULT (same screen, redisplayed)</b>Bulldog set to 5 · Angelfish line removed · total recalculated</div>
+</div>
+<form class="card">
+<table>
+<thead><tr><th>Item</th><th></th><th class="r">Quantity</th><th class="r">Unit price</th></tr></thead>
+<tbody>
+<tr><td class="item"><a href="#">Adult Male Bulldog</a><small>Links to item detail · EST-6</small></td>
+<td><a class="rm" href="#">Remove</a></td>
+<td class="r"><input class="qty" value="5" maxlength="10" aria-label="Quantity for Adult Male Bulldog"></td>
+<td class="r">$18.50</td></tr>
+</tbody></table>
+<div class="foot">
+<div><button class="btn" type="button">Update Cart</button><div class="hint" style="margin-top:6px">Typed quantities apply only after Update Cart. 0 removes a line.</div></div>
+<div class="total"><span>Total</span><span class="amt">$92.50</span><a class="btn primary" href="#">Check Out</a></div>
+</div>
+</form>
+<div class="note">No confirmation or error message: 0, a negative number, letters or a decimal all remove the line silently · the cart badge drops to 1 line</div>
+</main></div>
+<footer><span>Pet Store</span><span>Home · Search · Cart · Account</span></footer>
+</body></html>

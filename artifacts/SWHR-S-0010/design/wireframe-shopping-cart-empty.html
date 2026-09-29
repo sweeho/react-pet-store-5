@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Shopping cart — empty</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:13px/1.45 system-ui,sans-serif;color:#27272a;background:#fff;width:720px}
+a{color:inherit}
+.util{height:26px;border-bottom:1px solid #e4e4e7;background:#fafafa;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:#71717a}
+.util .lang span{border:1px solid #d4d4d8;border-radius:10px;padding:1px 8px;margin-left:4px}
+.util .lang span.on{background:#fff;color:#27272a;font-weight:600}
+header{height:52px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;gap:14px;padding:0 16px}
+.logo{display:flex;align-items:center;gap:6px;font-weight:700}
+.logo i{width:22px;height:22px;background:#a1a1aa;border-radius:5px;display:inline-block}
+.search{flex:1;display:flex;max-width:280px}
+.search div{flex:1;height:30px;border:1px solid #d4d4d8;border-radius:6px 0 0 6px;padding:6px 8px;color:#a1a1aa;font-size:11px}
+.search b{height:30px;border:1px solid #71717a;background:#71717a;color:#fff;border-radius:0 6px 6px 0;padding:6px 10px;font-size:11px}
+.acts{margin-left:auto;display:flex;gap:10px;align-items:center;font-weight:500}
+.acts .cur{border-bottom:2px solid #52525b}
+.badge{display:inline-block;min-width:16px;padding:0 5px;border-radius:8px;background:#52525b;color:#fff;font-size:10px;text-align:center}
+.btn{display:inline-block;border:1px solid #71717a;border-radius:6px;padding:6px 12px;background:#fff;font-weight:600;text-decoration:none;min-height:32px}
+.layout{display:flex;gap:16px;padding:16px;background:#fafafa;min-height:440px}
+aside{width:132px;flex:none;border:1px solid #e4e4e7;border-radius:8px;background:#fff;padding:6px;align-self:flex-start}
+aside h4{font-size:10px;letter-spacing:.06em;color:#71717a;padding:4px 6px}
+aside a{display:block;padding:6px;text-decoration:none;border-radius:5px}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px;font-weight:700}
+.crumb{font-size:11px;color:#71717a}
+.empty{border:1px solid #d4d4d8;border-radius:8px;background:#fff;height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.empty .ico{width:44px;height:44px;border-radius:50%;background:#f4f4f5;border:1px solid #d4d4d8;display:grid;place-items:center;font-size:9px;color:#71717a}
+.empty p{font-size:15px;font-weight:600}
+.note{font-size:10px;color:#a1a1aa;border:1px dashed #d4d4d8;border-radius:6px;padding:6px 8px}
+footer{height:40px;border-top:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:#71717a}
+</style></head><body>
+<div class="util"><div class="lang">Language <span class="on">English</span><span>日本語</span><span>中文</span></div><div>Store staff: Administration · Supplier</div></div>
+<header><a class="logo" href="#"><i></i>Pet Store</a>
+<div class="search"><div>Search pets by name or description</div><b>Search</b></div>
+<div class="acts"><a href="#">Account</a><a class="cur" href="#">Cart <span class="badge">0</span></a><a class="btn" href="#">Sign in</a></div></header>
+<div class="layout">
+<aside><h4>PETS</h4><a href="#">Birds</a><a href="#">Cats</a><a href="#">Dogs</a><a href="#">Fish</a><a href="#">Reptiles</a></aside>
+<main>
+<div class="crumb"><a href="#">Home</a> / Shopping cart</div>
+<h1>Shopping cart</h1>
+<div class="empty"><div class="ico">Cart</div><p>Your Shopping Cart is Empty.</p></div>
+<div class="note">Shell's shared Empty frame · no item rows, no Update Cart, no total, no Check Out · shown on first visit, after every line is removed, and after sign-out or an order is placed</div>
+</main></div>
+<footer><span>Pet Store</span><span>Home · Search · Cart · Account</span></footer>
+</body></html>
