@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:13px/1.45 system-ui,sans-serif;color:#27272a;background:#fafafa;width:720px}
+.util{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #e4e4e7;font-size:11px;color:#71717a;background:#f4f4f5}
+.util span.on{border:1px solid #a1a1aa;border-radius:10px;padding:0 6px;color:#27272a}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #e4e4e7}
+.logo{font-weight:700}.search{flex:1;display:flex}.search div{flex:1;border:1px solid #d4d4d8;border-radius:6px 0 0 6px;padding:6px 8px;color:#a1a1aa}.search b{border:1px solid #71717a;border-radius:0 6px 6px 0;padding:6px 10px;background:#e4e4e7}
+.acts{display:flex;gap:10px;align-items:center}.btn{border:1px solid #71717a;border-radius:6px;padding:5px 10px;background:#fff;display:inline-block}.btn.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.body{display:flex;gap:16px;padding:16px}
+aside{width:150px;flex:none}.panel{background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:6px}.panel h4{font-size:10px;text-transform:uppercase;color:#71717a;padding:4px 6px}.panel a{display:block;padding:5px 6px}
+main{flex:1;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px}.card{background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:12px}
+.card h3{font-size:12px;text-transform:uppercase;color:#71717a;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#52525b}
+.in{border:1px solid #a1a1aa;border-radius:6px;height:28px;background:#fff;padding:5px 8px;color:#a1a1aa;font-size:12px}
+.sel::after{content:" ▾";float:right}.sel{color:#27272a}
+.chk{flex-direction:row;align-items:center;gap:6px;font-size:12px;color:#27272a}.box{width:14px;height:14px;border:1px solid #71717a;border-radius:3px}
+.req{color:#27272a}
+footer{border-top:1px solid #e4e4e7;background:#fff;padding:10px 16px;color:#a1a1aa;font-size:11px;display:flex;justify-content:space-between}
+.hint{font-size:11px;color:#71717a}
+</style></head><body>
+<div class="util"><div>Language: <span class="on">English</span> 日本語 中文</div><div>Store staff: Administration · Supplier</div></div>
+<header><span class="logo">[logo] Pet Store</span><div class="search"><div>Search pets…</div><b>Search</b></div><div class="acts"><span>Account</span><span>Cart (0)</span><span class="btn">Sign out</span></div></header>
+<div class="body"><aside><nav class="panel"><h4>Pets</h4><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></nav></aside>
+<main>
+<h1>Create your account</h1>
+<p class="hint">Signed in as <b>newbie</b>. Fields marked * are required.</p>
+<section class="card"><h3>Contact information</h3><div class="grid">
+<label>First name *<span class="in"></span></label><label>Last name *<span class="in"></span></label>
+<label>Street address *<span class="in"></span></label><label>Street address 2 (optional)<span class="in"></span></label>
+<label>City *<span class="in"></span></label><label>State / province *<span class="in sel">California</span></label>
+<label>Postal code *<span class="in"></span></label><label>Country<span class="in sel">United States</span></label>
+<label>Telephone *<span class="in"></span></label><label>Email (optional)<span class="in"></span></label>
+</div><p class="hint" style="margin-top:6px">State: California · New York · Texas — Country: United States · Canada · Japan · China</p></section>
+<section class="card"><h3>Credit card</h3><div class="grid">
+<label>Card number<span class="in"></span></label><label>Card type<span class="in sel">Java(TM) Card</span></label>
+<label>Expiry month<span class="in sel">01</span></label><label>Expiry year<span class="in sel">2026</span></label>
+</div><p class="hint" style="margin-top:6px">Card type: Java(TM) Card · Duke Express · Meow Card — Month 01–12 — Year: four-year range</p></section>
+<section class="card"><h3>Profile preferences</h3><div class="grid">
+<label>I want Pet Store to be in *<span class="in sel">English</span></label><label>Favourite category *<span class="in sel">Birds</span></label>
+<label class="chk"><span class="box"></span>Show My List (pets from my favourite category)</label><label class="chk"><span class="box"></span>Show pet tips banners</label>
+</div><p class="hint" style="margin-top:6px">Language: English · Japanese · Chinese — Category: Birds · Cats · Dogs · Fish · Reptiles</p></section>
+<div><span class="btn pri">Submit</span></div>
+</main></div>
+<footer><span>Pet Store</span><span>Home · Account · Cart</span></footer>
+</body></html>

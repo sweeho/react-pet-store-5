@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:13px/1.45 system-ui,sans-serif;color:#27272a;background:#fafafa;width:720px}
+.util{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #e4e4e7;font-size:11px;color:#71717a;background:#f4f4f5}
+.util span.on{border:1px solid #a1a1aa;border-radius:10px;padding:0 6px;color:#27272a}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #e4e4e7}
+.logo{font-weight:700}.search{flex:1;display:flex}.search div{flex:1;border:1px solid #d4d4d8;border-radius:6px 0 0 6px;padding:6px 8px;color:#a1a1aa}.search b{border:1px solid #71717a;border-radius:0 6px 6px 0;padding:6px 10px;background:#e4e4e7}
+.acts{display:flex;gap:10px;align-items:center}.btn{border:1px solid #71717a;border-radius:6px;padding:5px 10px;background:#fff;display:inline-block}
+.body{display:flex;gap:16px;padding:16px}
+aside{width:150px;flex:none;display:flex;flex-direction:column;gap:10px}.panel{background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:6px}.panel h4{font-size:10px;text-transform:uppercase;color:#71717a;padding:4px 6px}.panel a{display:block;padding:4px 6px;text-decoration:underline;color:#27272a}
+.panel.ml{border:2px dashed #71717a}
+main{flex:1;display:flex;flex-direction:column;gap:12px}
+.banner{border:2px dashed #71717a;border-radius:8px;background:#fff;display:flex;gap:12px;padding:10px;align-items:center}
+.img{background:#f4f4f5;border:1px solid #d4d4d8;border-radius:6px;display:grid;place-items:center;color:#71717a;font-size:11px}
+.bar{height:8px;background:#d4d4d8;border-radius:4px;margin:5px 0}.bar.h{height:12px;background:#a1a1aa;width:40%}
+.cats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tag{font-size:10px;color:#52525b;text-transform:uppercase;letter-spacing:.05em}
+footer{border-top:1px solid #e4e4e7;background:#fff;padding:10px 16px;color:#a1a1aa;font-size:11px;display:flex;justify-content:space-between}
+</style></head><body>
+<div class="util"><div>Language: <span class="on">English</span> 日本語 中文</div><div>Store staff: Administration · Supplier</div></div>
+<header><span class="logo">[logo] Pet Store</span><div class="search"><div>Search pets…</div><b>Search</b></div><div class="acts"><span>Account</span><span>Cart (2)</span><span class="btn">Sign out</span></div></header>
+<div class="body"><aside>
+<nav class="panel"><h4>Pets</h4><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></nav>
+<nav class="panel ml"><h4>My List · Fish</h4><a>Angelfish</a><a>Goldfish</a><a>Koi</a><a>Tiger Shark</a><span style="font-size:10px;color:#71717a;padding:4px 6px;display:block">up to 10 products, each links to its product page</span></nav>
+</aside>
+<main>
+<div class="banner"><div class="img" style="width:90px;height:60px">Fish tips image</div><div style="flex:1"><span class="tag">Pet tips · Fish</span><div class="bar h"></div><div class="bar" style="width:90%"></div><div class="bar" style="width:60%"></div></div></div>
+<p style="font-size:11px;color:#71717a">Banner matches favourite category (dogs banner if no match). Shown on Home and Cart only, and only when "Show pet tips banners" is on. The My List panel is shown only when "Show My List" is on.</p>
+<div class="img" style="height:150px">Home — pet picture map (from the shell / catalog capability)</div>
+<div class="cats"><div class="img" style="height:60px">Birds</div><div class="img" style="height:60px">Cats</div><div class="img" style="height:60px">Dogs</div><div class="img" style="height:60px">Fish</div><div class="img" style="height:60px">Reptiles</div></div>
+</main></div>
+<footer><span>Pet Store</span><span>Home · Account · Cart</span></footer>
+</body></html>
