@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "../../db/client";
 import { outboxDeliveries, outboxMessages } from "../../db/schema";
 
-export type Channel = "supplier.purchase-order" | "opc.invoice";
+export type Channel = "supplier.purchase-order" | "opc.invoice" | "opc.purchase-order";
 export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type Handler = (payload: string) => Promise<(tx: Tx) => void>;
 
@@ -14,6 +14,7 @@ export type Handler = (payload: string) => Promise<(tx: Tx) => void>;
 const SUBSCRIBERS: Record<Channel, readonly string[]> = {
   "supplier.purchase-order": ["supplier-intake"],
   "opc.invoice": ["order-fulfillment", "customer-notification"],
+  "opc.purchase-order": ["order-intake"],
 };
 
 const consumers = new Map<string, Handler>();
