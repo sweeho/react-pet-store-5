@@ -27,3 +27,20 @@ export async function signUp(page: Page, userId: string, password: string) {
   await newAccountForm.getByRole("button", { name: "Create New Account" }).click();
   await completeAccountForm(page);
 }
+
+/** Signs in to the administration realm as the seeded administrator and lands on the console. */
+export async function signInAsAdmin(page: Page): Promise<void> {
+  void page;
+  throw new Error("VortexNotImplemented");
+}
+
+/**
+ * Registers `userId`, switches the session to 中文 and submits a two-item
+ * checkout, so the order stays PENDING (no zh_CN auto-approval). Returns the
+ * new order id.
+ */
+export async function placeZhCnOrder(page: Page, userId: string): Promise<string> {
+  void page;
+  void userId;
+  throw new Error("VortexNotImplemented");
+}
