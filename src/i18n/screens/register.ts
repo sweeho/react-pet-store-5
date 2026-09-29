@@ -2,21 +2,18 @@ import type { ScreenDefinition } from "../screens";
 
 export default {
   en_US: {
-    title: "Almost done",
-    subtitle: "One last step: choose the language you'd like to shop in.",
-    languageLabel: "Preferred language",
+    title: "Create your account",
+    subtitle: "One last step: tell us about yourself so checkout can be pre-filled.",
     submitButton: "Finish creating my account",
   },
   ja_JP: {
-    title: "もう少しです",
-    subtitle: "最後に、お買い物に使用する言語を選択してください。",
-    languageLabel: "希望する言語",
+    title: "アカウントを作成",
+    subtitle: "最後に、チェックアウトを簡単にするためのご情報を入力してください。",
     submitButton: "アカウント作成を完了する",
   },
   zh_CN: {
-    title: "即将完成",
-    subtitle: "最后一步：请选择您购物时使用的语言。",
-    languageLabel: "首选语言",
+    title: "创建您的账户",
+    subtitle: "最后一步：请填写您的信息，以便预填结账内容。",
     submitButton: "完成账户创建",
   },
 } satisfies ScreenDefinition;

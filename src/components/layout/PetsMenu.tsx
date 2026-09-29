@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import MyListPanel from "@/components/account/MyListPanel";
 import { getCategoryIcon } from "@/components/catalog/categoryIcons";
 import { useCatalogCategories } from "@/hooks";
 import { useScreen } from "@/i18n/screens";
@@ -51,6 +52,7 @@ export default function PetsMenu({ activeCategoryId }: PetsMenuProps) {
           );
         })}
       </nav>
+      <MyListPanel />
     </aside>
   );
 }

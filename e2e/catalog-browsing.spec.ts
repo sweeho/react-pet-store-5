@@ -63,6 +63,12 @@ test.describe("Category navigation menu locale", () => {
   test("[SWHR-C-0432] DOGS category page heading renders in Japanese", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "日本語" }).click();
+    // The click posts the locale asynchronously; navigating before the cookie
+    // is set makes the next page load in English on a slow runner.
+    await expect(page.getByRole("button", { name: "日本語" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
     await page.goto("/category/DOGS");
 

@@ -1,5 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
+import { completeAccountForm } from "./account-helpers";
+
 /**
  * UI / E2E TEST
  *
@@ -23,8 +25,7 @@ async function signUpAndCompleteRegistration(page: Page, userId: string, passwor
   await newAccountForm.getByLabel("Repeat password").fill(password);
   await newAccountForm.getByRole("button", { name: "Create New Account" }).click();
 
-  await expect(page).toHaveURL("/register");
-  await page.getByRole("button", { name: "Finish creating my account" }).click();
+  await completeAccountForm(page);
 }
 
 // Scoped to the item card named `itemName` (defaulting to the page's first
