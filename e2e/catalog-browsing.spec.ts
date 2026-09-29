@@ -60,7 +60,7 @@ test.describe("Home → category → product → item journey", () => {
 });
 
 test.describe("Category and product listing paging", () => {
-  test("[SWHR-C-0186] DOGS (6 products) shows the first 2 with a Next link and no Previous link", async ({
+  test("[SWHR-C-0186][SWHR-C-0435] DOGS (6 products) shows the first 2 with a Next link and no Previous link", async ({
     page,
   }) => {
     await page.goto("/category/DOGS");
