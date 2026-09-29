@@ -38,9 +38,9 @@
 
 ## 5. Caching and seed data
 
-- [ ] 5.1 Add optional listing caching keyed by full address and locale with a 5-minute expiry, or record the decision to omit it (SWHR-T-0061)
-- [ ] 5.2 Implement catalog seeding on first entry when catalog data is absent, pending the Q6 scope decision (SWHR-T-0061)
-- [ ] 5.3 Restrict the forced catalog reload to an authorised operator if it is kept (SWHR-T-0061)
+- [x] 5.1 Add optional listing caching keyed by full address and locale with a 5-minute expiry, or record the decision to omit it (SWHR-T-0061)
+- [x] 5.2 Implement catalog seeding on first entry when catalog data is absent, pending the Q6 scope decision (SWHR-T-0061)
+- [x] 5.3 Restrict the forced catalog reload to an authorised operator if it is kept (SWHR-T-0061)
 
 ## 6. Open decisions
 
