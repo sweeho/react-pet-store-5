@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stubs */
 export const ORDER_STATUSES = ["PENDING", "APPROVED", "DENIED", "COMPLETED"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export type Decision = "APPROVED" | "DENIED";
@@ -28,30 +27,83 @@ export interface CommitBatch {
   orderIds: string[];
 }
 
+/** SWHR-R-0167.02: anything but the four known statuses is absent, never mapped. */
 export function parseStatus(value: unknown): OrderStatus | null {
-  throw new Error("VortexNotImplemented");
+  return ORDER_STATUSES.find((status) => status === value) ?? null;
 }
 
 export function parseOrderSummary(raw: Record<string, unknown>): OrderSummary {
-  throw new Error("VortexNotImplemented");
+  return {
+    orderId: String(raw.orderId ?? ""),
+    userId: String(raw.userId ?? ""),
+    date: String(raw.date ?? ""),
+    amount: String(raw.amount ?? ""),
+    status: parseStatus(raw.status),
+  };
 }
 
+/** Strict `MM/dd/yyyy`, and a real calendar date. */
 export function isValidReportDate(text: string): boolean {
-  throw new Error("VortexNotImplemented");
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+  if (!match) {
+    return false;
+  }
+  const [month, day, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
 }
 
+/** SWHR-R-0184: drops a group with no name or a negative or unparseable value. */
 export function validGroups(raw: { name?: unknown; value?: unknown }[]): ReportGroup[] {
-  throw new Error("VortexNotImplemented");
+  const groups: ReportGroup[] = [];
+  for (const entry of raw) {
+    const name = typeof entry.name === "string" ? entry.name.trim() : "";
+    const value = typeof entry.value === "string" ? entry.value.trim() : "";
+    const amount = value === "" ? Number.NaN : Number(value);
+    if (name !== "" && Number.isFinite(amount) && amount >= 0) {
+      groups.push({ name, value, amount });
+    }
+  }
+  return groups;
 }
 
+/** The approvals first, then the denials; an empty group is skipped. */
 export function commitBatches(marks: Record<string, Decision>): CommitBatch[] {
-  throw new Error("VortexNotImplemented");
+  const batches: CommitBatch[] = [];
+  for (const status of ["APPROVED", "DENIED"] as const) {
+    const orderIds = Object.keys(marks)
+      .filter((orderId) => marks[orderId] === status)
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    if (orderIds.length > 0) {
+      batches.push({ status, orderIds });
+    }
+  }
+  return batches;
 }
 
+/** Each group's share of the total, to one decimal, without a trailing ".0". */
 export function percentShares(groups: ReportGroup[]): ShareGroup[] {
-  throw new Error("VortexNotImplemented");
+  const total = groups.reduce((sum, group) => sum + group.amount, 0);
+  return groups.map((group) => {
+    const share = total > 0 ? (group.amount / total) * 100 : 0;
+    return { ...group, percent: `${share.toFixed(1).replace(/\.0$/, "")}%` };
+  });
 }
 
+/** Thousands separators in the integer part; the fraction is kept as sent. */
 export function formatAmount(amount: string): string {
-  throw new Error("VortexNotImplemented");
+  const match = /^(-?)(\d+)(\.\d+)?$/.exec(amount);
+  if (!match) {
+    return amount;
+  }
+  return `${match[1]}${match[2].replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${match[3] ?? ""}`;
+}
+
+/** Substitutes `{name}` placeholders in an admin string template. */
+export function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    key in values ? String(values[key]) : match,
+  );
 }

@@ -364,7 +364,8 @@ describe("AdminOrdersPage", () => {
     const dialog = await screen.findByRole("alertdialog");
     expect(dialog).toHaveTextContent("Fatal Error!");
     expect(dialog).toHaveTextContent("Could not find PENDING orders");
-    expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
+    // The modal makes the page behind it inert, so it is hidden from the accessibility tree.
+    expect(screen.getByRole("button", { name: "Approve", hidden: true })).toBeDisabled();
 
     await user.click(within(dialog).getByRole("button", { name: "Sign out" }));
     expect(await screen.findByText("ADMIN LANDING")).toBeInTheDocument();
