@@ -1,8 +1,8 @@
 ## 1. Data model
 
-- [ ] 1.1 Add the supplier inventory table to `db/schema.ts` (item id primary key, integer quantity not null) (SWHR-T-0147)
-- [ ] 1.2 Generate and commit the drizzle migration for the supplier inventory table (SWHR-T-0147)
-- [ ] 1.3 Add a query helper that lists all stock records and one that reads a record by item id (SWHR-T-0147)
+- [x] 1.1 Add the supplier inventory table to `db/schema.ts` (item id primary key, integer quantity not null) (SWHR-T-0147)
+- [x] 1.2 Generate and commit the drizzle migration for the supplier inventory table (SWHR-T-0147)
+- [x] 1.3 Add a query helper that lists all stock records and one that reads a record by item id (SWHR-T-0147)
 
 ## 2. Stock update rules
 
