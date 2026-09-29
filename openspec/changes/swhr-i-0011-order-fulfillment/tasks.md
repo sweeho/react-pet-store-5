@@ -40,13 +40,13 @@
 
 ## 6. Supplier fulfilment
 
-- [ ] 6.1 Implement supplier order intake: create with PENDING, shipping contact and lines with shipped 0, atomically (SWHR-T-0139)
-- [ ] 6.2 Implement supplier order lookup by id and by status without duplicates, and cascade delete (SWHR-T-0139)
-- [ ] 6.3 Implement the pure fulfilment function with whole-line shipment, line-number order, missing stock treated as out of stock, and completion flag (SWHR-T-0139)
-- [ ] 6.4 Build the invoice for lines shipped in the attempt with original order date, today's shipping date and the fixed recipient text (SWHR-T-0139)
-- [ ] 6.5 Apply a fulfilment result (stock decrement, shipped quantities, status, invoice message) in one transaction on intake (SWHR-T-0139)
-- [ ] 6.6 Re-fulfil all PENDING supplier orders on a stock-update event, skipping an order whose invoice cannot be built (SWHR-T-0139)
-- [ ] 6.7 Publish each invoice to the order processing centre's invoice channel (SWHR-T-0139)
+- [x] 6.1 Implement supplier order intake: create with PENDING, shipping contact and lines with shipped 0, atomically (SWHR-T-0139)
+- [x] 6.2 Implement supplier order lookup by id and by status without duplicates, and cascade delete (SWHR-T-0139)
+- [x] 6.3 Implement the pure fulfilment function with whole-line shipment, line-number order, missing stock treated as out of stock, and completion flag (SWHR-T-0139)
+- [x] 6.4 Build the invoice for lines shipped in the attempt with original order date, today's shipping date and the fixed recipient text (SWHR-T-0139)
+- [x] 6.5 Apply a fulfilment result (stock decrement, shipped quantities, status, invoice message) in one transaction on intake (SWHR-T-0139)
+- [x] 6.6 Re-fulfil all PENDING supplier orders on a stock-update event, skipping an order whose invoice cannot be built (SWHR-T-0139)
+- [x] 6.7 Publish each invoice to the order processing centre's invoice channel (SWHR-T-0139)
 
 ## 7. Tests
 
