@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { db } from "../../db/client";
 import {
@@ -13,6 +13,11 @@ import {
 } from "../../db/schema";
 import { createAccount, createCustomer, getCustomerAccount, listCustomers } from "./customer";
 import type { ContactInfoValue, CreditCardValue } from "./types";
+
+beforeEach(() => {
+  db.delete(customers).run();
+  db.delete(users).where(eq(users.passwordHash, "x")).run();
+});
 
 function addUser(userId: string) {
   db.insert(users).values({ userId, passwordHash: "x" }).run();
@@ -102,7 +107,7 @@ describe("customer creation", () => {
         return fn(tx as never);
       })) as typeof db.transaction);
     try {
-      expect(() => createCustomer("rollback")).toThrow();
+      expect(() => createCustomer("rollback")).toThrow("profile insert failed");
     } finally {
       spy.mockRestore();
     }
