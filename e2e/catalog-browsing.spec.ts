@@ -59,6 +59,18 @@ test.describe("Home → category → product → item journey", () => {
   });
 });
 
+test.describe("Category navigation menu locale", () => {
+  test("[SWHR-C-0432] DOGS category page heading renders in Japanese", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "日本語" }).click();
+
+    await page.goto("/category/DOGS");
+
+    await expect(page.getByRole("heading", { level: 1, name: "犬" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Dogs" })).toHaveCount(0);
+  });
+});
+
 test.describe("Category and product listing paging", () => {
   test("[SWHR-C-0186][SWHR-C-0435] DOGS (6 products) shows the first 2 with a Next link and no Previous link", async ({
     page,
