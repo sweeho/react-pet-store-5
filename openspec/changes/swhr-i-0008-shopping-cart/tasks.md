@@ -29,11 +29,11 @@
 
 ## 4. Cart page
 
-- [ ] 4.1 Add `src/pages/cart.tsx` with the empty-cart message state (SWHR-T-0099)
-- [ ] 4.2 Render item rows with the linked attribute and name, Remove control, quantity input (max 10 characters) and currency unit price (SWHR-T-0099)
-- [ ] 4.3 Add the Update Cart submission sending all quantities in one request (SWHR-T-0099)
-- [ ] 4.4 Render the cart total and a Check Out control leading to order information entry (SWHR-T-0099)
-- [ ] 4.5 Wire an Add to Cart control on item and catalog rows to the add route (SWHR-T-0099)
+- [x] 4.1 Add `src/pages/cart.tsx` with the empty-cart message state (SWHR-T-0099)
+- [x] 4.2 Render item rows with the linked attribute and name, Remove control, quantity input (max 10 characters) and currency unit price (SWHR-T-0099)
+- [x] 4.3 Add the Update Cart submission sending all quantities in one request (SWHR-T-0099)
+- [x] 4.4 Render the cart total and a Check Out control leading to order information entry (SWHR-T-0099)
+- [x] 4.5 Wire an Add to Cart control on item and catalog rows to the add route (SWHR-T-0099)
 
 ## 5. Tests
 
