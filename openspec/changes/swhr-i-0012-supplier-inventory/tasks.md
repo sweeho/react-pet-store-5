@@ -6,10 +6,10 @@
 
 ## 2. Stock update rules
 
-- [ ] 2.1 Implement the batch update function: selected rows only, absolute replacement, blank quantity skipped (SWHR-T-0148)
-- [ ] 2.2 Skip negative quantities per row without failing the batch (SWHR-T-0148)
-- [ ] 2.3 Reject non-numeric quantities and unknown item ids for the whole batch (design D4, D5) (SWHR-T-0148)
-- [ ] 2.4 Unit-test the update rules against the spec scenarios (SWHR-T-0148)
+- [x] 2.1 Implement the batch update function: selected rows only, absolute replacement, blank quantity skipped (SWHR-T-0148)
+- [x] 2.2 Skip negative quantities per row without failing the batch (SWHR-T-0148)
+- [x] 2.3 Reject non-numeric quantities and unknown item ids for the whole batch (design D4, D5) (SWHR-T-0148)
+- [x] 2.4 Unit-test the update rules against the spec scenarios (SWHR-T-0148)
 
 ## 3. Update unit of work
 
