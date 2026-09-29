@@ -82,4 +82,38 @@ describe("CartPage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "カート" })).toBeInTheDocument();
     expect(await screen.findByText("カートは空です")).toBeInTheDocument();
   });
+
+  function stubCartAndAccount(accountStatus: number, profile?: object) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) =>
+        Promise.resolve(
+          String(input).startsWith("/api/account")
+            ? jsonResponse(profile ? { userId: "j2ee", profile } : {}, accountStatus)
+            : jsonResponse({ lines: [] }),
+        ),
+      ),
+    );
+  }
+
+  it("[SWHR-C-0229] shows the dogs pet-tips banner when the favourite category is empty", async () => {
+    stubCartAndAccount(200, {
+      favoriteCategory: "",
+      bannerPreference: true,
+      myListPreference: false,
+    });
+    renderCart();
+
+    const banner = await screen.findByTestId("pet-tips-banner");
+    expect(banner).toHaveAttribute("data-category", "dogs");
+  });
+
+  it("shows no pet-tips banner to an anonymous visitor", async () => {
+    stubCartAndAccount(401);
+    renderCart();
+
+    expect(await screen.findByText("Your cart is empty")).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByTestId("pet-tips-banner")).not.toBeInTheDocument();
+  });
 });
