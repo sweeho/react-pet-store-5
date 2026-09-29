@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -64,7 +65,7 @@ describe("SupplierInventoryPage", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("shows the inventory placeholder for a signed-on administrator", async () => {
+  it("[SWHR-C-0404] shows the home screen with the back-order explanation and its actions", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
@@ -76,6 +77,38 @@ describe("SupplierInventoryPage", () => {
 
     renderInventory();
 
-    expect(await screen.findByRole("heading", { name: "Supplier inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Supplier" })).toBeInTheDocument();
+    expect(screen.getByText(/Back Ordered/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Display Inventory" })).toHaveAttribute(
+      "href",
+      "/supplier/inventory",
+    );
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+  });
+
+  it("logout posts the supplier sign-off and follows its redirect", async () => {
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>((url) =>
+      Promise.resolve(
+        url.startsWith("/api/staff/signoff")
+          ? jsonResponse({ redirect: "/supplier/signed-out" })
+          : jsonResponse({ signedOn: true, userId: "supplier", isAdministrator: true }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={["/supplier"]}>
+        <Routes>
+          <Route path="/supplier" element={<SupplierInventoryPage />} />
+          <Route path="/supplier/signed-out" element={<div>SIGNED OUT PAGE</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Logout" }));
+
+    expect(await screen.findByText("SIGNED OUT PAGE")).toBeInTheDocument();
+    const call = fetchMock.mock.calls.find(([url]) => url === "/api/staff/signoff");
+    expect(JSON.parse((call?.[1] as RequestInit).body as string)).toEqual({ realm: "supplier" });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 });

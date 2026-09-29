@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Supplier home</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#fff;color:#27272a;font-size:13px;width:720px}
+.util{height:22px;background:#f4f4f5;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:10px;color:#71717a}
+.hdr{height:44px;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;gap:12px;padding:0 16px}
+.logo{border:1px solid #a1a1aa;border-radius:4px;padding:4px 8px;font-weight:600}
+.srch{flex:1;height:26px;border:1px solid #d4d4d8;border-radius:4px}
+.hbtn{border:1px solid #d4d4d8;border-radius:4px;padding:4px 8px;font-size:11px}
+.body{display:flex;gap:16px;padding:16px;min-height:380px;background:#fafafa}
+aside{width:120px;border:1px dashed #d4d4d8;border-radius:6px;padding:8px;font-size:10px;color:#71717a}
+aside div{height:10px;background:#e4e4e7;border-radius:2px;margin:8px 0}
+main{flex:1;display:flex;flex-direction:column;gap:12px}
+.crumb{font-size:11px;color:#71717a}
+h1{font-size:20px}
+.card{background:#fff;border:1px solid #d4d4d8;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.note{color:#52525b;line-height:1.5}
+.row{display:flex;gap:8px}
+.btn{border:1px solid #71717a;border-radius:6px;padding:10px 16px;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.btn.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.ann{font-size:10px;color:#a1a1aa;font-style:italic}
+footer{height:32px;border-top:1px solid #e4e4e7;display:flex;align-items:center;padding:0 16px;font-size:10px;color:#a1a1aa}
+</style></head><body>
+<div class="util"><span>Language: English · 日本語 · 中文</span><span>Store staff: Administration · <b>Supplier</b></span></div>
+<div class="hdr"><span class="logo">Pet Store</span><div class="srch"></div><span class="hbtn">Account</span><span class="hbtn">Cart 0</span><span class="hbtn">Sign out</span></div>
+<div class="body">
+<aside>Pets menu (shell, unchanged)<div></div><div></div><div></div><div></div><div></div></aside>
+<main>
+<div class="crumb">Home › Supplier</div>
+<h1>Supplier</h1>
+<div class="card">
+<p class="note">Updating the inventory lets the supplier fill items marked "Back Ordered". Orders waiting on stock are retried when you submit new quantities.</p>
+<div class="row"><a class="btn pri" href="#">Display Inventory</a><a class="btn" href="#">Logout</a></div>
+<p class="ann">Exactly two actions (SWHR-R-0229). Display Inventory → Supplier inventory. Logout → shell's Signed out page, offering re-entry to Supplier.</p>
+</div>
+</main>
+</div>
+<footer>Footer (shell, unchanged)</footer>
+</body></html>
