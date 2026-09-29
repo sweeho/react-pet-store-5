@@ -1,11 +1,11 @@
 ## 1. Data model
 
-- [ ] 1.1 Add purchase order, contact, address and credit card tables to db/schema.ts with the required NOT NULL columns and cascade deletes (SWHR-T-0134)
-- [ ] 1.2 Add the order line item table with immutable attributes, integer-cent unit price and shipped quantity defaulting to 0 (SWHR-T-0134)
-- [ ] 1.3 Add the order workflow table keyed by order id with a CHECK over PENDING, APPROVED, DENIED, SHIPPED_PART, COMPLETED (SWHR-T-0134)
-- [ ] 1.4 Add supplier order, supplier contact, supplier address and supplier line item tables with cascade deletes and a status CHECK (SWHR-T-0134)
-- [ ] 1.5 Add the outbox table for pending inter-step messages (SWHR-T-0134)
-- [ ] 1.6 Run db-generate and commit the resulting migration in drizzle/ (SWHR-T-0134)
+- [x] 1.1 Add purchase order, contact, address and credit card tables to db/schema.ts with the required NOT NULL columns and cascade deletes (SWHR-T-0134)
+- [x] 1.2 Add the order line item table with immutable attributes, integer-cent unit price and shipped quantity defaulting to 0 (SWHR-T-0134)
+- [x] 1.3 Add the order workflow table keyed by order id with a CHECK over PENDING, APPROVED, DENIED, SHIPPED_PART, COMPLETED (SWHR-T-0134)
+- [x] 1.4 Add supplier order, supplier contact, supplier address and supplier line item tables with cascade deletes and a status CHECK (SWHR-T-0134)
+- [x] 1.5 Add the outbox table for pending inter-step messages (SWHR-T-0134)
+- [x] 1.6 Run db-generate and commit the resulting migration in drizzle/ (SWHR-T-0134)
 
 ## 2. Purchase order persistence
 
