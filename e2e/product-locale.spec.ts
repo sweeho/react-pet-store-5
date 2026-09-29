@@ -15,18 +15,24 @@ test.describe("Product page language switch", () => {
   test("[SWHR-R-0008.01] switching language on the product page re-renders it in Japanese and moves the cart locale", async ({
     page,
   }) => {
-    await page.goto("/product/BULLDOG");
+    await page.goto("/product/K9-BD-01");
+
+    // Scoped to the "Male Adult Bulldog" card, not a bare page.getByText —
+    // EST-6 and EST-7 share the same list price ($18.50 / ¥2,000), so an
+    // unscoped price match is ambiguous between the two item rows.
+    const maleAdultCard = page.getByRole("listitem").filter({ hasText: "Male Adult Bulldog" });
 
     await expect(page.getByRole("heading", { level: 1, name: "Bulldog" })).toBeVisible();
-    await expect(page.getByText("Male Adult Bulldog")).toBeVisible();
-    await expect(page.getByText("$18.50")).toBeVisible();
+    await expect(maleAdultCard).toBeVisible();
+    await expect(maleAdultCard.getByText("$18.50")).toBeVisible();
 
     await page.getByRole("button", { name: "日本語" }).click();
 
-    await expect(page).toHaveURL("/product/BULLDOG");
+    await expect(page).toHaveURL("/product/K9-BD-01");
+    const maleAdultCardJa = page.getByRole("listitem").filter({ hasText: "オス成犬ブルドッグ" });
     await expect(page.getByRole("heading", { level: 1, name: "ブルドッグ" })).toBeVisible();
-    await expect(page.getByText("オス成犬ブルドッグ")).toBeVisible();
-    await expect(page.getByText("￥2,000")).toBeVisible();
+    await expect(maleAdultCardJa).toBeVisible();
+    await expect(maleAdultCardJa.getByText("￥2,000")).toBeVisible();
 
     // page.request shares the browser context's cookie jar, so this reads
     // back the same session the language switch just wrote (unlike the

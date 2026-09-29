@@ -9,34 +9,34 @@ import { getItem, getProduct, listProductItems } from "./queries";
  * database, seeded by db/seed/catalog.ts. Every case here exercises the
  * "no cross-locale fallback" rule (D4, SWHR-R-0014) against seeded rows
  * built specifically to exercise it — see db/seed/catalog.ts's comments on
- * POODLE (missing ja_JP and zh_CN entirely) and DALMATIAN/EST-9 (item has
- * ja_JP details, product does not).
+ * K9-PO-02/Poodle (missing ja_JP and zh_CN entirely) and K9-DL-01/EST-9
+ * (item has ja_JP details, product does not).
  */
 describe("getProduct", () => {
   it("[AC-2] returns the Japanese name, description and image for an item shown in ja_JP", () => {
-    const productView = getProduct("BULLDOG", "ja_JP");
+    const productView = getProduct("K9-BD-01", "ja_JP");
 
     expect(productView).toMatchObject({
-      productId: "BULLDOG",
+      productId: "K9-BD-01",
       name: "ブルドッグ",
       locale: "ja_JP",
     });
   });
 
   it("returns the en_US details for the same product", () => {
-    expect(getProduct("BULLDOG", "en_US")).toMatchObject({ name: "Bulldog", locale: "en_US" });
+    expect(getProduct("K9-BD-01", "en_US")).toMatchObject({ name: "Bulldog", locale: "en_US" });
   });
 
   it("[AC-3] reports not found for a product whose details exist only in en_US, requested in zh_CN", () => {
-    expect(getProduct("POODLE", "zh_CN")).toBeNull();
+    expect(getProduct("K9-PO-02", "zh_CN")).toBeNull();
   });
 
   it("reports not found for that same product requested in ja_JP", () => {
-    expect(getProduct("POODLE", "ja_JP")).toBeNull();
+    expect(getProduct("K9-PO-02", "ja_JP")).toBeNull();
   });
 
   it("returns the product when requested in the one locale it does have (en_US)", () => {
-    expect(getProduct("POODLE", "en_US")).toMatchObject({ name: "Poodle" });
+    expect(getProduct("K9-PO-02", "en_US")).toMatchObject({ name: "Poodle" });
   });
 
   it("returns null for a product id that doesn't exist at all", () => {
@@ -45,8 +45,8 @@ describe("getProduct", () => {
 });
 
 describe("listProductItems", () => {
-  it("[AC-2] returns Japanese item details for BULLDOG in ja_JP", () => {
-    const items = listProductItems("BULLDOG", "ja_JP");
+  it("[AC-2] returns Japanese item details for K9-BD-01 in ja_JP", () => {
+    const items = listProductItems("K9-BD-01", "ja_JP");
 
     expect(items.map((i) => i.itemId).sort()).toEqual(["EST-6", "EST-7"]);
     const est6 = items.find((i) => i.itemId === "EST-6");
@@ -54,18 +54,18 @@ describe("listProductItems", () => {
   });
 
   it("[AC-4] excludes an item whose product lacks the requested locale, even though the item has its own row", () => {
-    // EST-9 (DALMATIAN) has ja_JP item details, but DALMATIAN has no ja_JP
+    // EST-9 (K9-DL-01) has ja_JP item details, but K9-DL-01 has no ja_JP
     // product details — SWHR-R-0014.03.
-    expect(listProductItems("DALMATIAN", "ja_JP")).toEqual([]);
+    expect(listProductItems("K9-DL-01", "ja_JP")).toEqual([]);
   });
 
   it("includes that same item when both product and item have details (zh_CN)", () => {
-    const items = listProductItems("DALMATIAN", "zh_CN");
+    const items = listProductItems("K9-DL-01", "zh_CN");
     expect(items.map((i) => i.itemId)).toEqual(["EST-9"]);
   });
 
   it("returns an empty list for a product with no items in a locale it does have", () => {
-    expect(listProductItems("POODLE", "zh_CN")).toEqual([]);
+    expect(listProductItems("K9-PO-02", "zh_CN")).toEqual([]);
   });
 });
 

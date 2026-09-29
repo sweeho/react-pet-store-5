@@ -42,7 +42,7 @@ test("the API responds", async ({ request }) => {
  * That is exactly how this regression shipped undetected once already.
  */
 test("a database-backed route responds", async ({ request }) => {
-  const response = await request.get("/api/catalog/products/BULLDOG");
+  const response = await request.get("/api/catalog/products/K9-BD-01");
 
   expect(response.ok()).toBe(true);
   expect(await response.json()).toHaveProperty("product");
