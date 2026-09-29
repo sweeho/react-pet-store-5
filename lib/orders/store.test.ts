@@ -2,12 +2,23 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, test } from "vitest";
 
 import { db } from "../../db/client";
-import { counters, customers, purchaseOrders, users } from "../../db/schema";
+import * as schema from "../../db/schema";
+import { customers, users } from "../../db/schema";
 import { createCustomer, replaceCustomerAccount, getCustomerAccount } from "../account/customer";
 import type { PurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { getStoredOrder, persistPurchaseOrder } from "./store";
 
+// The checkout tables are addressed through the namespace so a missing table
+// fails an assertion here rather than erroring at import.
+function tables() {
+  const { counters, purchaseOrders } = schema as Partial<typeof schema>;
+  expect(counters).toBeDefined();
+  expect(purchaseOrders).toBeDefined();
+  return { counters: counters!, purchaseOrders: purchaseOrders! };
+}
+
 beforeEach(() => {
+  const { counters, purchaseOrders } = tables();
   db.delete(purchaseOrders).run();
   db.delete(counters).run();
   db.delete(customers).run();
@@ -67,6 +78,7 @@ function order(overrides: Partial<PurchaseOrder> = {}): PurchaseOrder {
 
 describe("counters", () => {
   test("[SWHR-C-0280] inserting a second counter named 1001 is rejected", () => {
+    const { counters } = tables();
     db.insert(counters).values({ name: "1001", value: 0 }).run();
     expect(() => db.insert(counters).values({ name: "1001", value: 5 }).run()).toThrow();
     expect(db.select().from(counters).where(eq(counters.name, "1001")).all()).toHaveLength(1);
@@ -119,6 +131,7 @@ describe("persistPurchaseOrder", () => {
   test("persisting the same order id twice is a no-op", () => {
     persistPurchaseOrder(db, order());
     persistPurchaseOrder(db, order({ totalPrice: "99.00" }));
+    const { purchaseOrders } = tables();
     expect(db.select().from(purchaseOrders).all()).toHaveLength(1);
     expect(getStoredOrder("10011")?.totalValue).toBe(5150);
   });
