@@ -20,10 +20,10 @@
 
 ## 4. Server API
 
-- [ ] 4.1 Add `GET /api/supplier/inventory` returning all stock records, restricted to the supplier staff role (SWHR-T-0150)
-- [ ] 4.2 Add `POST /api/supplier/inventory` accepting the batch update and running the unit of work (SWHR-T-0150)
-- [ ] 4.3 Return a distinguishable error when the stock list cannot be retrieved (SWHR-T-0150)
-- [ ] 4.4 Route tests for both endpoints including authorisation refusal (SWHR-T-0150)
+- [x] 4.1 Add `GET /api/supplier/inventory` returning all stock records, restricted to the supplier staff role (SWHR-T-0150)
+- [x] 4.2 Add `POST /api/supplier/inventory` accepting the batch update and running the unit of work (SWHR-T-0150)
+- [x] 4.3 Return a distinguishable error when the stock list cannot be retrieved (SWHR-T-0150)
+- [x] 4.4 Route tests for both endpoints including authorisation refusal (SWHR-T-0150)
 
 ## 5. Initial stock load
 
