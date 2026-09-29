@@ -13,10 +13,10 @@
 
 ## 3. Update unit of work
 
-- [ ] 3.1 Wrap stock writes, pending supplier order re-fulfilment and invoice outbox writes in one database transaction (SWHR-T-0149)
-- [ ] 3.2 Invoke the order-fulfillment re-attempt for every PENDING supplier order after the stock writes (SWHR-T-0149)
-- [ ] 3.3 Record an invoice for each order that shipped anything in this attempt (SWHR-T-0149)
-- [ ] 3.4 Integration-test restock-ships-order, insufficient-restock and rollback-on-failure scenarios (SWHR-T-0149)
+- [x] 3.1 Wrap stock writes, pending supplier order re-fulfilment and invoice outbox writes in one database transaction (SWHR-T-0149)
+- [x] 3.2 Invoke the order-fulfillment re-attempt for every PENDING supplier order after the stock writes (SWHR-T-0149)
+- [x] 3.3 Record an invoice for each order that shipped anything in this attempt (SWHR-T-0149)
+- [x] 3.4 Integration-test restock-ships-order, insufficient-restock and rollback-on-failure scenarios (SWHR-T-0149)
 
 ## 4. Server API
 
