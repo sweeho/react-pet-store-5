@@ -4,8 +4,16 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
 import { migrateDatabase } from "../lib/db/migrate";
-import { category, groupMembers, profiles, roleAssignments, users } from "./schema";
+import {
+  category,
+  groupMembers,
+  profiles,
+  roleAssignments,
+  supplierInventory,
+  users,
+} from "./schema";
 import { seedCatalog } from "./seed/catalog";
+import { seedInventory } from "./seed/inventory";
 
 // Vitest sets VITEST=true in every worker; an in-memory db keeps route
 // integration tests isolated from the file-backed dev/prod db and from
@@ -70,4 +78,9 @@ if (process.env.NODE_ENV !== "production" && db.select().from(users).all().lengt
 // Locale-keyed catalog data (design D4, P4), seeded once per fresh database.
 if (db.select().from(category).all().length === 0) {
   seedCatalog(db);
+}
+
+// Supplier stock (order-fulfillment P6), seeded once per fresh database.
+if (db.select().from(supplierInventory).all().length === 0) {
+  seedInventory(db);
 }
