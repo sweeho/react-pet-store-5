@@ -59,9 +59,10 @@ All 14 acceptance criteria are proven: 9 by a genuine red→green unit test (SWH
 -0184, -0186, -0188, -0190, -0191, -0192 — see `tdd-test-result.md` for the case→test mapping), 5 by
 `e2e/catalog-browsing.spec.ts` only (SWHR-C-0180, -0181, -0185, -0187, -0189 — cross-page navigation
 journeys with no reasonable unit-level equivalent, or, for -0189, behavior unchanged by this ticket).
-The e2e spec could not be executed in this container (Chromium genuinely missing); every citation in
-it was written from the same acceptance criteria and reviewed against the real component tests'
-assertions for consistency.
+This container has no working Chromium (`bun run test:e2e`'s own preflight confirms it, pinned-version
+mismatch), so the e2e spec couldn't be run here — but CI's `build-and-test` job does run it, in a real
+browser, and its first run caught two genuine bugs this container's tooling gap let through: see
+`## Notes`. Both are fixed and CI is green on the final commit.
 
 ## Verification
 
@@ -70,21 +71,41 @@ $ bun run verify
 lint ✓  typecheck ✓
 NODE_ENV=test bun --bun vitest run
  Test Files  126 passed (126)
-      Tests  604 passed (604)
+      Tests  605 passed (605)
 
 $ bun run build          # ✓
 $ node scripts/check-doc-links.mjs   # ✓ 80 files checked
 ```
 
 `bun run test:e2e`'s preflight reports Chromium genuinely not installed at the pinned path in this
-container; per AGENTS.md this is the documented fallback (E2E runs in the QA/CI containers), not
-retried. As a partial substitute, started the dev server and confirmed every new route serves 200 with
-correct catalog data (`/`, `/category/DOGS`, `/product/K9-BD-01`, `/item/EST-6`,
-`/search?keywords=bulldog`, plus the underlying `/api/catalog/*` and `/images/*.svg` endpoints) — see
-`tdd-test-result.md` for the exact checks. This ticket carries platform-linked test cases, so
-`tdd-test-result.md` carries the recorded run ids rather than a `TDD-RESULT:` marker.
+container; per AGENTS.md this is the documented fallback, not retried. As a partial substitute before
+pushing, started the dev server and confirmed every new route serves 200 with correct catalog data
+(`/`, `/category/DOGS`, `/product/K9-BD-01`, `/item/EST-6`, `/search?keywords=bulldog`, plus the
+underlying `/api/catalog/*` and `/images/*.svg` endpoints). CI's `build-and-test` job (real Chromium)
+ran the full 49-spec E2E suite including `e2e/catalog-browsing.spec.ts` twice: the first run failed 3
+specs, both real bugs (see `## Notes`); the second, after fixing them, is green —
+https://github.com/sweeho/react-pet-store-5/actions/runs/36526239836. This ticket carries
+platform-linked test cases, so `tdd-test-result.md` carries the recorded run ids rather than a
+`TDD-RESULT:` marker.
 
 ## Notes
+
+**Two real bugs, both only visible in a real browser, caught by CI's first E2E run.**
+
+1. Home (`src/pages/index.tsx`) never actually rendered `<PetsMenu />` — I'd wired it into category/
+   product/item/search but forgot Home itself, despite writing (at the time, incorrectly) that it was
+   on all five pages. `SWHR-C-0180` and `SWHR-C-0185` both start their journey at `/` and hung the full
+   30s test timeout (three attempts each) waiting for a "Pets" navigation landmark that wasn't there.
+   Fixed by wrapping Home's content in the same layout every other catalog page uses; added a unit test
+   asserting the Pets menu's presence on Home specifically, since no test had covered that before.
+2. A pre-existing `e2e/sign-on.spec.ts` case (`SWHR-C-0106`, not owned by this ticket) asserted the old
+   placeholder search heading `'Search results for "dog"'`, which the real search page never produces —
+   updated to match the new structure, same class of fix as the one already made to `e2e/home.spec.ts`.
+
+Neither was reachable from this container (no working Chromium) or from the unit suite (both are
+real-browser/cross-page behaviors) — this is exactly why PLAN step 13 asks for the e2e spec in the
+first place. See `tdd-test-result.md` for the full account, including the CI JUnit artifacts inspected
+to diagnose them.
 
 **PetsMenu is composed per-page, not rendered globally by `SiteLayout`.** `PLAN.md` step 2 says "rendered
 by SiteLayout on storefront pages" — SiteLayout wraps _every_ route in this app (admin, supplier, cart,

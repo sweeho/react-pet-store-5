@@ -43,11 +43,12 @@ per case below, with the red/green run ids as evidence for the 9 cases the scann
   dual-citations above): all 9 scanner-visible cases report `assertion_failure` or `stub_failure`.
   See `## Notes` for the two rounds this took.
 - Green run `7c50ca93-5748-4816-bf51-27143e9e7a78` (`a2a_run_tests(phase: "green")`, commit
-  `3989104`): all 9 scanner-visible cases report `pass`, `modified_after_red: []`. Overall verdict
-  `invalid` for two reasons, neither in this ticket's own code: (1) the same 5 e2e-only cases,
-  "no test citing it" — expected, see `## Notes`; (2) the whole-repo stub-sentinel scanner false
-  positive already filed as SWHR-T-0065 during SWHR-T-0057, now also matching
-  `artifacts/SWHR-S-0005/SWHR-T-0059/tdd-test-result.md`'s prose.
+  `3989104`), reconfirmed at `bb423524-c7e2-4e9e-bbd2-e3dc7c11bb62` (commit `f885b65`, the final
+  commit — after fixing the CI-caught issues in `## Notes`): all 9 scanner-visible cases report
+  `pass`, `modified_after_red: []`. Overall verdict `invalid` for two reasons, neither in this
+  ticket's own code: (1) the same 5 e2e-only cases, "no test citing it" — expected, see `## Notes`;
+  (2) the whole-repo stub-sentinel scanner false positive already filed as SWHR-T-0065 during
+  SWHR-T-0057, now also matching `artifacts/SWHR-S-0005/SWHR-T-0059/tdd-test-result.md`'s prose.
 
 ## Notes
 
