@@ -18,10 +18,10 @@
 
 ## 3. Order workflow tracking
 
-- [ ] 3.1 Implement start-tracking with initial PENDING and duplicate rejection (SWHR-T-0137)
-- [ ] 3.2 Implement status read and status update with not-found errors and no implicit create (SWHR-T-0137)
-- [ ] 3.3 Implement list-order-ids-by-status (SWHR-T-0137)
-- [ ] 3.4 Route status changes through the documented lifecycle and make every tracking call join the caller's transaction (SWHR-T-0137)
+- [x] 3.1 Implement start-tracking with initial PENDING and duplicate rejection (SWHR-T-0137)
+- [x] 3.2 Implement status read and status update with not-found errors and no implicit create (SWHR-T-0137)
+- [x] 3.3 Implement list-order-ids-by-status (SWHR-T-0137)
+- [x] 3.4 Route status changes through the documented lifecycle and make every tracking call join the caller's transaction (SWHR-T-0137)
 
 ## 4. Message dispatch
 
