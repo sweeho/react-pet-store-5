@@ -1,41 +1,11 @@
-# local-development Specification
-
-## Purpose
-
-How a developer runs the application locally: the development server entry point and the runtime it guarantees.
-
-## Requirements
-
-### Requirement: Development server runtime
-
-ID: SWHR-R-0247
-
-The project's development server entry point SHALL run the server-side route handlers under the Bun runtime regardless of whether Node.js is also installed, so that every route backed by the Bun SQLite driver responds normally in development.
-
-#### Scenario: Database-backed route under the development server
-
-ID: SWHR-R-0247.01
-
-- **GIVEN** a clean checkout on a machine with both Bun and Node.js installed
-- **WHEN** the development server is started through the project's dev entry point and the category list API is requested
-- **THEN** the response is HTTP 200 with a JSON body containing a categories list, not an HTTP 500
-
-#### Scenario: End-to-end suite uses the development entry point
-
-ID: SWHR-R-0247.02
-
-- **GIVEN** the end-to-end suite's web server configuration
-- **WHEN** the suite starts its server
-- **THEN** it starts through the same dev entry point developers use, so a database-backed end-to-end spec fails if that entry point stops running under Bun
+## ADDED Requirements
 
 ### Requirement: Stub sentinel confined to live stubs
-
 ID: SWHR-R-0248
 
 The repository SHALL NOT contain the literal text of the configured stub sentinel in any documentation or configuration file: everything under `artifacts/`, `openspec/` and `.vortex/`, and the repository-root Markdown files. The configuration SHALL still declare a value that decodes to the stub sentinel, so a live stub remains detectable. Source and test files MAY contain the literal only at live stub call sites.
 
 #### Scenario: Configuration declares the sentinel without its literal text
-
 ID: SWHR-R-0248.01
 
 - **GIVEN** the repository's `.vortex/config.yaml`
@@ -43,7 +13,6 @@ ID: SWHR-R-0248.01
 - **THEN** the raw text does not contain the literal sentinel, and the decoded value equals the stub sentinel
 
 #### Scenario: Historical and generated documentation carries no literal sentinel
-
 ID: SWHR-R-0248.02
 
 - **GIVEN** every file under `artifacts/`, `openspec/` and `.vortex/`, plus the repository-root Markdown files, including closed sprints' platform-generated `SPRINT-PLAN.md` indexes
@@ -51,7 +20,6 @@ ID: SWHR-R-0248.02
 - **THEN** no file contains it
 
 #### Scenario: A documentation file that quotes the sentinel is caught
-
 ID: SWHR-R-0248.03
 
 - **GIVEN** a Markdown file under `artifacts/` whose name is not `tdd-test-result.md` and whose text quotes the literal sentinel
@@ -59,7 +27,6 @@ ID: SWHR-R-0248.03
 - **THEN** the sentinel hygiene test fails and names that file
 
 #### Scenario: The hygiene guard does not reintroduce the literal
-
 ID: SWHR-R-0248.04
 
 - **GIVEN** the source of the sentinel hygiene regression test
