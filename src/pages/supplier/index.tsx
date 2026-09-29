@@ -54,6 +54,7 @@ export default function SupplierInventoryPage() {
     );
   }
 
+  throw new Error("VortexNotImplemented");
   return (
     <div className="flex flex-col gap-4 p-8">
       <h1 className="text-2xl font-bold">Supplier inventory</h1>
