@@ -1,18 +1,17 @@
 import { createError, defineHandler, readBody } from "nitro/h3";
 
 import { db } from "../../db/client";
-import { customers, profiles } from "../../db/schema";
+import { createCustomer, replaceCustomerAccount } from "../../lib/account/customer";
+import { parseAccountForm, type AccountFormInput } from "../../lib/account/form";
 import { ACCOUNT_CHANGE_PATH } from "../../lib/auth/protection";
 import { getAuthSession, updateAuthSession } from "../../lib/auth/session";
-import { parseLocale } from "../../lib/locale/model";
 import { applyPreferredLanguageOnProfileSave } from "../../lib/locale/preference";
-import { getSessionLocale } from "../../lib/locale/session";
 
 /**
  * Registration step 2 (design.md P8, SWHR-R-0072): needs a pending
  * registration from POST /api/users (userId set, not yet signed on).
- * customer-account (swhr-i-0007) replaces this form and extends
- * `customers`/`profiles` — it must not recreate them.
+ * Takes the full account form (swhr-i-0007 P8); customer, account, contact,
+ * address, card and profile are written in one transaction.
  */
 export default defineHandler(async (event) => {
   const session = await getAuthSession(event, "storefront");
@@ -21,14 +20,20 @@ export default defineHandler(async (event) => {
   }
   const userId = session.userId;
 
-  const body = await readBody<{ preferredLanguage?: unknown }>(event);
-  const requested =
-    typeof body?.preferredLanguage === "string" ? parseLocale(body.preferredLanguage) : null;
-  const preferredLanguage = requested ? requested.id : await getSessionLocale(event);
+  const body = await readBody<AccountFormInput>(event);
+  const result = parseAccountForm(body ?? {}, "create");
+  if (!result.ok) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Required fields missing",
+      data: { missing: result.missing },
+    });
+  }
+  const { preferredLanguage } = result.value.profile;
 
   db.transaction((tx) => {
-    tx.insert(customers).values({ userId, createdAt: new Date() }).run();
-    tx.insert(profiles).values({ userId, preferredLanguage }).run();
+    createCustomer(userId, tx);
+    replaceCustomerAccount(userId, result.value, tx);
   });
 
   await updateAuthSession(event, "storefront", { signedOn: true });
