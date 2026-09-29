@@ -40,8 +40,8 @@
 
 ## 6. Error routing
 
-- [ ] 6.1 Map failure kinds to error displays (empty cart, duplicate account, general), with subtypes covered by their parent kind (SWHR-T-0112)
-- [ ] 6.2 Return a generic server error naming the failure kind for unmapped failures (SWHR-T-0112)
+- [x] 6.1 Map failure kinds to error displays (empty cart, duplicate account, general), with subtypes covered by their parent kind (SWHR-T-0112)
+- [x] 6.2 Return a generic server error naming the failure kind for unmapped failures (SWHR-T-0112)
 
 ## 7. Open questions
 
