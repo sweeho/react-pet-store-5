@@ -13,15 +13,15 @@
 
 ## 3. Order placement service
 
-- [ ] 3.1 Validate billing and shipping contacts (required fields trimmed, address line 2 and e-mail optional, blank line 2 stored as absent) (SWHR-T-0109)
-- [ ] 3.2 Reject an empty cart with a dedicated empty-cart error before any order is built (SWHR-T-0109)
-- [ ] 3.3 Build the purchase order (order id, user id, billing e-mail, order date, both contacts, credit card, locale) (SWHR-T-0109)
-- [ ] 3.4 Build order lines in cart order with line numbers from 0, and compute the total as sum of unit cost times quantity (SWHR-T-0109)
-- [ ] 3.5 Attach a credit card to the order, pending the OQ-1 decision on its source (SWHR-T-0109)
-- [ ] 3.6 Serialize the purchase order to its XML document and write it to the outbox in the same transaction (SWHR-T-0109)
-- [ ] 3.7 Empty the cart after the hand-off, and roll back everything (id, outbox row, cart) on any failure (SWHR-T-0109)
-- [ ] 3.8 Expose order placement as a Nitro POST route returning order id and billing e-mail (SWHR-T-0109)
-- [ ] 3.9 Add integration tests for success, empty cart, missing field, and send-failure rollback (SWHR-T-0109)
+- [x] 3.1 Validate billing and shipping contacts (required fields trimmed, address line 2 and e-mail optional, blank line 2 stored as absent) (SWHR-T-0109)
+- [x] 3.2 Reject an empty cart with a dedicated empty-cart error before any order is built (SWHR-T-0109)
+- [x] 3.3 Build the purchase order (order id, user id, billing e-mail, order date, both contacts, credit card, locale) (SWHR-T-0109)
+- [x] 3.4 Build order lines in cart order with line numbers from 0, and compute the total as sum of unit cost times quantity (SWHR-T-0109)
+- [x] 3.5 Attach a credit card to the order, pending the OQ-1 decision on its source (SWHR-T-0109)
+- [x] 3.6 Serialize the purchase order to its XML document and write it to the outbox in the same transaction (SWHR-T-0109)
+- [x] 3.7 Empty the cart after the hand-off, and roll back everything (id, outbox row, cart) on any failure (SWHR-T-0109)
+- [x] 3.8 Expose order placement as a Nitro POST route returning order id and billing e-mail (SWHR-T-0109)
+- [x] 3.9 Add integration tests for success, empty cart, missing field, and send-failure rollback (SWHR-T-0109)
 
 ## 4. Asynchronous hand-off
 
