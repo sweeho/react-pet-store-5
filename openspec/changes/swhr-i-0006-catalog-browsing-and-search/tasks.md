@@ -7,14 +7,14 @@
 
 ## 2. Catalog queries
 
-- [ ] 2.1 Implement the category listing query filtered by locale and ordered by name (SWHR-T-0058)
-- [ ] 2.2 Implement the product listing query for a category filtered by locale and ordered by name (SWHR-T-0058)
-- [ ] 2.3 Implement the item listing query for a product requiring item and product details in the locale, returning correct product and category identifiers (SWHR-T-0058)
-- [ ] 2.4 Implement single category, product and item lookups that return no result for a missing identifier or locale (SWHR-T-0058)
-- [ ] 2.5 Implement shared paging (start offset, page size, next-page flag, next and previous start, empty page for out-of-range start) (SWHR-T-0058)
-- [ ] 2.6 Implement search keyword parsing (whitespace split, de-duplication, blank query short-circuit) (SWHR-T-0058)
-- [ ] 2.7 Implement case-insensitive OR-of-substring search over product name, category identifier and item description (SWHR-T-0058)
-- [ ] 2.8 Add unit tests covering locale visibility, ordering, paging edges and search matching (SWHR-T-0058)
+- [x] 2.1 Implement the category listing query filtered by locale and ordered by name (SWHR-T-0058)
+- [x] 2.2 Implement the product listing query for a category filtered by locale and ordered by name (SWHR-T-0058)
+- [x] 2.3 Implement the item listing query for a product requiring item and product details in the locale, returning correct product and category identifiers (SWHR-T-0058)
+- [x] 2.4 Implement single category, product and item lookups that return no result for a missing identifier or locale (SWHR-T-0058)
+- [x] 2.5 Implement shared paging (start offset, page size, next-page flag, next and previous start, empty page for out-of-range start) (SWHR-T-0058)
+- [x] 2.6 Implement search keyword parsing (whitespace split, de-duplication, blank query short-circuit) (SWHR-T-0058)
+- [x] 2.7 Implement case-insensitive OR-of-substring search over product name, category identifier and item description (SWHR-T-0058)
+- [x] 2.8 Add unit tests covering locale visibility, ordering, paging edges and search matching (SWHR-T-0058)
 
 ## 3. Server routes
 
