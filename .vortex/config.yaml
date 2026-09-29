@@ -95,7 +95,7 @@ specDriven:
 testEvidence:
   command: bun run test -- --reporter=junit --outputFile=.vortex-results/junit.xml
   junitPath: .vortex-results/junit.xml
-  testGlobs: ["src/**/*.test.ts", "src/**/*.test.tsx", "routes/**/*.test.ts"]
+  testGlobs: ["src/**/*.test.ts", "src/**/*.test.tsx", "routes/**/*.test.ts", "lib/**/*.test.ts", "plugins/**/*.test.ts", "middleware/**/*.test.ts"]
   stubSentinel: VortexNotImplemented
   ciJobs:
     unit: build-and-test
