@@ -54,3 +54,70 @@ Greenfield table; the initial-load operation seeds EST-1..EST-29 at 10000 for de
 - Q3. Should the "no items in inventory" state show for an empty inventory, a failed lookup, or both (spec assumes both; a failed lookup may warrant a distinct error)?
 - Q4. Validation feedback for non-numeric or negative quantities: legacy ignores negatives silently; should the rebuild warn?
 - Q5. Priority order for re-fulfilling pending supplier orders when stock is scarce.
+
+## Sprint planning — SWHR-S-0015
+
+This section was added at sprint planning (SWHR-T-0144). The sections above describe the change as extracted from the legacy system. This section describes the repository as it stands on sprint base `24dccab` (SWHR-S-0014 landed) and fixes the interfaces the six tickets code against. Where this section and D1–D5 disagree, this section wins, and the disagreement is listed under Spec discrepancies. The idea canvas's "Current State" and "Affected Code" sections describe the bootstrap template and are stale; ignore them.
+
+### Codebase findings
+
+Much of this change was built by order fulfilment (swhr-i-0011) and sign-on (swhr-i-0005):
+
+| Change asks for                  | Already in the repo                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stock table (D1, tasks 1.1, 1.2) | `supplierInventory` (`itemId` text PK, `quantity` integer NOT NULL, no CHECK) in `db/schema.ts`, migration `drizzle/0008_lazy_jimmy_woo.sql`. No query helpers.                                                                                                                                       |
+| Seed data (task 5.1)             | `db/seed/inventory.ts` `seedInventory(db)` inserts EST-1..EST-29 at 10000. `db/client.ts` calls it when the table is empty. There is no forced mode.                                                                                                                                                  |
+| Unit of work (D3, tasks 3.1–3.3) | `lib/supplier/stock.ts` `applyStockUpdate(tx, updates, now)` upserts absolute quantities, calls `refulfilPendingSupplierOrders` (ascending order id, one savepoint per order, **every** failure swallowed) and `publishInvoices` on `opc.invoice` in the caller's transaction. It has no input rules. |
+| Supplier sign-in, role, sign-out | `/supplier/signin`, `/supplier/login-error`, `/supplier/signed-out` (re-entry link, SWHR-R-0083). `GET /api/staff/session?realm=supplier` returns `isAdministrator`. `requireRole(event, "supplier", "administrator")` in `lib/auth/roles.ts`. `POST /api/staff/signoff` with realm supplier.         |
+| Supplier area page               | `src/pages/supplier/index.tsx` redirects to sign-in when signed off, shows "Not authorised" without the role, and otherwise a "Coming soon" placeholder. The header and footer already link `/supplier`.                                                                                              |
+| Shared UI                        | `EmptyState`, `ErrorState`, `LoadingState`, `AsyncContent` (`src/components/state`), `Button`, `Input` (`src/components/ui`). The admin order table in `src/pages/admin/orders.tsx` is the nearest table markup.                                                                                      |
+| CI                               | `.github/workflows/ci.yml` runs on pushes and pull requests to `vortex/**`, `dev`, `main`.                                                                                                                                                                                                            |
+
+### Decisions (fixed interfaces)
+
+Every signature below is a contract between tickets. A ticket that needs to change one escalates to planning instead.
+
+- **P1 — Stock record access (group 1, SWHR-T-0147).** New `lib/supplier/inventory.ts`: `StockRecord { itemId: string; quantity: number }`; `listStockRecords(executor = db): StockRecord[]`, sorted by item id with a numeric-aware comparison (EST-2 before EST-10); `getStockRecord(itemId, executor = db): StockRecord | null`; `createStockRecord(tx, record): void`, a plain insert that throws and writes nothing for a duplicate item id or a missing quantity (the PK and NOT NULL do the refusing). No schema or migration change: tasks 1.1 and 1.2 are verified, not rebuilt.
+- **P2 — Batch rule (group 2, SWHR-T-0148).** New pure `lib/supplier/stockBatch.ts`: `StockBatchRow { itemId: string; update: boolean; quantity: string }` (the raw text of the New Quantity box). `planStockBatch(rows, knownItemIds: ReadonlySet<string>): StockBatchPlan`. Per row, in order: not ticked → skip; trimmed quantity blank → skip; not matching `^-?\d+$` → invalid; negative → skip silently; item id not in `knownItemIds` → unknown; otherwise an update `{ itemId, quantity: Number }` that replaces the stored value. Any invalid or unknown row rejects the whole batch: `{ ok: false, invalid, unknown }`. Otherwise `{ ok: true, updates }`. Zero is an update.
+- **P3 — Unit of work (group 3, SWHR-T-0149).** New `lib/supplier/inventoryUpdate.ts`: `updateInventory(rows, now = new Date()): UpdateInventoryResult`. It runs one `db.transaction`: read the known ids through `listStockRecords(tx)`, plan with P2, and on a rejected plan return it with nothing written. Otherwise it calls `applyStockUpdate(tx, updates, now)` and returns `{ ok: true, updated, invoicedOrderIds }`. Any throw escapes and rolls the whole transaction back. In `lib/supplier/stock.ts`, `fulfilSupplierOrder` builds the invoice before it writes anything and wraps a build failure in a new `InvoiceBuildError` (`lib/supplier/errors.ts`, `.cause` set). `refulfilPendingSupplierOrders` skips an order only on `InvoiceBuildError`; every other error propagates (SD-2). "Invoice sent" means queued on `opc.invoice` in the same transaction (D3, Q2).
+- **P4 — API (group 4, SWHR-T-0150).** `routes/api/supplier/inventory.get.ts` and `inventory.post.ts`, both starting with `requireRole(event, "supplier", "administrator")` (401 / 403).
+  - GET → 200 `{ items: StockRecord[] }`, or 500 `{ error: "INVENTORY_UNAVAILABLE" }` when the lookup throws. Distinguishable, so Q3 can be decided in the UI alone.
+  - POST body `{ rows: StockBatchRow[] }`, every row of the screen (SD-3). A malformed body → 400 `{ error: "INVALID_BATCH", invalid: [], unknown: [] }`. A rejected plan → 400 `{ error: "INVALID_BATCH", invalid, unknown }`. Commit → 200 `{ updated }`. A throw → 500. Nothing is written except on 200.
+- **P5 — Initial load (group 5, SWHR-T-0151).** `db/seed/inventory.ts` exports `loadInitialStock(db, { force = false } = {}): "loaded" | "skipped"`, replacing `seedInventory`. Unforced: skip when any stock record exists, else insert EST-1..EST-29 at 10000. Forced: upsert each seeded item to 10000, leaving any other item untouched. `db/client.ts` calls it unforced at startup. **No HTTP route runs it** (R1 closed). A forced reload is reachable only by calling the function (Q1: the role that may run it after launch stays a human decision).
+- **P6 — Screens (group 6, SWHR-T-0152).** `src/pages/supplier/index.tsx` becomes the home page; new `inventory.tsx` and `updated.tsx`. Every page keeps the existing gate: signed off → `/supplier/signin`; no role → the existing "Not authorised" state. Logout posts `POST /api/staff/signoff` `{ realm: "supplier" }` and follows its redirect to `/supplier/signed-out`. The inventory page renders `GET /api/supplier/inventory`; an empty list **or** a failed GET shows "There are no items in inventory." with no table and no Submit (R-0231, SD-6). Submit posts every row; 200 → navigate to `/supplier/updated`; any other answer → an inline error and no navigation. English literals only, like the existing supplier pages (sign-on P12). Layout follows the mockups under the design reference below, with the SD-7 corrections.
+- **P7 — Order of work.** Groups 1, 2 and 5 start in parallel. 3 waits for 1 and 2; 4 waits for 3; 6 waits for 4. The ownership maps in each PLAN.md are disjoint.
+
+### Design reference
+
+Exported byte-exact from idea SWHR-I-0012, doc v12, to `artifacts/SWHR-S-0015/design/` (index `MANIFEST.md`): a wireframe and a mockup each for the supplier home, the inventory screen, the no-items state and the update confirmation.
+
+### Spec discrepancies
+
+These are recorded as observed. Nothing in the delta spec was edited.
+
+- **SD-1 — Already built.** Tasks 1.1, 1.2, 5.1 and most of 3.1–3.3 exist (see Codebase findings). Their tickets verify them, add the missing pieces and cite the scenarios; they do not rebuild. D1's snake_case `supplier_inventory` is the camelCase `supplierInventory` the repo already has.
+- **SD-2 — Roll back the update or skip the order.** SWHR-R-0227.03 says a re-fulfilment failure rolls back the stock change. Order-fulfillment SWHR-R-0220.02 (spec of record) and ARCHITECTURE's Key Decision say each pending order runs in its own savepoint, so a failing order is skipped. The shipped code swallows every error, which fails SWHR-R-0227.03. P3 keeps both: only an invoice-build failure skips its order (the SWHR-R-0220.02 case); any other failure aborts the whole update. The ARCHITECTURE Key Decision is amended to match.
+- **SD-3 — What Submit sends.** D2 says the SPA sends only ticked rows. SWHR-R-0230 says Submit "sends every row's entries as one batch". P4 sends every row with its `update` flag, so the selection rule lives in one place, the server.
+- **SD-4 — Non-numeric input.** D4 rejects the whole batch with a 400. The canvas's technical approach skips it like a negative, pending Q4. D4 is the change's decision and is kept. "12.5" is non-numeric.
+- **SD-5 — Unknown item id.** Per D5 the whole batch is rejected. `applyStockUpdate` upserts, and would silently create a stock record for an unknown id, so P3 plans before it writes.
+- **SD-6 — Lookup failure message.** SWHR-R-0231.02 shows "no items in inventory" when the list cannot be loaded. The canvas's open question prefers the shell's error frame with Try again, because "no stock" may prompt staff to re-enter everything. The spec is built; the API keeps the failure distinguishable (P4), so a human can change only the page later.
+- **SD-7 — Mockups against the spec.** The inventory mockup labels its columns "Item ID" and "Current Quantity" and shows Submit above and below the table. The spec requires "Item Id", "Existing Quantity", "New Quantity", "Update" and one Submit, so the screen uses the spec's labels and one Submit below the table. The home mockup's copy does not mention "Back Ordered"; the page states that updating inventory lets the supplier fill items marked "Back Ordered". The confirmation must state that the inventory was updated successfully. Everything else follows the mockups.
+- **SD-8 — Pending-order priority (Q5).** Order fulfilment already re-tries pending orders in ascending order id, which is oldest first because ids come from one counter. Kept.
+- **SD-9 — Not-authorised copy (R4).** The existing supplier page says "You are not authorised to update orders." It belongs to sign-on (SWHR-R-0082.01) and is kept unchanged.
+
+### Phases
+
+1. **Data model** (group 1). Stock record access and the SWHR-R-0224 tests.
+2. **Rules** (group 2). The pure batch plan and its tests.
+3. **Unit of work** (group 3). `updateInventory` and the narrowed re-fulfilment skip.
+4. **API** (group 4). Both routes and their tests, including authorisation refusal.
+5. **Initial load** (group 5). Forced and unforced load, startup call.
+6. **Screens** (group 6). Three pages, the no-items state and their page tests.
+7. **Test harness.** Every approved case SWHR-C-0390..0412 gets a citing test in the ticket that owns its scenario. Integration cases run in the Vitest `server` project (`lib/**`, `routes/**`), with the in-memory database. The unit page cases (C-0404, C-0407, C-0409, C-0410, C-0411) are page tests in the `client` project with `fetch` stubbed. The e2e cases (C-0405, C-0406, C-0408, C-0412) live in the new `e2e/supplier-inventory.spec.ts`, which signs in as the seeded `supplier` user. Playwright runs fully parallel against one database, and other specs order EST-1 and EST-6, so the spec never sets a stock level below 10.
+8. **CI.** No workflow change is needed. `ci.yml` already triggers on `vortex/**` and runs the unit and Playwright suites; the new tests land in those jobs by path.
+
+### Risks
+
+- Narrowing the re-fulfilment skip (SD-2) changes shipped order-fulfillment code. `lib/supplier/stock.test.ts` (SWHR-C-0386) and `lib/b2b/scenarios/order-fulfillment.test.ts` are the regression guard and must stay green unchanged in behaviour.
+- `src/pages/supplier/index.test.tsx` asserts the "Coming soon" placeholder; SWHR-T-0152 rewrites it with the page. `e2e/shell.spec.ts` only checks that `/supplier` renders in the shell.
+- A forced initial load overwrites real stock. It has no HTTP entry point, and a human still has to decide who may run it after launch (Q1).
