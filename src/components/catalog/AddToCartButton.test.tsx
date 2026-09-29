@@ -39,4 +39,21 @@ describe("AddToCartButton", () => {
 
     expect(await screen.findByText("Added to cart")).toBeInTheDocument();
   });
+
+  it("announces cart:changed after a successful add", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(jsonResponse({ lines: [] }))),
+    );
+    const listener = vi.fn();
+    window.addEventListener("cart:changed", listener);
+    const user = userEvent.setup();
+
+    render(<AddToCartButton itemId="EST-6" label="Add to Cart" addedLabel="Added to cart" />);
+    await user.click(screen.getByRole("button", { name: "Add to Cart" }));
+
+    await screen.findByText("Added to cart");
+    window.removeEventListener("cart:changed", listener);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });

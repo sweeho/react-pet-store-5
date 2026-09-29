@@ -122,8 +122,8 @@ test.describe("Item detail page", () => {
     await expect(page.getByText("Added to cart")).toBeVisible();
 
     await page.goto("/cart");
-    await expect(page.getByText("Male Adult Bulldog")).toBeVisible();
-    await expect(page.getByText("Quantity: 1")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Male Adult Bulldog" })).toBeVisible();
+    await expect(page.getByLabel("Quantity for Male Adult Bulldog")).toHaveValue("1");
   });
 });
 
@@ -161,9 +161,9 @@ test.describe("Product item listing", () => {
     await expect(maleRow.getByText("Added to cart")).toBeVisible();
 
     await page.goto("/cart");
-    await expect(page.getByText("Male Adult Bulldog")).toBeVisible();
-    await expect(page.getByText("Quantity: 1")).toBeVisible();
-    await expect(page.getByText("Female Puppy Bulldog")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Male Adult Bulldog" })).toBeVisible();
+    await expect(page.getByLabel("Quantity for Male Adult Bulldog")).toHaveValue("1");
+    await expect(page.getByRole("link", { name: "Female Puppy Bulldog" })).toHaveCount(0);
   });
 });
 

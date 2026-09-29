@@ -2,6 +2,7 @@ import { LogIn, LogOut, Menu, PawPrint, Search, ShoppingCart, User } from "lucid
 import type { FormEvent } from "react";
 import { Link } from "react-router";
 
+import { useCartCount } from "@/hooks/useCartCount";
 import { useSignOnSession } from "@/hooks/useSignOnSession";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
@@ -34,6 +35,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
   const { locale, changeLocale } = useLocale();
   const { signedOn, refresh } = useSignOnSession();
   const t = useScreen("shell");
+  const cartCount = useCartCount();
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -149,6 +151,7 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
           </Link>
           <Link
             to="/cart"
+            aria-label={cartCount ? `${t.cart} (${cartCount})` : undefined}
             className={cn(
               "hover:bg-background-1 flex h-11 items-center gap-2 rounded-md px-3 text-sm font-medium",
               FOCUS_RING,
@@ -156,6 +159,14 @@ export default function SiteHeader({ onOpenMenu }: SiteHeaderProps) {
           >
             <ShoppingCart aria-hidden="true" className="size-4.5" />
             <span className="hidden sm:inline">{t.cart}</span>
+            {cartCount ? (
+              <span
+                aria-hidden="true"
+                className="bg-primary text-primary-foreground inline-grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-semibold"
+              >
+                {cartCount}
+              </span>
+            ) : null}
           </Link>
           {signedOn ? (
             <button
