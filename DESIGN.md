@@ -31,7 +31,13 @@ Class-based dark mode: `.dark` on `<html>` switches every token. No toggle is wi
 
 ## Layout and the site shell
 
-Every page renders inside one shell — header, one navigation landmark named **Global**, `main`, footer — and never draws its own chrome. Pages contribute only the content inside `main`. On narrow screens (below `lg`) the navigation folds behind a menu button and opens as a panel with the same entries. The entries come from one list, `src/constants/navigation.ts`; a new primary area adds an entry there rather than a second menu. Behaviour of record: `openspec/specs/site-shell/`.
+Every page renders inside one shell — header, one navigation landmark named **Global**, `main`, footer — and never draws its own chrome. Pages contribute only the content inside `main`. On narrow screens (below `lg`) the navigation folds behind a menu button and opens as a panel with the same entries. Primary areas come from one list, `src/constants/navigation.ts`; a new primary area adds an entry there rather than a second menu. Behaviour of record: `openspec/specs/site-shell/`.
+
+Storefront pages add a **Pets** side panel left of `main` from `lg` up: 232 px wide, an uppercase `text-muted-foreground-1` heading, one 40 px row per pet category, the current category highlighted with `bg-primary-50` and `text-primary-700`. Below `lg` the same entries sit under a "Pets" heading in the navigation panel. Its entries are the catalog's categories for the current locale (ARCHITECTURE.md §Key Decisions), never a hand-kept list.
+
+## Paged lists
+
+A list that pages shows **Previous** only when an earlier page exists and **Next** only when a later one does, as plain links under the list; never a disabled control and never page numbers. The page is part of the address (`start`, `count`), so a paged view can be bookmarked and the browser's Back button steps back through pages.
 
 ## State frames
 

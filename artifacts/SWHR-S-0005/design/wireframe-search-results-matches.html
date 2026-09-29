@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;font-size:13px;color:#27272a;background:#fafafa;width:720px}
+.util{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #e4e4e7;font-size:11px;color:#71717a}
+.util .on{border:1px solid #a1a1aa;border-radius:10px;padding:1px 6px;color:#27272a}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #e4e4e7}
+.logo{font-weight:700}.search{flex:1;display:flex}.search .in{flex:1;border:1px solid #52525b;border-radius:6px 0 0 6px;padding:7px}.search b{border:1px solid #52525b;background:#52525b;color:#fff;padding:7px 10px;border-radius:0 6px 6px 0;font-weight:600}
+.acts{display:flex;gap:10px}.acts span{padding:6px 8px}.acts .btn{border:1px solid #a1a1aa;border-radius:6px}
+.body{display:flex;gap:16px;padding:16px}
+aside{width:140px;flex:none;background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:6px}
+aside h3{font-size:10px;letter-spacing:.06em;color:#71717a;padding:4px 8px}aside a{display:block;padding:7px 8px;border-radius:6px}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px}.kw{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.chip{border:1px solid #a1a1aa;border-radius:10px;padding:2px 8px;background:#fff}
+.list{background:#fff;border:1px solid #e4e4e7;border-radius:8px}
+.row{padding:12px 14px;border-bottom:1px solid #e4e4e7;display:flex;gap:12px;align-items:center}.row:last-child{border-bottom:0}
+.txt{flex:1;display:flex;flex-direction:column;gap:6px}.txt a{font-weight:600;text-decoration:underline}
+.bar{height:7px;background:#d4d4d8;border-radius:4px}
+.price{width:80px;text-align:right;font-weight:600}.price small{display:block;font-size:10px;color:#71717a;font-weight:400}
+.add{border:1px solid #52525b;background:#52525b;color:#fff;border-radius:6px;padding:9px 12px;font-weight:600;white-space:nowrap}
+.pager{display:flex;justify-content:space-between}.pbtn{border:1px solid #a1a1aa;border-radius:6px;padding:8px 14px;background:#fff;font-weight:600}
+.note{font-size:11px;color:#71717a}
+footer{border-top:1px solid #e4e4e7;background:#fff;padding:12px 16px;font-size:11px;color:#71717a;display:flex;justify-content:space-between}
+</style></head><body>
+<div class="util"><span>Language <span class="on">English</span> 日本語 中文</span><span>Store staff: Administration · Supplier</span></div>
+<header><span class="logo">▣ Pet Store</span><div class="search"><span class="in">bull fish</span><b>Search</b></div><div class="acts"><span>Account</span><span>Cart 0</span><span class="btn">Sign in</span></div></header>
+<div class="body"><aside><h3>PETS</h3><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></aside>
+<main>
+<h1>Search results</h1>
+<div class="kw">Items matching any of: <span class="chip">bull</span><span class="chip">fish</span></div>
+<div class="list">
+<div class="row"><div class="txt"><a>Male Adult Bulldog</a><div class="bar" style="width:80%"></div></div><span class="price">$12.00<small>Your Price</small></span><span class="add">Add to Cart</span></div>
+<div class="row"><div class="txt"><a>Adult Male Goldfish</a><div class="bar" style="width:60%"></div></div><span class="price">$5.50<small>Your Price</small></span><span class="add">Add to Cart</span></div>
+</div>
+<div class="pager"><span></span><span class="pbtn">Next ›</span></div>
+<p class="note">Duplicate keywords are removed · 2 results per page · the query stays in the header box · Previous and Next show only when that page exists. The spec shows "Your Price" (unit cost) here; which price listings should show is still an open item in the proposal.</p>
+</main></div>
+<footer><span>© Pet Store</span><span>Footer links (shell)</span></footer>
+</body></html>
