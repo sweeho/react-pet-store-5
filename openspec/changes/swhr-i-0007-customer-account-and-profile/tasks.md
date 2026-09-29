@@ -44,9 +44,9 @@
 
 ## 6. Open questions
 
-- [ ] 6.1 Obtain a decision on card number storage, masking and access (design Q1) before building 1.5 and 4.1 (SWHR-T-0085)
-- [ ] 6.2 Obtain the authoritative card type, expiry year range, expiry format and country lists (design Q2, Q5, Q7) (SWHR-T-0085)
-- [ ] 6.3 Obtain decisions on disabled accounts, customer deletion and field formats (design Q8, Q9, Q10) (SWHR-T-0085)
+- [x] 6.1 Obtain a decision on card number storage, masking and access (design Q1) before building 1.5 and 4.1 (SWHR-T-0085)
+- [x] 6.2 Obtain the authoritative card type, expiry year range, expiry format and country lists (design Q2, Q5, Q7) (SWHR-T-0085)
+- [x] 6.3 Obtain decisions on disabled accounts, customer deletion and field formats (design Q8, Q9, Q10) (SWHR-T-0085)
 
 ## 7. Tests
 
