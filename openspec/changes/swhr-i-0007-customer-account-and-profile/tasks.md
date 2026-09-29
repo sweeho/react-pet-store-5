@@ -22,12 +22,12 @@
 
 ## 3. Server routes and validation
 
-- [ ] 3.1 Add the route returning the signed-on customer's account (SWHR-T-0082)
-- [ ] 3.2 Add the registration route creating the account once for the signed-on user (SWHR-T-0082)
-- [ ] 3.3 Add the update route replacing contact, address, card and profile with submitted values (SWHR-T-0082)
-- [ ] 3.4 Enforce that a signed-on user reads and updates only their own account in the route layer (SWHR-T-0082)
-- [ ] 3.5 Validate required contact fields after trimming; store blank street line 2 as absent; keep email optional (SWHR-T-0082)
-- [ ] 3.6 Validate required preferred language and favourite category; default unticked My List and banner to off (SWHR-T-0082)
+- [x] 3.1 Add the route returning the signed-on customer's account (SWHR-T-0082)
+- [x] 3.2 Add the registration route creating the account once for the signed-on user (SWHR-T-0082)
+- [x] 3.3 Add the update route replacing contact, address, card and profile with submitted values (SWHR-T-0082)
+- [x] 3.4 Enforce that a signed-on user reads and updates only their own account in the route layer (SWHR-T-0082)
+- [x] 3.5 Validate required contact fields after trimming; store blank street line 2 as absent; keep email optional (SWHR-T-0082)
+- [x] 3.6 Validate required preferred language and favourite category; default unticked My List and banner to off (SWHR-T-0082)
 
 ## 4. Account screens
 
