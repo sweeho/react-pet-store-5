@@ -23,6 +23,7 @@ ID: SWHR-R-0147.02
 - **THEN** the submission passes contact validation
 
 #### Scenario: No contact e-mail anywhere
+ID: SWHR-R-0147.03
 
 - **GIVEN** a signed-in customer whose account holds no e-mail and a non-empty cart, and the order information form with every required field filled and the billing and shipping e-mail blank
 - **WHEN** the form is submitted
