@@ -12,11 +12,11 @@
 
 ## Backlog
 
-| Ticket | Type | Title | Role | Depends on |
-| --- | --- | --- | --- | --- |
-| SWHR-T-0023 | DEFECT | Pet-category and area navigation labels stay English in ja_JP and zh_CN | implementation | SWHR-T-0064 |
-| SWHR-T-0050 | DEFECT | bun run dev 500s on any route touching db/client.ts (pre-existing, reproduces on base branch) | devops | — |
-| SWHR-T-0064 | DEFECT | a2a_run_tests(green) false-positives on the word "VortexNotImplemented" in config/prose, not live stubs | devops | — |
+| Ticket      | Type   | Title                                                                                                | Role           | Depends on  |
+| ----------- | ------ | ---------------------------------------------------------------------------------------------------- | -------------- | ----------- |
+| SWHR-T-0023 | DEFECT | Pet-category and area navigation labels stay English in ja_JP and zh_CN                              | implementation | SWHR-T-0064 |
+| SWHR-T-0050 | DEFECT | bun run dev 500s on any route touching db/client.ts (pre-existing, reproduces on base branch)        | devops         | —           |
+| SWHR-T-0064 | DEFECT | a2a_run_tests(green) false-positives on the configured stub sentinel in config/prose, not live stubs | devops         | —           |
 
 ## Where to look
 
