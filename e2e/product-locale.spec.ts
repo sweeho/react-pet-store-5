@@ -15,7 +15,7 @@ test.describe("Product page language switch", () => {
   test("[SWHR-R-0008.01] switching language on the product page re-renders it in Japanese and moves the cart locale", async ({
     page,
   }) => {
-    await page.goto("/product/BULLDOG");
+    await page.goto("/product/K9-BD-01");
 
     await expect(page.getByRole("heading", { level: 1, name: "Bulldog" })).toBeVisible();
     await expect(page.getByText("Male Adult Bulldog")).toBeVisible();
@@ -23,7 +23,7 @@ test.describe("Product page language switch", () => {
 
     await page.getByRole("button", { name: "日本語" }).click();
 
-    await expect(page).toHaveURL("/product/BULLDOG");
+    await expect(page).toHaveURL("/product/K9-BD-01");
     await expect(page.getByRole("heading", { level: 1, name: "ブルドッグ" })).toBeVisible();
     await expect(page.getByText("オス成犬ブルドッグ")).toBeVisible();
     await expect(page.getByText("￥2,000")).toBeVisible();
