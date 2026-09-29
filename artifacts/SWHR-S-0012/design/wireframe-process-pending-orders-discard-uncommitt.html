@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Discard warning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:13px;color:#27272a;background:#fafafa;width:1200px}
+.util{height:30px;background:#f4f4f5;border-bottom:1px solid #d4d4d8}
+header{height:56px;background:#fff;border-bottom:1px solid #d4d4d8;padding:0 24px;display:flex;align-items:center;font-weight:700}
+.body{display:flex;gap:24px;padding:24px}
+aside{width:190px;height:220px;flex:none;border:1px solid #d4d4d8;border-radius:10px;background:#fff}
+main{flex:1;display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px}
+.tabs{display:flex;border-bottom:1px solid #d4d4d8}.tabs a{padding:10px 16px;color:#71717a}.tabs a.on{color:#27272a;font-weight:600;border-bottom:2px solid #27272a}
+.btn{display:inline-block;min-height:34px;padding:8px 14px;border:1px solid #71717a;border-radius:6px;background:#fff;font-weight:600}
+.btn.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.bar{display:flex;gap:8px;justify-content:flex-end}
+.table{height:260px;background:#fff;border:1px solid #d4d4d8;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.table i{display:block;height:10px;background:#e4e4e7;border-radius:3px}
+.wrapx{position:relative}
+.dim{position:absolute;inset:0;background:rgba(39,39,42,.35);border-radius:10px}
+.alert{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:440px;background:#fff;border:2px solid #52525b;border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.alert h3{font-size:16px}
+.alert .row{display:flex;gap:8px;justify-content:flex-end}
+.note{font-size:11px;color:#71717a;font-style:italic}
+footer{height:56px;border-top:1px solid #d4d4d8;background:#fff}
+</style></head><body>
+<div class="util"></div><header>Pet Store — shell header</header>
+<div class="body"><aside></aside><main>
+<h1>Order management</h1>
+<nav class="tabs"><a class="on">Process Pending Orders</a><a>View Non-Pending Orders</a></nav>
+<div class="bar"><span style="align-self:center;font-size:12px">3 uncommitted decisions</span><span class="btn">Refresh</span><span class="btn pri">Commit</span></div>
+<div class="wrapx">
+<div class="table"><i style="width:100%"></i><i style="width:92%"></i><i style="width:96%"></i><i style="width:88%"></i><i style="width:94%"></i><i style="width:90%"></i></div>
+<div class="dim"></div>
+<div class="alert" role="alertdialog">
+<h3>Discard 3 uncommitted decisions?</h3>
+<p>You have approved or denied orders that are not committed yet. Refreshing reloads the orders from the server and discards these decisions.</p>
+<div class="row"><span class="btn">Keep my decisions</span><span class="btn pri">Discard and refresh</span></div>
+</div></div>
+<p class="note">Shown when Refresh (or leaving the pending tab/view) would drop uncommitted decisions. With no uncommitted decisions, Refresh reloads straight away.</p>
+</main></div><footer></footer>
+</body></html>

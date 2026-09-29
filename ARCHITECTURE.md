@@ -27,6 +27,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 │   ├── components/ui/   # shadcn/ui-style primitives (+ *.test.tsx)
 │   ├── components/layout/ # the site shell: header, Global navigation, footer
 │   ├── components/state/  # shared empty / error / loading frames, AsyncContent
+│   ├── components/admin/  # administrator order tables, sales charts, dialogs
 │   ├── pages/            # Frontend routes, file-based (+ *.test.tsx)
 │   ├── constants/navigation.ts # the one list of primary areas and pet categories
 │   ├── hooks/, utils/, types/, constants/, data/, store/
@@ -38,7 +39,7 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [DESIGN.md](./DESIGN.md) for th
 │   ├── auth/               # Credentials, per-realm sessions, the protected-page gate, roles
 │   ├── cart/               # Session cart: lines, read-time CartView, emptyCart
 │   ├── checkout/           # Order form validation and order placement (one transaction)
-│   ├── orders/             # Purchase-order storage, intake consumer, exact decimal money for documents
+│   ├── orders/             # Purchase-order storage, intake and approval consumers, approval policy, admin order data and reports, exact decimal money
 │   ├── ids/                # Per-prefix identifier counters (order ids)
 │   ├── errors/             # Failure kinds and the failure-kind → error-screen mapping
 │   ├── b2b/                # Partner XML documents: xml/ infrastructure, elements/, documents/, partner/, exchange/, schemas/ (bundled DTD/XSD + catalog)
@@ -89,13 +90,14 @@ Shoppers sign on only for account, account change, checkout and the sign-on welc
   - `middleware/signon.ts`, for document requests
   - `requireSignOn`, for the API routes behind protected pages
 - **Roles.** `role_assignments` grants a role per realm to a user or a group, and `group_members` holds group membership. `requireRole(event, realm, "administrator")` guards staff routes. Staff users are seeded outside production only.
+- **Administrator data.** The administrator screens (`/admin/console`, `/admin/orders`) are role-gated. The data service behind them, `POST /api/admin/order-data`, needs only a signed-on admin session, by cookie or `Authorization: Session <id>` (PRD decided behaviour 11). Spec: `openspec/specs/order-approval/` once change `swhr-i-0010-order-approval` archives.
 
 ## Partner documents and messaging
 
 The order centre and the supplier exchange XML documents in the legacy trading-partner formats (purchase order, supplier order, invoice). Spec: `openspec/specs/b2b-document-exchange/` once change `swhr-i-0004-partner-document-exchange` archives.
 
 - **Documents.** `lib/b2b/` writes and reads every document format. Schemas are bundled under `lib/b2b/schemas/`, found through an entity catalog; a deployment catalog (`B2B_ENTITY_CATALOG`) overrides the bundled one. Validation is switched per document type and form (`B2B_VALIDATE_*`, `B2B_SCHEMA_FORM`). The order centre publishes its catalog and schemas at `GET /api/b2b/entity-catalog` and `GET /api/b2b/schemas/:file`. There is no XML-over-HTTP intake.
-- **Messaging.** Asynchronous hops go through one SQLite outbox (`lib/messaging/`). A producer enqueues inside its own `db.transaction()`. Each channel has a fixed subscriber list and one delivery row per subscriber. A dispatcher, polled by a Nitro plugin, runs each handler's commit and marks it delivered in one transaction, and retries on failure. Channels today: `opc.purchase-order` (checkout → order intake), `supplier.purchase-order` (→ supplier intake) and `opc.invoice` (→ order fulfilment, customer notification). Consumers are registered at startup by Nitro plugins.
+- **Messaging.** Asynchronous hops go through one SQLite outbox (`lib/messaging/`). A producer enqueues inside its own `db.transaction()`. Each channel has a fixed subscriber list and one delivery row per subscriber. A dispatcher, polled by a Nitro plugin, runs each handler's commit and marks it delivered in one transaction, and retries on failure. Channels today: `opc.purchase-order` (checkout → order intake), `opc.order-approval` (auto-approval and administrator decisions → order approval), `opc.approval-notice` (→ customer notification), `supplier.purchase-order` (→ supplier intake) and `opc.invoice` (→ order fulfilment, customer notification). A channel whose consumer has not shipped keeps its deliveries pending until it registers. Consumers are registered at startup by Nitro plugins.
 
 ## Database
 
@@ -135,4 +137,5 @@ Four tiers, one worked example each. Commands and how to extend: [README.md](./R
 - **Sessions are server-side and per realm; access checks live in the caller.** Every capability reads sign-on state through `lib/auth/session.ts` and guards with `checkGate`, `requireSignOn` or `requireRole`. Data-layer functions never check roles or sessions. This gives one revocable session store and one place where access is decided. Authored in change `swhr-i-0005-sign-on-and-access-control` (design P4, P6, P10).
 - **Card numbers are kept as their last four digits only.** The card on file stores `cardLastFour`, type and expiry, and is shown masked; no table, log or response carries a full card number, and "the card on the account" at checkout means those three values. PRD constraint 6 forbids storing or showing a card number in full. Authored in change `swhr-i-0007-customer-account-and-profile` (design P3).
 - **Protected pages are configuration.** A page becomes protected through an entry in `configs/signon-config.json`, matched by exact path, never through code in the page. The operator can change protection without a release, as the legacy deployment descriptors allowed. Authored in change `swhr-i-0005-sign-on-and-access-control` (design P5, P6).
+- **Approval decisions are documents on the outbox, applied only to PENDING orders.** Automatic and administrator decisions alike are `OrderApproval` documents on `opc.order-approval`. The one `order-approval` consumer changes a status only with a conditional update from PENDING, sends one supplier purchase order per approval, and queues one `opc.approval-notice` per batch listing the orders that changed. Duplicate and late decisions are therefore harmless. Order fulfilment and customer notification consume these messages rather than deciding approval again. Authored in change `swhr-i-0010-order-approval` (design, Sprint planning P2–P5).
 - **XML is validated against XSD only.** Validation uses `xmllint-wasm`, which cannot validate DTDs under Bun. Each DTD therefore ships with an equivalent XSD, and DTD-form documents are validated against it. A new document type adds both files. Authored in change `swhr-i-0004-partner-document-exchange` (design P1).

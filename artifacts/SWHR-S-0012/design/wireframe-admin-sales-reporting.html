@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Admin sales reporting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:13px;color:#27272a;background:#fafafa;width:1200px}
+a{color:inherit}
+.util{display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 24px;background:#f4f4f5;border-bottom:1px solid #d4d4d8;font-size:12px;color:#52525b}
+.util .on{border:1px solid #a1a1aa;border-radius:10px;padding:1px 8px;background:#fff}.util span{margin-right:8px}
+header{display:flex;align-items:center;gap:20px;height:56px;padding:0 24px;background:#fff;border-bottom:1px solid #d4d4d8}
+.logo{font-weight:700;display:flex;gap:8px;align-items:center}.logo i{width:26px;height:26px;background:#d4d4d8;border:1px solid #a1a1aa;border-radius:6px}
+.search{flex:1;max-width:440px;display:flex}.search div{flex:1;height:34px;border:1px solid #a1a1aa;border-radius:6px 0 0 6px;padding:8px 10px;color:#a1a1aa}.search b{height:34px;border:1px solid #71717a;border-radius:0 6px 6px 0;padding:8px 14px;background:#e4e4e7}
+.acts{margin-left:auto;display:flex;gap:16px;align-items:center}
+.btn{display:inline-block;min-height:34px;padding:8px 14px;border:1px solid #71717a;border-radius:6px;background:#fff;font-weight:600;text-decoration:none}
+.btn.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.body{display:flex;gap:24px;padding:24px}
+aside{width:190px;flex:none;border:1px solid #d4d4d8;border-radius:10px;background:#fff;padding:8px;align-self:flex-start}
+aside h4{font-size:11px;text-transform:uppercase;color:#71717a;padding:4px 8px}aside a{display:block;padding:9px 8px;text-decoration:none}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.crumb{font-size:12px;color:#71717a}h1{font-size:22px}
+.views{display:flex;gap:6px}.views a{padding:7px 14px;border:1px solid #a1a1aa;border-radius:6px;text-decoration:none}.views a.on{background:#e4e4e7;font-weight:600}
+.bar{display:flex;align-items:center;gap:8px}.bar .sp{flex:1}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#fff;border:1px solid #d4d4d8;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:15px}.sub{font-size:12px;color:#71717a}
+.dates{display:flex;gap:10px;align-items:flex-end}
+.f{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.f span.in{width:130px;height:34px;border:1px solid #a1a1aa;border-radius:6px;padding:8px;background:#fff}
+.f.err span.in{border:2px solid #3f3f46}
+.errmsg{font-size:12px;border:1px solid #71717a;background:#f4f4f5;border-radius:6px;padding:8px 10px}
+.chart{height:220px;display:flex;align-items:center;justify-content:center;gap:24px}
+.pie{width:170px;height:170px;border-radius:50%;background:conic-gradient(#3f3f46 0 34%,#71717a 0 58%,#a1a1aa 0 76%,#d4d4d8 0 90%,#e4e4e7 0);border:1px solid #a1a1aa}
+.legend{font-size:12px;line-height:2}.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;border:1px solid #a1a1aa;vertical-align:middle}
+.bars{height:200px;width:100%;display:flex;align-items:flex-end;gap:18px;padding:0 10px;border-left:1px solid #a1a1aa;border-bottom:1px solid #a1a1aa}
+.bars div{flex:1;background:#a1a1aa;position:relative}
+.bars div span{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:11px}
+.bars div b{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px}
+.note{font-size:11px;color:#71717a;font-style:italic}
+footer{display:flex;justify-content:space-between;padding:18px 24px;border-top:1px solid #d4d4d8;background:#fff;font-size:12px;color:#71717a}
+</style></head><body>
+<div class="util"><div><span>Language</span><span class="on">English</span><span>日本語</span><span>中文</span></div><div>Store staff: <u>Administration</u> &nbsp; Supplier</div></div>
+<header><div class="logo"><i></i>Pet Store</div><div class="search"><div>Search pets by name or description</div><b>Search</b></div><div class="acts"><a>Account</a><a>Cart (0)</a><a class="btn">Sign out</a></div></header>
+<div class="body">
+<aside><h4>Pets</h4><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></aside>
+<main>
+<div class="crumb">Home › Administration › Sales</div>
+<div class="bar"><h1>Sales</h1><span class="sp"></span><div class="views"><a>Orders</a><a class="on">Sales</a></div><a class="btn">Log out</a></div>
+<div class="grid">
+<section class="card">
+<h3>Revenue share by category</h3><p class="sub">Orders in every status are counted.</p>
+<div class="dates"><label class="f">Start Date<span class="in">09/01/2026</span></label><label class="f">End Date<span class="in">09/27/2026</span></label><span class="btn pri">Get Data</span></div>
+<div class="chart"><div class="pie"></div>
+<div class="legend"><div><i style="background:#3f3f46"></i>Dogs — 34%</div><div><i style="background:#71717a"></i>Cats — 24%</div><div><i style="background:#a1a1aa"></i>Birds — 18%</div><div><i style="background:#d4d4d8"></i>Reptiles — 14%</div><div><i style="background:#e4e4e7"></i>Fish — 10%</div></div></div>
+</section>
+<section class="card">
+<h3>Ordered quantity by category</h3><p class="sub">Orders in every status are counted.</p>
+<div class="dates"><label class="f">Start Date<span class="in">09/01/2026</span></label><label class="f err">End Date<span class="in">2026-09-27</span></label><span class="btn pri">Get Data</span></div>
+<div class="errmsg" role="alert">End Date must be entered as MM/dd/yyyy. No data was fetched.</div>
+<div class="chart" style="padding-bottom:20px"><div class="bars">
+<div style="height:40%"><b>12</b><span>Birds</span></div><div style="height:55%"><b>17</b><span>Cats</span></div><div style="height:90%"><b>28</b><span>Dogs</span></div><div style="height:30%"><b>9</b><span>Fish</span></div><div style="height:25%"><b>8</b><span>Reptiles</span></div>
+</div></div>
+</section>
+</div>
+<p class="note">Each chart has its own dates and Get Data and reloads only when asked. Right-hand card shows the date-format error state: the chart keeps its last data and nothing is fetched. Figures are placeholders.</p>
+</main></div>
+<footer><span>Pet Store</span><span>Footer links (shell)</span></footer>
+</body></html>

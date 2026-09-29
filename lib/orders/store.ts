@@ -44,15 +44,15 @@ export interface StoredOrder {
  * Stores the order as a snapshot (OQ-5: only the shipping contact is kept;
  * billing travels in the document). `totalValue` is the supplied total,
  * never recomputed from the lines. A second call with the same `orderId`
- * does nothing, which gives exactly-once delivery.
+ * does nothing and returns false, which gives exactly-once delivery.
  */
-export function persistPurchaseOrder(tx: Executor, po: PurchaseOrder): void {
+export function persistPurchaseOrder(tx: Executor, po: PurchaseOrder): boolean {
   const existing = tx
     .select({ orderId: purchaseOrders.orderId })
     .from(purchaseOrders)
     .where(eq(purchaseOrders.orderId, po.orderId))
     .get();
-  if (existing) return;
+  if (existing) return false;
 
   tx.insert(purchaseOrders)
     .values({
@@ -110,6 +110,7 @@ export function persistPurchaseOrder(tx: Executor, po: PurchaseOrder): void {
       })
       .run();
   }
+  return true;
 }
 
 export function getStoredOrder(orderId: string, tx: Executor = db): StoredOrder | null {

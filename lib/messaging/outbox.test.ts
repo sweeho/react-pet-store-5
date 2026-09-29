@@ -44,6 +44,19 @@ describe("enqueue", () => {
     ]);
   });
 
+  it.each([
+    ["opc.order-approval", "order-approval"],
+    ["opc.approval-notice", "customer-notification"],
+  ] as const)("creates one delivery for %s", (channel, consumer) => {
+    const id = db.transaction((tx) => enqueue(tx, channel, "payload"));
+    const deliveries = db
+      .select()
+      .from(outboxDeliveries)
+      .where(eq(outboxDeliveries.messageId, id))
+      .all();
+    expect(deliveries.map((d) => d.consumer)).toEqual([consumer]);
+  });
+
   it("rolls back the message and deliveries when the caller's transaction throws", () => {
     expect(() =>
       db.transaction((tx) => {
