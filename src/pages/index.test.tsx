@@ -7,8 +7,11 @@ import { LocaleProvider } from "@/i18n/LocaleProvider";
 
 import Home from "./index";
 
-function jsonResponse(body: unknown): Response {
-  return new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 }
 
 const CATEGORIES = [
@@ -141,5 +144,48 @@ describe("Home page", () => {
     const map = await screen.findByRole("group", { name: "Choose a pet to start" });
     await waitFor(() => expect(within(map).getAllByRole("link")).toHaveLength(4));
     expect(within(map).queryByRole("link", { name: /Reptiles/ })).not.toBeInTheDocument();
+  });
+
+  function stubAccountAndCategories(accountStatus: number, profile?: object) {
+    vi.unstubAllGlobals();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) =>
+        Promise.resolve(
+          String(input).startsWith("/api/account")
+            ? jsonResponse(profile ? { userId: "j2ee", profile } : {}, accountStatus)
+            : jsonResponse({ categories: CATEGORIES }),
+        ),
+      ),
+    );
+    return render(
+      <MemoryRouter initialEntries={["/"]}>
+        <LocaleProvider
+          fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}
+        >
+          <Home />
+        </LocaleProvider>
+      </MemoryRouter>,
+    );
+  }
+
+  it("[SWHR-C-0228] shows the cats pet-tips banner for a customer whose favourite is CATS", async () => {
+    stubAccountAndCategories(200, {
+      favoriteCategory: "CATS",
+      bannerPreference: true,
+      myListPreference: false,
+    });
+
+    await waitFor(() => expect(screen.queryByTestId("pet-tips-banner")).not.toBeNull());
+    const banner = screen.getByTestId("pet-tips-banner");
+    expect(banner).toHaveAttribute("data-category", "cats");
+  });
+
+  it("shows no pet-tips banner to an anonymous visitor", async () => {
+    stubAccountAndCategories(401);
+
+    await screen.findByRole("group", { name: "Choose a pet to start" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByTestId("pet-tips-banner")).not.toBeInTheDocument();
   });
 });

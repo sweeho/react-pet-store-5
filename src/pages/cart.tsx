@@ -1,5 +1,6 @@
 import { PawPrint } from "lucide-react";
 
+import PetTipsBanner from "@/components/account/PetTipsBanner";
 import { AsyncContent, EmptyState } from "@/components/state";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
@@ -35,6 +36,7 @@ export default function CartPage() {
   return (
     <div className="flex flex-col gap-6 p-8">
       <h1 className="text-2xl font-bold">{t.title}</h1>
+      <PetTipsBanner />
       <AsyncContent
         load={loadCart}
         isEmpty={(lines) => lines.length === 0}

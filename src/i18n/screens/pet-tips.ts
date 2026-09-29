@@ -1,0 +1,66 @@
+import type { ScreenDefinition } from "../screens";
+
+// Pet-tips banner copy, one entry per category (design.md P10). The dogs
+// entry doubles as the fallback for a favourite category with no entry.
+export default {
+  en_US: {
+    label: "Pet tips",
+    myListHeading: "My List",
+    dogsName: "Dogs",
+    dogsHeadline: "Walk your dog at least twice a day.",
+    dogsBody: "Regular walks keep dogs fit and calm, and give them the chance to explore.",
+    catsName: "Cats",
+    catsHeadline: "Give your cat a scratching post.",
+    catsBody:
+      "A sturdy post protects the furniture and lets cats stretch and mark their territory.",
+    reptilesName: "Reptiles",
+    reptilesHeadline: "Keep the terrarium at the right temperature.",
+    reptilesBody:
+      "Provide a warm basking spot and a cooler side so reptiles can regulate themselves.",
+    birdsName: "Birds",
+    birdsHeadline: "Let your bird out of the cage every day.",
+    birdsBody: "Supervised time outside the cage keeps birds active and well socialised.",
+    fishName: "Fish",
+    fishHeadline: "Change about a quarter of the aquarium water every two weeks.",
+    fishBody:
+      "Match the new water's temperature to the tank first — sudden changes stress fish more than the water itself.",
+  },
+  ja_JP: {
+    label: "ペットのヒント",
+    myListHeading: "マイリスト",
+    dogsName: "犬",
+    dogsHeadline: "犬の散歩は1日2回以上しましょう。",
+    dogsBody: "定期的な散歩は犬の健康と落ち着きを保ち、探索の機会にもなります。",
+    catsName: "猫",
+    catsHeadline: "猫に爪とぎを用意しましょう。",
+    catsBody: "丈夫な爪とぎは家具を守り、猫が体を伸ばしたり縄張りを示したりするのに役立ちます。",
+    reptilesName: "爬虫類",
+    reptilesHeadline: "テラリウムを適切な温度に保ちましょう。",
+    reptilesBody: "暖かい日光浴の場所と涼しい場所を用意すると、体温調節ができます。",
+    birdsName: "鳥",
+    birdsHeadline: "毎日、鳥をケージの外に出してあげましょう。",
+    birdsBody: "見守りながらケージの外で過ごすと、鳥は活発で社交的に育ちます。",
+    fishName: "魚",
+    fishHeadline: "2週間ごとに水槽の水を4分の1ほど替えましょう。",
+    fishBody: "新しい水は先に水温を合わせましょう。急な変化は魚にとって大きな負担です。",
+  },
+  zh_CN: {
+    label: "宠物贴士",
+    myListHeading: "我的清单",
+    dogsName: "狗",
+    dogsHeadline: "每天至少遛狗两次。",
+    dogsBody: "定期散步能让狗保持健康和平静，也让它们有机会探索。",
+    catsName: "猫",
+    catsHeadline: "给猫准备一个猫抓板。",
+    catsBody: "结实的猫抓板可以保护家具，让猫伸展身体并留下气味标记。",
+    reptilesName: "爬行动物",
+    reptilesHeadline: "让饲养箱保持合适的温度。",
+    reptilesBody: "提供温暖的晒背区和较凉的一侧，让爬行动物自行调节体温。",
+    birdsName: "鸟",
+    birdsHeadline: "每天让鸟出笼活动。",
+    birdsBody: "在看护下出笼活动能让鸟保持活力并更亲人。",
+    fishName: "鱼",
+    fishHeadline: "每两周换掉约四分之一的鱼缸水。",
+    fishBody: "先让新水的温度与鱼缸一致——温度骤变对鱼的伤害比水质本身更大。",
+  },
+} satisfies ScreenDefinition;
