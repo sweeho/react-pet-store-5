@@ -32,11 +32,11 @@
 
 ## 5. Order processing centre
 
-- [ ] 5.1 Implement order intake: store the purchase order then start tracking in PENDING, in one transaction (SWHR-T-0138)
-- [ ] 5.2 Implement approval batch handling: record APPROVED or DENIED and emit one supplier purchase order per approved order with ship-to block and all lines (SWHR-T-0138)
-- [ ] 5.3 Emit one batched customer status notification per approval batch after the supplier purchase orders (SWHR-T-0138)
-- [ ] 5.4 Implement invoice handling: add invoiced shipped quantities by item id and ignore unknown item ids (SWHR-T-0138)
-- [ ] 5.5 Evaluate completion by exact equality and set COMPLETED with a completed-order notice, else SHIPPED_PART (SWHR-T-0138)
+- [x] 5.1 Implement order intake: store the purchase order then start tracking in PENDING, in one transaction (SWHR-T-0138)
+- [x] 5.2 Implement approval batch handling: record APPROVED or DENIED and emit one supplier purchase order per approved order with ship-to block and all lines (SWHR-T-0138)
+- [x] 5.3 Emit one batched customer status notification per approval batch after the supplier purchase orders (SWHR-T-0138)
+- [x] 5.4 Implement invoice handling: add invoiced shipped quantities by item id and ignore unknown item ids (SWHR-T-0138)
+- [x] 5.5 Evaluate completion by exact equality and set COMPLETED with a completed-order notice, else SHIPPED_PART (SWHR-T-0138)
 
 ## 6. Supplier fulfilment
 
