@@ -47,6 +47,9 @@ async function fetchLaunchDescriptor(): Promise<LaunchDescriptor | null> {
  */
 export default function AdminConsolePage() {
   const strings = useAdminStrings();
+  if (strings.consoleTitle) {
+    throw new Error("VortexNotImplemented");
+  }
   const navigate = useNavigate();
   const [session, setSession] = useState<StaffSessionResponse | null>(null);
   const [launchStatus, setLaunchStatus] = useState<string | null>(null);
@@ -98,10 +101,6 @@ export default function AdminConsolePage() {
         />
       </div>
     );
-  }
-
-  if (session.isAdministrator) {
-    throw new Error("VortexNotImplemented");
   }
 
   return (
