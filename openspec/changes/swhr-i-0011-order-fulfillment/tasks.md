@@ -9,12 +9,12 @@
 
 ## 2. Purchase order persistence
 
-- [ ] 2.1 Implement atomic purchase order creation (header, shipping contact, card, lines with shipped 0) using the incoming order id (SWHR-T-0135)
-- [ ] 2.2 Reject a duplicate order id without altering the stored order (SWHR-T-0135)
-- [ ] 2.3 Implement read-back that reports the single stored contact as both billing and shipping contact (SWHR-T-0135)
-- [ ] 2.4 Implement the detached read-only purchase order snapshot (SWHR-T-0135)
-- [ ] 2.5 Expose line-item updates for shipped quantity only, and line creation from an existing line with a stated shipped quantity (SWHR-T-0135)
-- [ ] 2.6 Store the card as a token or last four digits instead of the plain-text number (SWHR-T-0135)
+- [x] 2.1 Implement atomic purchase order creation (header, shipping contact, card, lines with shipped 0) using the incoming order id (SWHR-T-0135)
+- [x] 2.2 Reject a duplicate order id without altering the stored order (SWHR-T-0135)
+- [x] 2.3 Implement read-back that reports the single stored contact as both billing and shipping contact (SWHR-T-0135)
+- [x] 2.4 Implement the detached read-only purchase order snapshot (SWHR-T-0135)
+- [x] 2.5 Expose line-item updates for shipped quantity only, and line creation from an existing line with a stated shipped quantity (SWHR-T-0135)
+- [x] 2.6 Store the card as a token or last four digits instead of the plain-text number (SWHR-T-0135)
 
 ## 3. Order workflow tracking
 
