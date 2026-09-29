@@ -6,4 +6,4 @@ Files: `routes/api/cart/{index.get,items.post,index.patch}.ts`, `routes/api/cart
 
 AC coverage: AC-1 by `[SWHR-C-0240]` in `items.test.ts` (anonymous POST adds EST-6, no error or redirect).
 
-Verification: `bun run verify` passed (152 files, 752 tests); e2e result in the work log. No design consulted beyond the unchanged page layout.
+Verification: `bun run verify` passed (152 files, 752 tests); `bun run test:e2e` passed (59 tests). No design consulted beyond the unchanged page layout.
