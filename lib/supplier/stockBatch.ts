@@ -12,6 +12,28 @@ export function planStockBatch(
   rows: readonly StockBatchRow[],
   knownItemIds: ReadonlySet<string>,
 ): StockBatchPlan {
-  void [rows, knownItemIds];
-  throw new Error("VortexNotImplemented");
+  const updates: { itemId: string; quantity: number }[] = [];
+  const invalid: string[] = [];
+  const unknown: string[] = [];
+
+  for (const { itemId, update, quantity } of rows) {
+    if (!update) continue;
+    const text = quantity.trim();
+    if (text === "") continue;
+    if (!/^-?\d+$/.test(text)) {
+      invalid.push(itemId);
+      continue;
+    }
+    const value = Number(text);
+    if (value < 0) continue;
+    if (!knownItemIds.has(itemId)) {
+      unknown.push(itemId);
+      continue;
+    }
+    updates.push({ itemId, quantity: value });
+  }
+
+  return invalid.length > 0 || unknown.length > 0
+    ? { ok: false, invalid, unknown }
+    : { ok: true, updates };
 }
