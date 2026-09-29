@@ -31,12 +31,12 @@
 
 ## 5. Screens
 
-- [ ] 5.1 Build the order information page with Billing and Shipping sections pre-filled from the stored contact and a Submit control (SWHR-T-0111)
-- [ ] 5.2 Gate the order information page behind sign-in (SWHR-T-0111)
-- [ ] 5.3 Show per-field missing-value errors on the form when submission is rejected (SWHR-T-0111)
-- [ ] 5.4 Build the order complete page showing the heading, order id and confirmation e-mail address (SWHR-T-0111)
-- [ ] 5.5 Show the empty-cart Order Error with the re-submission note (SWHR-T-0111)
-- [ ] 5.6 Add UI tests for both pages and the empty-cart error, and an E2E spec for cart to checkout to confirmation (SWHR-T-0111)
+- [x] 5.1 Build the order information page with Billing and Shipping sections pre-filled from the stored contact and a Submit control (SWHR-T-0111)
+- [x] 5.2 Gate the order information page behind sign-in (SWHR-T-0111)
+- [x] 5.3 Show per-field missing-value errors on the form when submission is rejected (SWHR-T-0111)
+- [x] 5.4 Build the order complete page showing the heading, order id and confirmation e-mail address (SWHR-T-0111)
+- [x] 5.5 Show the empty-cart Order Error with the re-submission note (SWHR-T-0111)
+- [x] 5.6 Add UI tests for both pages and the empty-cart error, and an E2E spec for cart to checkout to confirmation (SWHR-T-0111)
 
 ## 6. Error routing
 
