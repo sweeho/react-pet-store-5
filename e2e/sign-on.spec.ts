@@ -81,7 +81,9 @@ test.describe("Sign-on journeys", () => {
     await page.getByRole("button", { name: "Search" }).click();
 
     await expect(page).toHaveURL("/search?keywords=dog");
-    await expect(page.getByRole("heading", { name: 'Search results for "dog"' })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Search results" })).toBeVisible();
+    await expect(page.getByText("Items matching any of:")).toBeVisible();
+    await expect(page.getByText("dog", { exact: true })).toBeVisible();
   });
 
   test("[SWHR-C-0117] gated shopper signing on as alice is returned to the account page", async ({

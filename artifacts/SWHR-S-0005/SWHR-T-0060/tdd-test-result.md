@@ -91,7 +91,32 @@ type directly; the platform's gate reported that as "ended in error" rather than
 failure. Rewritten as `waitFor(() => expect(screen.queryByRole(...)).not.toBeNull())`, which fails via
 a genuine `AssertionError` — confirmed by inspecting the actual JUnit report both before and after.
 
-All 604 tests pass (126 files): `bun run verify` — lint, typecheck, and the complete unit suite, green.
+**CI caught a race my local runs never hit.** After pushing the green commit, CI (`build-and-test`)
+failed two tests that pass reliably here: `index.test.tsx › [SWHR-C-0003] links to every primary area`
+and `PetsMenu.test.tsx › lists the five categories...`. Both share a root cause: `src/pages/index.tsx`'s
+`<div role="group">` and `PetsMenu`'s `<nav aria-label="Pets">` render unconditionally on first paint,
+before `useCatalogCategories` resolves — the category links arrive on a later render. The tests did
+`await screen.findByRole("group"/"navigation", ...)` then immediately queried for links synchronously;
+`findByRole` resolves as soon as the _container_ appears (the very first render, zero links yet), so
+the sync query races the second render instead of waiting for it. Fixed (commit `3834e62`) by replacing
+those with `waitFor(() => expect(within(container).getAllByRole("link")).toHaveLength(N))` — the same
+technique already used elsewhere in this ticket's own tests, just missed in these two. Confirmed via
+three consecutive local runs of the affected suites; downloaded and inspected the actual CI JUnit
+artifact (`gh run download`) rather than guessing at the cause from the summary line.
+
+**CI's E2E tier found a real bug the unit suite couldn't**: `src/pages/index.tsx` (Home) never rendered
+`<PetsMenu />` — I'd written the summary claiming it did, but only wired it into the category/product/
+item/search pages and forgot Home itself. `e2e/catalog-browsing.spec.ts`'s SWHR-C-0180 and SWHR-C-0185
+both start their journey at `/`, so both hung for a full 30s (three attempts each) waiting for a "Pets"
+navigation landmark that was never on the page. Fixed (commit after `3834e62`) by wrapping Home's
+content in the same `flex gap-8` + `<PetsMenu />` layout every other catalog page uses, and added a
+unit test (`index.test.tsx` — "renders the Pets menu") so this specific regression can't recur silently;
+no prior unit test asserted the Pets menu's presence on Home specifically. This CI run also caught an
+unrelated pre-existing `e2e/sign-on.spec.ts` case (SWHR-C-0106, not owned by this ticket) asserting the
+old placeholder search heading `'Search results for "dog"'`; updated to match the real heading structure
+("Search results" + a separate "Items matching any of:" line), the same class of fix as `e2e/home.spec.ts`.
+
+All 605 tests pass (126 files): `bun run verify` — lint, typecheck, and the complete unit suite, green.
 `bun run build` and `node scripts/check-doc-links.mjs` also pass. `bun run test:e2e`'s preflight
 reports Chromium genuinely not installed at the pinned path in this container (`/ms-playwright/`
 carries `chromium-1223`, not the pinned `chromium-1155`); per AGENTS.md this is the documented

@@ -56,6 +56,19 @@ describe("Home page", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the Pets menu (SWHR-R-0104 — every storefront page, home included)", async () => {
+    renderHome();
+
+    const nav = screen.getByRole("navigation", { name: "Pets" });
+    await waitFor(() => {
+      expect(within(nav).getAllByRole("link")).toHaveLength(CATEGORIES.length);
+    });
+    expect(within(nav).getByRole("link", { name: "Dogs" })).toHaveAttribute(
+      "href",
+      "/category/DOGS",
+    );
+  });
+
   it("[SWHR-C-0003] links to every primary area", async () => {
     renderHome();
     const map = screen.getByRole("group", { name: "Choose a pet to start" });
