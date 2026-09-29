@@ -12,6 +12,7 @@ import type { Executor } from "../account/types";
 import type { PurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { DuplicateOrderError } from "./errors";
 import { decimalToMinor } from "./money";
+import { getStatus, startTracking } from "./workflow";
 
 interface StoredAddress {
   streetName1: string;
@@ -139,6 +140,7 @@ export function persistPurchaseOrder(tx: Executor, po: PurchaseOrder): boolean {
     .get();
   if (existing) return false;
   createPurchaseOrder(tx, po);
+  startTracking(tx, po.orderId);
   return true;
 }
 
@@ -183,7 +185,7 @@ export function getStoredOrder(orderId: string, tx: Executor = db): StoredOrder 
     orderDate: order.orderDate,
     locale: order.locale,
     totalValue: order.totalValue,
-    status: order.status,
+    status: getStatus(tx, orderId),
     contact: storedContact,
     address: storedAddress,
     // One contact is stored (OQ-5, SWHR-R-0195): it is both billing and shipping.

@@ -1,8 +1,7 @@
-import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
-import { outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schema";
+import { orderWorkflow, outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schema";
 import {
   type ApprovalEntry,
   readOrderApproval,
@@ -13,10 +12,12 @@ import { dispatchPending } from "../messaging/dispatcher";
 import { enqueue, registerConsumer } from "../messaging/outbox";
 import { createOrderApprovalHandler } from "./approval";
 import { persistPurchaseOrder } from "./store";
+import { getStatus, updateStatus, type OrderStatus } from "./workflow";
 
 beforeEach(() => {
   db.delete(outboxDeliveries).run();
   db.delete(outboxMessages).run();
+  db.delete(orderWorkflow).run();
   db.delete(purchaseOrders).run();
   registerConsumer("opc.order-approval", "order-approval", createOrderApprovalHandler());
 });
@@ -59,14 +60,13 @@ function order(orderId: string, totalPrice = "51.50"): PurchaseOrder {
   };
 }
 
-const seed = (orderId: string, status?: string, total?: string) => {
+const seed = (orderId: string, status?: OrderStatus, total?: string) => {
   db.transaction((tx) => persistPurchaseOrder(tx, order(orderId, total)));
   if (status) {
-    db.update(purchaseOrders).set({ status }).where(eq(purchaseOrders.orderId, orderId)).run();
+    updateStatus(db, orderId, status);
   }
 };
-const statusOf = (orderId: string) =>
-  db.select().from(purchaseOrders).where(eq(purchaseOrders.orderId, orderId)).get()?.status;
+const statusOf = (orderId: string) => getStatus(db, orderId);
 const decide = (entries: ApprovalEntry[]) =>
   db.transaction((tx) => enqueue(tx, "opc.order-approval", writeOrderApproval(entries)));
 const payloads = (channel: string) =>

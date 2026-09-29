@@ -1,7 +1,13 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 
 import { db } from "../../db/client";
-import { categoryDetails, orderContacts, orderLines, purchaseOrders } from "../../db/schema";
+import {
+  categoryDetails,
+  orderContacts,
+  orderLines,
+  orderWorkflow,
+  purchaseOrders,
+} from "../../db/schema";
 import { writeOrderApproval, type ApprovalEntry } from "../b2b/documents/orderApproval";
 import { enqueue } from "../messaging/outbox";
 import { minorToDecimal } from "./money";
@@ -28,12 +34,13 @@ export function listOrdersByStatus(status: string): { orders: OrderSummary[]; to
       orderDate: purchaseOrders.orderDate,
       locale: purchaseOrders.locale,
       totalValue: purchaseOrders.totalValue,
-      status: purchaseOrders.status,
+      status: orderWorkflow.status,
       contactId: orderContacts.id,
     })
     .from(purchaseOrders)
+    .innerJoin(orderWorkflow, eq(orderWorkflow.orderId, purchaseOrders.orderId))
     .leftJoin(orderContacts, eq(orderContacts.orderId, purchaseOrders.orderId))
-    .where(eq(purchaseOrders.status, status))
+    .where(eq(orderWorkflow.status, status))
     .orderBy(asc(purchaseOrders.orderId))
     .all();
 

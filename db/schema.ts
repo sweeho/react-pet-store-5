@@ -390,25 +390,15 @@ export const counters = sqliteTable(
   (table) => [check("counters_name_check", sql`length(${table.name}) <= 255`)],
 );
 
-export const purchaseOrders = sqliteTable(
-  "purchaseOrders",
-  {
-    orderId: text("orderId").primaryKey(),
-    userId: text("userId").notNull(),
-    emailId: text("emailId").notNull(),
-    orderDate: integer("orderDate", { mode: "timestamp_ms" }).notNull(),
-    locale: text("locale").notNull(),
-    totalValue: integer("totalValue").notNull(),
-    status: text("status").notNull().default("PENDING"),
-    createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => [
-    check(
-      "purchaseOrders_status_check",
-      sql`${table.status} IN ('PENDING', 'APPROVED', 'DENIED', 'SHIPPED_PART', 'COMPLETED')`,
-    ),
-  ],
-);
+export const purchaseOrders = sqliteTable("purchaseOrders", {
+  orderId: text("orderId").primaryKey(),
+  userId: text("userId").notNull(),
+  emailId: text("emailId").notNull(),
+  orderDate: integer("orderDate", { mode: "timestamp_ms" }).notNull(),
+  locale: text("locale").notNull(),
+  totalValue: integer("totalValue").notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+});
 
 export const orderContacts = sqliteTable("orderContacts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
