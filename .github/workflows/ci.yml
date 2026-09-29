@@ -43,13 +43,6 @@ jobs:
       - name: Unit and integration tests
         run: bun run test -- --reporter=junit --outputFile=.vortex-results/junit.xml
 
-      - name: Upload test evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vortex-test-results
-          path: .vortex-results/junit.xml
-
       - name: Build
         run: bun run build
 
@@ -58,3 +51,13 @@ jobs:
 
       - name: E2E tests
         run: bun run test:e2e
+
+      # Last, so it carries the e2e report too: Vortex reads every JUnit file in
+      # the artifact. `always()` uploads the evidence of a failing run as well,
+      # which is the run it matters most for.
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vortex-test-results
+          path: .vortex-results/

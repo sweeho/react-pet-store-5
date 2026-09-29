@@ -21,7 +21,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: "list",
+  // The JUnit report is Vortex's test evidence for the e2e cases: CI uploads
+  // .vortex-results/ and Vortex reads every report in it. Without it an e2e
+  // case never has an official result, and a failing e2e test was missing
+  // from the evidence of a red CI run (SWHR-S-0008, SWHR-C-0432).
+  reporter: [["list"], ["junit", { outputFile: ".vortex-results/e2e-junit.xml" }]],
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
