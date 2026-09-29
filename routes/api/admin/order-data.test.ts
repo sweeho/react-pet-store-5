@@ -116,7 +116,7 @@ async function call(
     }),
   );
   const result = (await orderData(event)) as Result;
-  return { status: event.res.status, result };
+  return { status: event.res.status ?? 200, result };
 }
 
 describe("POST /api/admin/order-data", () => {
