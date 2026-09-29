@@ -7,7 +7,7 @@ import { getCustomerAccount } from "../account/customer";
 import { requireSignOn } from "../auth/protection";
 import { writePurchaseOrder, type PurchaseOrder } from "../b2b/documents/purchaseOrder";
 import { emptyCart, getCart, listCartLines } from "../cart/lines";
-import { EmptyCartFailure, GeneralFailure } from "../errors/failures";
+import { EmptyCartFailure, GeneralFailure, MissingFormDataFailure } from "../errors/failures";
 import { nextId, ORDER_ID_PREFIX } from "../ids/counter";
 import { enqueue } from "../messaging/outbox";
 import { minorToDecimal } from "../orders/money";
@@ -34,6 +34,8 @@ export async function placeOrder(
   if (cart.lines.length === 0) throw new EmptyCartFailure("The cart is empty");
 
   const email = billing.email || account.contactInfo.email;
+  // Order intake requires a non-empty EmailId, so an order with no address is never queued.
+  if (!email) throw new MissingFormDataFailure(["billing.email"]);
   const orderDate = opts.now ?? new Date();
   const creditCard = orderCardFromAccount(account.creditCard);
   const userId = session.userId;
