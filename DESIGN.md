@@ -6,16 +6,16 @@ See [PRODUCT.md](./PRODUCT.md) for what this is, [ARCHITECTURE.md](./ARCHITECTUR
 
 The token source is the Preline set in [design/tokens.theme.css](./design/tokens.theme.css), carried into `src/index.css`: raw values in `:root` (light) and `.dark`, exposed as Tailwind utilities through `@theme inline`. Treat `design/tokens.theme.css` as read-only input; a value you need that it lacks is a design question, not a component-level token.
 
-| Role          | Tailwind class                                                          |
-| ------------- | ----------------------------------------------------------------------- |
-| Page surfaces | `bg-background`, `bg-background-1`, `bg-background-2`                   |
-| Text          | `text-foreground`, `text-muted-foreground-1`, `text-muted-foreground-2` |
-| Brand action  | `bg-primary`, `hover:bg-primary-hover`, `text-primary-foreground`       |
-| Lines         | `border-line-1`, `border-line-2`, `border-card-line`                    |
-| Navigation    | `bg-navbar`, `border-navbar-line`, `hover:bg-navbar-nav-hover`          |
-| Destructive   | `bg-destructive`, `text-destructive-foreground`                         |
-| Charts        | `fill-chart-1` … `fill-chart-10`, in that order                         |
-| Status        | see Status colours below                                                |
+| Role          | Tailwind class                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| Page surfaces | `bg-background`, `bg-background-1`, `bg-background-2`                                       |
+| Text          | `text-foreground`, `text-muted-foreground-1`, `text-muted-foreground-2`                     |
+| Brand action  | `bg-primary`, `hover:bg-primary-hover`, `text-primary-foreground`                           |
+| Lines         | `border-line-1`, `border-line-2`, `border-card-line`                                        |
+| Navigation    | `bg-navbar`, `border-navbar-line`, `hover:bg-navbar-nav-hover`                              |
+| Destructive   | `bg-destructive`, `text-destructive-foreground`                                             |
+| Charts        | `fill-chart-primary`, then `fill-chart-5`, `-6`, `-7`, `-3`, `-4`, `-9`, `-10` (see Charts) |
+| Status        | see Status colours below                                                                    |
 
 The shadcn names the `src/components/ui/` primitives use (`ring`, `input`, `accent`, `accent-foreground`) are aliases onto Preline values in `src/index.css`, so those primitives keep working unchanged.
 
@@ -76,7 +76,7 @@ The browser's own `confirm`/`alert` are never used.
 
 ## Charts
 
-Charts are inline SVG with `role="img"` and an `aria-label` that states the chart title. Series colours come from the `chart-*` tokens in order. Every chart has a legend or table beside it that gives each value in text, so a reader never needs the colour to read the chart.
+Charts are inline SVG with `role="img"` and an `aria-label` that states the chart title. Series colours come from the `chart-*` tokens in this order: `chart-primary`, `chart-5`, `chart-6`, `chart-7`, `chart-3`, `chart-4`, `chart-9`, `chart-10`. `chart-1`, `chart-2` and `chart-8` are near-white tints and are never a series colour. The sequence lives in `src/components/admin/SalesCharts.tsx`. Every chart has a legend or table beside it that gives each value in text, so a reader never needs the colour to read the chart.
 
 ## State frames
 
