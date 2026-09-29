@@ -8,4 +8,4 @@ AC coverage: AC-1/AC-2 by SWHR-C-0232/0233; AC-3/AC-4 by the Remove and Update C
 
 Decisions: the h1 stays "Cart" (other e2e specs assert it). The category line is derived from `categoryId` (title-cased) because `CartLine` carries no category name. The Remove button's accessible name is "Remove <item>" via `aria-label`. A failed Remove/Update leaves the screen unchanged.
 
-Verification: `bun run lint`, `bun run typecheck`, `bun run test` (759 pass). E2E: see below.
+Verification: `bun run lint`, `bun run typecheck`, `bun run test` (759 pass). `bun run test:e2e` (59 pass).
