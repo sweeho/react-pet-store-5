@@ -10,4 +10,4 @@ Deviations: (1) [SWHR-C-0236] asserts `/signin` because the case precondition sa
 
 Red: not achievable. The behaviour was delivered by SWHR-T-0097..0099, so every new test passes on first run; the platform rejected the red run (id 5af25b7a) for that reason. No stub can make a tests-only ticket red without weakening the tests.
 
-Verification: `bun run verify:full` passed (unit suite, and 62 e2e tests including the 3 new ones). CI: see work log.
+Verification: `bun run verify:full` passed (unit suite, and 62 e2e tests including the 3 new ones). CI green.
