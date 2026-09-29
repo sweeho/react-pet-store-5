@@ -12,6 +12,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "NODE_ENV=test bun --bun vitest run",
+    "test:evidence": "bun scripts/test-evidence.ts",
     "test:watch": "NODE_ENV=test bun --bun vitest",
     "pretest:e2e": "node scripts/ensure-playwright-browser.mjs",
     "test:e2e": "playwright test",

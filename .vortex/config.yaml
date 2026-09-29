@@ -87,13 +87,12 @@ specDriven:
 
 # Official test evidence (architecture doc 43, FR-TT-56).
 #
-# `command` runs the client+server Vitest projects together — the same run
-# `test-unit` above triggers — with the built-in junit reporter added, so it
-# covers both the unit tests (src/**) and the integration tests (routes/**)
-# in one JUnit XML report. E2E (Playwright) has no separate report here: this
-# repo runs all three levels inside the single `build-and-test` CI job.
+# `command` runs scripts/test-evidence.ts: the client+server Vitest projects
+# and, when the Playwright browser is installed, the E2E suite, merged into one
+# JUnit report at junitPath (e2e results are named by e2e/ repository path).
+# Without a browser the E2E tier is skipped and the output says so.
 testEvidence:
-  command: bun run test -- --reporter=junit --outputFile=.vortex-results/junit.xml
+  command: bun run test:evidence
   junitPath: .vortex-results/junit.xml
   testGlobs: ["src/**/*.test.ts", "src/**/*.test.tsx", "routes/**/*.test.ts", "lib/**/*.test.ts", "plugins/**/*.test.ts", "middleware/**/*.test.ts", "e2e/**/*.spec.ts", "**/*.fixture.ts"]
   stubSentinel: "Vortex\x4EotImplemented"
