@@ -18,7 +18,7 @@ downstream:
 
 ## Executive Summary
 
-**Verdict: PASS.** All 50 scenarios of change `swhr-i-0011-order-fulfillment` hold on the integrated sprint branch, and all 49 approved test cases (SWHR-C-0340 to SWHR-C-0389) have a citing test that passes. `bun run verify` (lint, typecheck, 963 unit tests) and `bun run test:e2e` (70 Playwright tests) both exit 0 with no skips. No defects found.
+**Verdict: PASS.** All 50 scenarios of change `swhr-i-0011-order-fulfillment` hold on the integrated sprint branch, and all 50 approved test cases (SWHR-C-0340 to SWHR-C-0389) have a citing test that passes. `bun run verify` (lint, typecheck, 963 unit tests) and `bun run test:e2e` (70 Playwright tests) both exit 0 with no skips. No defects found.
 
 The change has no screen of its own (order status shows in the existing administrator order lists), so there is no design reference to compare; the only UI-facing scenario is the checkout-to-COMPLETED journey, covered by `e2e/order-fulfillment.spec.ts`.
 
