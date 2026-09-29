@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -65,9 +65,18 @@ describe("GlobalNav", () => {
     const user = userEvent.setup();
     renderGlobalNav("ja_JP");
 
-    await user.click(await screen.findByRole("button", { name: "メニューを開く" }));
-    const dialog = screen.getByRole("dialog");
+    // queryByRole (not getByRole/findByRole) throughout: a query that finds
+    // nothing must fail as an `expect` assertion, not as a raw thrown
+    // TestingLibraryElementError — the latter is an uncaught error, not a
+    // test failure, to the platform's red/green test-result reader.
+    let menuButton: HTMLElement | null = null;
+    await waitFor(() => {
+      menuButton = screen.queryByRole("button", { name: "メニューを開く" });
+      expect(menuButton).toBeInTheDocument();
+    });
+    await user.click(menuButton!);
 
+    const dialog = screen.getByRole("dialog");
     const expected: [string, string][] = [
       ["検索", "/search"],
       ["カート", "/cart"],
@@ -77,14 +86,24 @@ describe("GlobalNav", () => {
       ["サプライヤー", "/supplier"],
     ];
     for (const [name, href] of expected) {
-      expect(within(dialog).getByRole("link", { name })).toHaveAttribute("href", href);
+      const link = within(dialog).queryByRole("link", { name });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute("href", href);
     }
   });
 
   it("[SWHR-C-0439] renders zh_CN search and checkout labels", async () => {
     renderGlobalNav("zh_CN");
 
-    expect(await screen.findByRole("link", { name: "搜索" })).toHaveAttribute("href", "/search");
-    expect(screen.getByRole("link", { name: "结账" })).toHaveAttribute("href", "/checkout");
+    let searchLink: HTMLElement | null = null;
+    await waitFor(() => {
+      searchLink = screen.queryByRole("link", { name: "搜索" });
+      expect(searchLink).toBeInTheDocument();
+    });
+    expect(searchLink!).toHaveAttribute("href", "/search");
+
+    const checkoutLink = screen.queryByRole("link", { name: "结账" });
+    expect(checkoutLink).toBeInTheDocument();
+    expect(checkoutLink).toHaveAttribute("href", "/checkout");
   });
 });
