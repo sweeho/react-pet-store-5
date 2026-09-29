@@ -33,6 +33,9 @@ export const BUNDLED_SCHEMA_CATALOG: readonly SchemaCatalogEntry[] = [
   // Internal supplier order (SWHR-R-0033, 1.1).
   { identifier: BLUEPRINTS_PUBLIC_ID("SupplierOrder", "1.1"), file: "SupplierOrder.dtd.xsd" },
 
+  // Order approval batch (SWHR-R-0172, 1.1).
+  { identifier: BLUEPRINTS_PUBLIC_ID("OrderApproval", "1.1"), file: "OrderApproval.dtd.xsd" },
+
   // Trading-partner documents (1.0) — DTD-declared and XML-Schema-declared
   // forms are separate files for the same document (SWHR-R-0044.02).
   {

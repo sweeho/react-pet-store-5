@@ -1,0 +1,8 @@
+<!--
+  OrderApproval 1.1 (design.md P2). One or more Order entries, each holding
+  the order id and its APPROVED or DENIED status.
+-->
+<!ELEMENT OrderApproval (Order+)>
+<!ELEMENT Order (OrderId, OrderStatus)>
+<!ELEMENT OrderId (#PCDATA)>
+<!ELEMENT OrderStatus (#PCDATA)>
