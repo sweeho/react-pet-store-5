@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 /**
  * UI / E2E TEST
@@ -87,7 +87,7 @@ test.describe("Global navigation locale labels", () => {
   // 375px viewport it isn't actionable — switch language from inside the
   // drawer instead, then reopen the (now-relabelled) menu button, mirroring
   // SiteLayout.test.tsx's "switching language from the mobile drawer..." test.
-  async function switchToJapaneseFromMobileDrawer(page: import("@playwright/test").Page) {
+  async function switchToJapaneseFromMobileDrawer(page: Page) {
     await page.getByRole("button", { name: "Open menu" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "日本語" }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
