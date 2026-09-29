@@ -5,16 +5,17 @@ export class DuplicateOrderError extends Error {
   }
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stubs */
 export class OrderNotFoundError extends Error {
-  constructor(public readonly orderId: string) {
-    super(`No workflow record for order ${orderId}.`);
-    this.name = "OrderNotFoundError";
+  constructor(_orderId: string) {
+    super("VortexNotImplemented");
+    throw new Error("VortexNotImplemented");
   }
 }
 
 export class WorkflowCreateError extends Error {
-  constructor(public readonly orderId: string) {
-    super(`Workflow tracking already started for order ${orderId}.`);
-    this.name = "WorkflowCreateError";
+  constructor(_orderId: string) {
+    super("VortexNotImplemented");
+    throw new Error("VortexNotImplemented");
   }
 }
