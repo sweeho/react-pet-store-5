@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stubs */
+import { and, eq } from "drizzle-orm";
+
+import { orderLines } from "../../db/schema";
 import type { Executor } from "../account/types";
 
 export interface OrderLine {
@@ -11,15 +13,20 @@ export interface OrderLine {
   quantityShipped: number;
 }
 
+/** The only line update: item, quantity, price, category, product and line number are fixed. */
 export function setShippedQuantity(
-  _tx: Executor,
-  _orderId: string,
-  _lineNum: number,
-  _quantityShipped: number,
+  tx: Executor,
+  orderId: string,
+  lineNum: number,
+  quantityShipped: number,
 ): void {
-  throw new Error("VortexNotImplemented");
+  tx.update(orderLines)
+    .set({ quantityShipped })
+    .where(and(eq(orderLines.orderId, orderId), eq(orderLines.lineNum, lineNum)))
+    .run();
 }
 
-export function copyLine(_line: OrderLine, _quantityShipped: number): OrderLine {
-  throw new Error("VortexNotImplemented");
+/** Builds a line from another; the shipped quantity must be stated. */
+export function copyLine(line: OrderLine, quantityShipped: number): OrderLine {
+  return { ...line, quantityShipped };
 }

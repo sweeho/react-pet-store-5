@@ -108,6 +108,7 @@ describe("persistPurchaseOrder", () => {
         itemId: "EST-1",
         quantity: 2,
         unitPrice: 2000,
+        quantityShipped: 0,
       },
     ]);
     expect(stored?.status).toBe("PENDING");
