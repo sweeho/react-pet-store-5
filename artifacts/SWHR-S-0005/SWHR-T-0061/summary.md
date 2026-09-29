@@ -76,6 +76,13 @@ See `tdd-test-result.md` for the platform-recorded red/green runs (`a2a_run_test
   unit cost; DOGS page 1 = Bulldog then Chihuahua, "Friendly dog from England" / "Great companion
   dog") is reproduced exactly. No fixed interface or ownership boundary changed.
 - 28 items split 5 FISH / 10 DOGS / 4 REPTILES / 4 CATS / 5 BIRDS across the 16 products.
+- **CI caught a real regression, fixed here.** PLAN.md fixes EST-6 and EST-7 at the same list price
+  (1850/1200), unlike the old seed which priced them differently specifically to keep
+  `e2e/product-locale.spec.ts`'s `page.getByText("$18.50")` unambiguous. With both items now
+  sharing that price, the unscoped assertion matched two elements (Playwright strict-mode
+  violation) — CI run 36517727119 caught it. Fixed by scoping the price assertion to the "Male
+  Adult Bulldog" / "オス成犬ブルドッグ" item card (`page.getByRole("listitem").filter({ hasText: ... })`),
+  the same pattern `e2e/sign-on.spec.ts`'s `addToCart` helper already uses.
 - `lib/catalog/seed.test.ts`'s cache-scenario tests use a private `listCategoryProducts` query
   local to the test file (not new production code) per PLAN.md step 4's "use... a direct query"
   option — SWHR-T-0058 owns the real listing function.
