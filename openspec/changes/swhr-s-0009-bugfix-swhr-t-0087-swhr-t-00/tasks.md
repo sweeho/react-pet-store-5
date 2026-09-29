@@ -10,6 +10,6 @@
 
 ## 3. End-to-end tests produce test evidence
 
-- [ ] 3.1 Add `mergeJunitReports` with unit tests (SWHR-T-0070)
-- [ ] 3.2 Add `scripts/test-evidence.ts` + `test:evidence` script and point `testEvidence.command` at it (SWHR-T-0070)
-- [ ] 3.3 Record the reasons from this ticket's own green evidence run as the live check (SWHR-T-0070)
+- [x] 3.1 Add `mergeJunitReports` with unit tests (SWHR-T-0070)
+- [x] 3.2 Add `scripts/test-evidence.ts` + `test:evidence` script and point `testEvidence.command` at it (SWHR-T-0070)
+- [x] 3.3 Record the reasons from this ticket's own green evidence run as the live check (SWHR-T-0070)
