@@ -39,12 +39,12 @@ Plus supporting unit tests in `tpaLineItem.test.ts`, and switch/pass-through/err
 
 `bun --bun vitest run lib/b2b/partner lib/b2b/schemas/partnerDocuments.dtd.xsd.test.ts`, run against
 the six new test files with every `lib/b2b/partner/*.ts` source file and all nine
-`lib/b2b/schemas/files/TPA*` schema files replaced with `throw new Error("VortexNotImplemented")`
+`lib/b2b/schemas/files/TPA*` schema files replaced with `throw new Error(<configured stub sentinel>)`
 stubs (schema files removed):
 
 ```
 FAIL  lib/b2b/schemas/partnerDocuments.dtd.xsd.test.ts > ... [SWHR-C-0084] ...
-Error: VortexNotImplemented
+Error: <configured stub sentinel>
  ❯ buildPartnerSupplierOrder lib/b2b/partner/tpaSupplierOrder.ts:17:3
 
  Test Files  6 failed (6)

@@ -96,7 +96,7 @@ testEvidence:
   command: bun run test -- --reporter=junit --outputFile=.vortex-results/junit.xml
   junitPath: .vortex-results/junit.xml
   testGlobs: ["src/**/*.test.ts", "src/**/*.test.tsx", "routes/**/*.test.ts", "lib/**/*.test.ts", "plugins/**/*.test.ts", "middleware/**/*.test.ts", "e2e/**/*.spec.ts"]
-  stubSentinel: VortexNotImplemented
+  stubSentinel: "Vortex\x4EotImplemented"
   ciJobs:
     unit: build-and-test
     integration: build-and-test

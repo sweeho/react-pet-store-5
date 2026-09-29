@@ -30,18 +30,18 @@ upstream: [artifacts/SWHR-S-0004/SWHR-T-0043/PLAN.md]
 
 ## Red run
 
-`bun --bun vitest run lib/auth/password.test.ts lib/auth/credentials.test.ts`, run against both files committed as stubs whose bodies were only `throw new Error("VortexNotImplemented")`:
+`bun --bun vitest run lib/auth/password.test.ts lib/auth/credentials.test.ts`, run against both files committed as stubs whose bodies were only `throw new Error(<configured stub sentinel>)`:
 
 ```
 FAIL  |server| lib/auth/credentials.test.ts > createCredential > [SWHR-C-0107] stores exactly one credential for a new user id
-Error: VortexNotImplemented
+Error: <configured stub sentinel>
  ❯ createCredential lib/auth/credentials.ts:26:3
 
  Test Files  2 failed (2)
       Tests  22 failed | 1 passed (23)
 ```
 
-The one pass is `exposes the 25-character limit as USER_ID_MAX_LENGTH`, a plain exported constant rather than a stub — every behavioral test failed on the `VortexNotImplemented` sentinel, confirming a real red.
+The one pass is `exposes the 25-character limit as USER_ID_MAX_LENGTH`, a plain exported constant rather than a stub — every behavioral test failed on the configured stub sentinel, confirming a real red.
 
 ## Green run
 

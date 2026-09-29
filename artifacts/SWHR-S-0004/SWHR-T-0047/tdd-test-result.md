@@ -42,7 +42,7 @@ upstream: [artifacts/SWHR-S-0004/SWHR-T-0047/PLAN.md]
 
 ## Red run
 
-`NODE_ENV=test bun --bun vitest run lib/auth/roles.test.ts routes/api/staff/ routes/api/admin/ src/components/auth/StaffSignInForm.test.tsx src/pages/admin/ src/pages/supplier/`, with every new/changed implementation file (`lib/auth/roles.ts`, the five new routes, `StaffSignInForm.tsx`, all eight admin/supplier pages) stubbed to `throw new Error("VortexNotImplemented")`:
+`NODE_ENV=test bun --bun vitest run lib/auth/roles.test.ts routes/api/staff/ routes/api/admin/ src/components/auth/StaffSignInForm.test.tsx src/pages/admin/ src/pages/supplier/`, with every new/changed implementation file (`lib/auth/roles.ts`, the five new routes, `StaffSignInForm.tsx`, all eight admin/supplier pages) stubbed to `throw new Error(<configured stub sentinel>)`:
 
 ```
  ❯ |client| src/pages/supplier/signin.test.tsx (3 tests | 3 failed)

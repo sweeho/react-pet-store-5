@@ -32,7 +32,7 @@ upstream: [artifacts/SWHR-S-0004/SWHR-T-0045/PLAN.md]
 
 ## Red run
 
-`NODE_ENV=test bun --bun vitest run routes/api/signon.test.ts routes/api/users/index.test.ts routes/api/customers.test.ts routes/api/signoff.test.ts`, with all four route handlers stubbed to `throw new Error("VortexNotImplemented")`:
+`NODE_ENV=test bun --bun vitest run routes/api/signon.test.ts routes/api/users/index.test.ts routes/api/customers.test.ts routes/api/signoff.test.ts`, with all four route handlers stubbed to `throw new Error(<configured stub sentinel>)`:
 
 ```
  ❯ |server| routes/api/users/index.test.ts (4 tests | 4 failed)
