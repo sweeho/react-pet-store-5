@@ -21,11 +21,11 @@
 
 ## 3. API routes
 
-- [ ] 3.1 Add `routes/api/cart/index.get.ts` returning lines, count and subtotal (SWHR-T-0098)
-- [ ] 3.2 Add `routes/api/cart/items.post.ts` to add an item by id (SWHR-T-0098)
-- [ ] 3.3 Add `routes/api/cart/items/[itemId].delete.ts` to remove an item (SWHR-T-0098)
-- [ ] 3.4 Add `routes/api/cart/index.patch.ts` to apply a batch of quantities (SWHR-T-0098)
-- [ ] 3.5 Confirm cart routes require no sign-in (SWHR-T-0098)
+- [x] 3.1 Add `routes/api/cart/index.get.ts` returning lines, count and subtotal (SWHR-T-0098)
+- [x] 3.2 Add `routes/api/cart/items.post.ts` to add an item by id (SWHR-T-0098)
+- [x] 3.3 Add `routes/api/cart/items/[itemId].delete.ts` to remove an item (SWHR-T-0098)
+- [x] 3.4 Add `routes/api/cart/index.patch.ts` to apply a batch of quantities (SWHR-T-0098)
+- [x] 3.5 Confirm cart routes require no sign-in (SWHR-T-0098)
 
 ## 4. Cart page
 
