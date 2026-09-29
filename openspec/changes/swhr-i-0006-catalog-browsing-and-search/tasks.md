@@ -1,9 +1,9 @@
 ## 1. Data model
 
-- [ ] 1.1 Define the category and category_details Drizzle tables with keys, name length and one-details-row-per-locale constraint (SWHR-T-0057)
-- [ ] 1.2 Define the product and product_details Drizzle tables with the category foreign key (SWHR-T-0057)
-- [ ] 1.3 Define the item and item_details Drizzle tables with exact-decimal list price and unit cost and five optional attributes (SWHR-T-0057)
-- [ ] 1.4 Generate and commit the migration in drizzle/ and add schema constraint tests (SWHR-T-0057)
+- [x] 1.1 Define the category and category_details Drizzle tables with keys, name length and one-details-row-per-locale constraint (SWHR-T-0057)
+- [x] 1.2 Define the product and product_details Drizzle tables with the category foreign key (SWHR-T-0057)
+- [x] 1.3 Define the item and item_details Drizzle tables with exact-decimal list price and unit cost and five optional attributes (SWHR-T-0057)
+- [x] 1.4 Generate and commit the migration in drizzle/ and add schema constraint tests (SWHR-T-0057)
 
 ## 2. Catalog queries
 
