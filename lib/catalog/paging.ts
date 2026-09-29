@@ -19,9 +19,28 @@ export interface Page<T> {
   paging: PageInfo;
 }
 
+/**
+ * Shapes a page from up to `count + 1` fetched rows (design.md P1): the
+ * extra row, when present, proves a next page exists without a separate
+ * count query. `previousStart` follows the legacy rule (design.md Q3/D7):
+ * the current start minus the number of results actually on this page,
+ * floored at zero, offered only when the page starts past the first result
+ * and isn't itself empty.
+ */
 export function buildPage<T>(rows: T[], start: number, count: number): Page<T> {
-  void rows;
-  void start;
-  void count;
-  throw new Error("VortexNotImplemented");
+  const items = rows.slice(0, count);
+  const hasNext = rows.length > count;
+  const hasPrevious = start > 0 && items.length > 0;
+
+  return {
+    items,
+    paging: {
+      start,
+      count,
+      hasNext,
+      nextStart: hasNext ? start + items.length : null,
+      hasPrevious,
+      previousStart: hasPrevious ? Math.max(0, start - items.length) : null,
+    },
+  };
 }

@@ -26,9 +26,12 @@ const BULLDOG_EN: ProductPayload = {
     {
       itemId: "EST-6",
       productId: "K9-BD-01",
+      categoryId: "DOGS",
+      productName: "Bulldog",
       name: "Male Adult Bulldog",
       description: "Friendly dog from England",
       image: "dogs.svg",
+      attributes: ["Male Adult", null, null, null, null],
       listPrice: 1850,
       unitCost: 1200,
       locale: "en_US",
