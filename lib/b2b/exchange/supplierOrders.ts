@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { db } from "../../../db/client";
+import type { Executor } from "../../account/types";
 import {
   supplierAddresses,
   supplierContacts,
@@ -33,26 +34,27 @@ export interface SupplierOrderRecord {
  * this function is reachable only from inside the application (design.md
  * §Mapping to the rebuild stack).
  */
-export function getSupplierOrder(orderId: string): SupplierOrderRecord | null {
-  const order = db.select().from(supplierOrders).where(eq(supplierOrders.orderId, orderId)).get();
+export function getSupplierOrder(orderId: string, tx: Executor = db): SupplierOrderRecord | null {
+  const order = tx.select().from(supplierOrders).where(eq(supplierOrders.orderId, orderId)).get();
   if (!order) {
     return null;
   }
 
-  const contact = db
+  const contact = tx
     .select()
     .from(supplierContacts)
     .where(eq(supplierContacts.orderId, orderId))
     .get();
-  const address = db
+  const address = tx
     .select()
     .from(supplierAddresses)
     .where(eq(supplierAddresses.orderId, orderId))
     .get();
-  const lineItems = db
+  const lineItems = tx
     .select()
     .from(supplierLineItems)
     .where(eq(supplierLineItems.orderId, orderId))
+    .orderBy(supplierLineItems.lineNum)
     .all();
 
   if (!contact || !address) {
@@ -99,7 +101,12 @@ export function listSupplierOrders(): SupplierOrderRecord[] {
     .filter((record): record is SupplierOrderRecord => record !== null);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- red-phase stub
 export function listSupplierOrderIdsByStatus(status: string): string[] {
-  throw new Error("VortexNotImplemented");
+  return db
+    .select({ orderId: supplierOrders.orderId })
+    .from(supplierOrders)
+    .where(eq(supplierOrders.status, status))
+    .orderBy(supplierOrders.orderId)
+    .all()
+    .map((r) => r.orderId);
 }
