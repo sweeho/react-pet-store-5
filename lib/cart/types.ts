@@ -28,7 +28,7 @@ export interface CartView {
   locale: LocaleId;
 }
 
+/** The cart a session has before its first line is stored. */
 export function emptyCartView(locale: LocaleId): CartView {
-  if (locale) throw new Error("VortexNotImplemented");
-  throw new Error("VortexNotImplemented");
+  return { lines: [], count: 0, subtotal: 0, locale };
 }
