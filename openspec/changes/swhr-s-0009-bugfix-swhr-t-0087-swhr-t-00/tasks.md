@@ -1,7 +1,7 @@
 ## 1. Schema upgrade preserves existing data
 
-- [ ] 1.1 Add `migrateDatabase` (enforcement OFF → migrate → ON → foreign-key check) and call it from `db/client.ts` (SWHR-T-0087)
-- [ ] 1.2 Cover upgrade-from-0004, enforcement, length checks, dangling reference and fresh database in `lib/db/migrate.test.ts` (SWHR-T-0087)
+- [x] 1.1 Add `migrateDatabase` (enforcement OFF → migrate → ON → foreign-key check) and call it from `db/client.ts` (SWHR-T-0087)
+- [x] 1.2 Cover upgrade-from-0004, enforcement, length checks, dangling reference and fresh database in `lib/db/migrate.test.ts` (SWHR-T-0087)
 
 ## 2. End-to-end browser matches the pinned test runner
 
