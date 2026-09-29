@@ -1,8 +1,10 @@
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bird, Cat, Dog, Fish, PawPrint, Turtle, X } from "lucide-react";
+import { PawPrint, X } from "lucide-react";
 import { Link } from "react-router";
 
-import { PET_CATEGORIES, PRIMARY_AREAS, type PetCategoryId } from "@/constants/navigation";
+import { getCategoryIcon } from "@/components/catalog/categoryIcons";
+import { PET_CATEGORIES, PRIMARY_AREAS } from "@/constants/navigation";
+import { useCatalogCategories } from "@/hooks";
 import { useSignOnSession } from "@/hooks/useSignOnSession";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { useScreen } from "@/i18n/screens";
@@ -13,18 +15,12 @@ import SiteHeader, { LANGUAGES } from "./SiteHeader";
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-const CATEGORY_ICONS: Record<PetCategoryId, typeof Bird> = {
-  BIRDS: Bird,
-  CATS: Cat,
-  DOGS: Dog,
-  FISH: Fish,
-  REPTILES: Turtle,
-};
-
 // PRIMARY_AREAS already carries every PET_CATEGORIES entry (same id/href) —
 // SiteHeader renders Account/Cart/Sign in/Administration/Supplier, so the
-// remaining areas this row needs to cover are the pet categories plus
-// Search and Checkout.
+// remaining areas this row needs to cover are Search and Checkout. Category
+// navigation itself moved to the Pets panel/menu (design.md P5, SD7), fed
+// by the live category list — PET_CATEGORIES stays only as the home map's
+// fixed region lookup (id → icon/picture), never a source of labels.
 const SECONDARY_AREAS = PRIMARY_AREAS.filter(
   (area) => area.id === "SEARCH" || area.id === "CHECKOUT",
 );
@@ -48,6 +44,7 @@ export default function GlobalNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { locale, changeLocale } = useLocale();
   const { signedOn, refresh } = useSignOnSession();
+  const { categories } = useCatalogCategories();
   const navigate = useNavigate();
   const t = useScreen("shell");
 
@@ -64,23 +61,6 @@ export default function GlobalNav() {
         <SiteHeader onOpenMenu={() => setMobileOpen(true)} />
 
         <div className="border-line-2 hidden items-center gap-1 border-t px-4 py-1.5 lg:flex lg:px-8">
-          {PET_CATEGORIES.map((category) => {
-            const Icon = CATEGORY_ICONS[category.id];
-            return (
-              <Link
-                key={category.id}
-                to={category.href}
-                className={cn(
-                  "hover:bg-background-1 flex h-11 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium",
-                  FOCUS_RING,
-                )}
-              >
-                <Icon aria-hidden="true" className="text-muted-foreground-1 size-4" />
-                {category.label}
-              </Link>
-            );
-          })}
-          <span className="border-line-2 mx-1 h-5 border-l" aria-hidden="true" />
           {SECONDARY_AREAS.map((area) => (
             <Link
               key={area.id}
@@ -166,14 +146,14 @@ export default function GlobalNav() {
 
           <div className="mt-4 flex flex-col gap-1">
             <p className="text-muted-foreground-1 px-2.5 pt-2 text-xs font-semibold tracking-wide uppercase">
-              {t.shopByPet}
+              {t.petsMenuHeading}
             </p>
-            {PET_CATEGORIES.map((category) => {
-              const Icon = CATEGORY_ICONS[category.id];
+            {categories.map((category) => {
+              const Icon = getCategoryIcon(category.categoryId);
               return (
                 <Link
-                  key={category.id}
-                  to={category.href}
+                  key={category.categoryId}
+                  to={`/category/${category.categoryId}`}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     "hover:bg-background-1 flex h-11 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium",
@@ -181,7 +161,7 @@ export default function GlobalNav() {
                   )}
                 >
                   <Icon aria-hidden="true" className="text-muted-foreground-1 size-4" />
-                  {category.label}
+                  {category.name}
                 </Link>
               );
             })}
