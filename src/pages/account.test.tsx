@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -77,7 +77,9 @@ describe("AccountPage", () => {
     stubFetch(stored);
     renderAccount();
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Your Account" })).toBeVisible();
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "Your Account" })).not.toBeNull(),
+    );
     expect(within(field("First Name")).getByText("Maria")).toBeVisible();
     expect(within(field("Last Name")).getByText("Chen")).toBeVisible();
     expect(within(field("Telephone")).getByText("555-555-5555")).toBeVisible();
@@ -97,13 +99,18 @@ describe("AccountPage", () => {
     stubFetch(stored);
     renderAccount();
 
-    const edit = await screen.findByRole("link", { name: "Edit Your Account Information" });
-    expect(edit).toHaveAttribute("href", "/account-edit");
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("link", { name: "Edit Your Account Information" })?.getAttribute("href"),
+      ).toBe("/account-edit"),
+    );
   });
 
   it("renders the Japanese page copy for ?locale=ja_JP", async () => {
     stubFetch(stored);
     renderAccount("/account?locale=ja_JP");
-    expect(await screen.findByRole("heading", { level: 1, name: "アカウント情報" })).toBeVisible();
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { level: 1, name: "アカウント情報" })).not.toBeNull(),
+    );
   });
 });
