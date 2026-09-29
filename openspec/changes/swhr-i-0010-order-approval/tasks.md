@@ -1,8 +1,8 @@
 ## 1. Data model
 
-- [ ] 1.1 Add order status values PENDING, APPROVED, DENIED, COMPLETED to the Drizzle order schema and generate the migration (SWHR-T-0119)
-- [ ] 1.2 Add an approval-decision table (order id, decided status, created at, processed at) and generate the migration (SWHR-T-0119)
-- [ ] 1.3 Add per-locale auto-approval thresholds (en_US < 500, ja_JP < 50000, others none) as configuration (SWHR-T-0119)
+- [x] 1.1 Add order status values PENDING, APPROVED, DENIED, COMPLETED to the Drizzle order schema and generate the migration (SWHR-T-0119)
+- [x] 1.2 Add an approval-decision table (order id, decided status, created at, processed at) and generate the migration (SWHR-T-0119)
+- [x] 1.3 Add per-locale auto-approval thresholds (en_US < 500, ja_JP < 50000, others none) as configuration (SWHR-T-0119)
 
 ## 2. Automatic approval
 
