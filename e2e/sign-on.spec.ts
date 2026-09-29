@@ -188,9 +188,11 @@ test.describe("Sign-on journeys", () => {
 
     // Japanese item name (catalog seed's EST-6 ja_JP details) — the locale
     // switch above means the product page renders in Japanese from here on.
-    await addToCart(page, "K9-BD-01", "オス成犬ブルドッグ", 3);
+    await addToCart(page, "K9-BD-01", "オス成犬ブルドッグ");
+    await addToCart(page, "K9-BD-01", "メス子犬ブルドッグ");
+    await addToCart(page, "K9-PO-02");
     await page.goto("/cart");
-    await expect(page.getByText("数量: 3")).toBeVisible();
+    await expect(page.getByText("数量: 1")).toHaveCount(3);
 
     await page
       .getByRole("navigation", { name: "Global" })

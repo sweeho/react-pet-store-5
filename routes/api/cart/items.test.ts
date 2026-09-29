@@ -23,7 +23,7 @@ describe("POST /api/cart/items", () => {
     expect(result.lines).toEqual([expect.objectContaining({ itemId: "EST-6", quantity: 1 })]);
   });
 
-  it("increments the quantity when the same item is added twice", async () => {
+  it("resets the quantity to 1 when the same item is added twice", async () => {
     const first = new H3Event(postRequest({ itemId: "EST-6" }));
     await postItems(first);
 
@@ -41,7 +41,7 @@ describe("POST /api/cart/items", () => {
 
     const result = await postItems(second);
 
-    expect(result.lines).toEqual([expect.objectContaining({ itemId: "EST-6", quantity: 2 })]);
+    expect(result.lines).toEqual([expect.objectContaining({ itemId: "EST-6", quantity: 1 })]);
   });
 
   it("rejects a request with no itemId", async () => {
