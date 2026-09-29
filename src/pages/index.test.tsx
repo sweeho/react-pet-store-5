@@ -176,7 +176,8 @@ describe("Home page", () => {
       myListPreference: false,
     });
 
-    const banner = await screen.findByTestId("pet-tips-banner");
+    await waitFor(() => expect(screen.queryByTestId("pet-tips-banner")).not.toBeNull());
+    const banner = screen.getByTestId("pet-tips-banner");
     expect(banner).toHaveAttribute("data-category", "cats");
   });
 

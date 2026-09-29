@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -104,7 +104,8 @@ describe("CartPage", () => {
     });
     renderCart();
 
-    const banner = await screen.findByTestId("pet-tips-banner");
+    await waitFor(() => expect(screen.queryByTestId("pet-tips-banner")).not.toBeNull());
+    const banner = screen.getByTestId("pet-tips-banner");
     expect(banner).toHaveAttribute("data-category", "dogs");
   });
 

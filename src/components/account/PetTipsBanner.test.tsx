@@ -47,7 +47,8 @@ describe("PetTipsBanner", () => {
     stubAccount(200, { favoriteCategory, bannerPreference: true, myListPreference: true });
     renderBanner();
 
-    const banner = await screen.findByTestId("pet-tips-banner");
+    await waitFor(() => expect(screen.queryByTestId("pet-tips-banner")).not.toBeNull());
+    const banner = screen.getByTestId("pet-tips-banner");
     expect(banner).toHaveAttribute("data-category", expected);
   });
 
