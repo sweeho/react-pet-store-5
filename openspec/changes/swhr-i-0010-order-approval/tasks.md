@@ -12,10 +12,10 @@
 
 ## 3. Decision processing
 
-- [ ] 3.1 Implement the decision processor that applies decisions only to PENDING orders, each independently, in one transaction per order (SWHR-T-0121)
-- [ ] 3.2 Emit a supplier purchase order trigger for each approved order (SWHR-T-0121)
-- [ ] 3.3 Emit one batched customer-notice trigger listing every order whose status changed (SWHR-T-0121)
-- [ ] 3.4 Test duplicate and late decisions are ignored with no side effects (SWHR-T-0121)
+- [x] 3.1 Implement the decision processor that applies decisions only to PENDING orders, each independently, in one transaction per order (SWHR-T-0121)
+- [x] 3.2 Emit a supplier purchase order trigger for each approved order (SWHR-T-0121)
+- [x] 3.3 Emit one batched customer-notice trigger listing every order whose status changed (SWHR-T-0121)
+- [x] 3.4 Test duplicate and late decisions are ignored with no side effects (SWHR-T-0121)
 
 ## 4. Administrator API
 
