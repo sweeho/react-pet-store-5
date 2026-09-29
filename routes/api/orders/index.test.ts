@@ -70,7 +70,10 @@ function cookieFrom(event: H3Event): string {
     .join("; ");
 }
 
-async function signIn(userId: string): Promise<{ cookie: string; sessionId: string }> {
+async function signIn(
+  userId: string,
+  accountEmail = account.email,
+): Promise<{ cookie: string; sessionId: string }> {
   await createCredential(userId, "Secret1");
   createCustomer(userId);
   const event = new H3Event(new Request("http://localhost/"));
@@ -81,7 +84,7 @@ async function signIn(userId: string): Promise<{ cookie: string; sessionId: stri
       new Request("http://localhost/api/account", {
         method: "PUT",
         headers: { "content-type": "application/json", cookie },
-        body: JSON.stringify(account),
+        body: JSON.stringify({ ...account, email: accountEmail }),
       }),
     ),
   );
@@ -170,6 +173,36 @@ describe("POST /api/orders", () => {
     expect(event.res.status).toBe(400);
     expect(result).toMatchObject({ missing: ["shipping.telephone"] });
     expect(queued()).toHaveLength(0);
+  });
+
+  it("[SWHR-C-0460] no billing e-mail and no account e-mail places no order and reports billing.email", async () => {
+    const { cookie, sessionId } = await signIn("j2ee", "");
+    fillCart(sessionId);
+    const linesBefore = countCartLines(sessionId);
+    const countersBefore = db.select().from(counters).all();
+    const blank = { ...contact, email: "" };
+    const event = post(cookie, { billing: blank, shipping: blank });
+
+    const result = await postOrders(event);
+
+    expect(event.res.status).toBe(400);
+    expect(result).toMatchObject({ screen: "/error", missing: ["billing.email"] });
+    expect(queued().filter((m) => m.channel === "opc.purchase-order")).toHaveLength(0);
+    expect(db.select().from(counters).all()).toEqual(countersBefore);
+    expect(countCartLines(sessionId)).toBe(linesBefore);
+    expect(db.select().from(sessions).all()[0].lastOrderId).toBeNull();
+  });
+
+  it("a blank billing e-mail falls back to the account e-mail on the queued purchase order", async () => {
+    const { cookie, sessionId } = await signIn("j2ee");
+    fillCart(sessionId);
+    const event = post(cookie, { billing: { ...contact, email: "" }, shipping: contact });
+
+    const result = await postOrders(event);
+
+    expect(result).toMatchObject({ email: "abc@xyz.com" });
+    const po = await readPurchaseOrder(queued()[0].payload);
+    expect(po.emailId).toBe("abc@xyz.com");
   });
 
   it("[SWHR-C-0264] empty cart answers the empty-cart Order Error and queues nothing", async () => {

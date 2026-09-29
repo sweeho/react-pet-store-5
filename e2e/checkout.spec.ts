@@ -51,6 +51,11 @@ test.describe("Checkout journey", () => {
     await checkOutAs(page, testInfo.retry === 0 ? "hana" : `hana-retry${testInfo.retry}`);
 
     await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+    // The account has no e-mail, so the order needs one from the billing section.
+    await page
+      .getByRole("region", { name: "Billing Information" })
+      .getByLabel(/^E-mail/)
+      .fill("hana@example.com");
     await page.getByRole("button", { name: "Submit" }).click();
     await expect(page).toHaveURL("/order-complete");
     await expect(page.getByRole("heading", { name: "Your Order is Complete" })).toBeVisible();
