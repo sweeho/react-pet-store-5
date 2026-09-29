@@ -14,6 +14,8 @@ The token source is the Preline set in [design/tokens.theme.css](./design/tokens
 | Lines         | `border-line-1`, `border-line-2`, `border-card-line`                    |
 | Navigation    | `bg-navbar`, `border-navbar-line`, `hover:bg-navbar-nav-hover`          |
 | Destructive   | `bg-destructive`, `text-destructive-foreground`                         |
+| Charts        | `fill-chart-1` … `fill-chart-10`, in that order                         |
+| Status        | see Status colours below                                                |
 
 The shadcn names the `src/components/ui/` primitives use (`ring`, `input`, `accent`, `accent-foreground`) are aliases onto Preline values in `src/index.css`, so those primitives keep working unchanged.
 
@@ -38,6 +40,43 @@ Storefront pages add a **Pets** side panel left of `main` from `lg` up: 232 px w
 ## Paged lists
 
 A list that pages shows **Previous** only when an earlier page exists and **Next** only when a later one does, as plain links under the list; never a disabled control and never page numbers. The page is part of the address (`start`, `count`), so a paged view can be bookmarked and the browser's Back button steps back through pages.
+
+## Status colours
+
+A status is always shown as its word on a tinted badge, so colour is never the only cue (DESIGN-GUIDE contrast rules apply to the text):
+
+| Status    | Badge classes                                                              |
+| --------- | -------------------------------------------------------------------------- |
+| Pending   | `bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-300` |
+| Approved  | `bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300`     |
+| Denied    | `bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300`             |
+| Any other | `bg-background-2 text-foreground`                                          |
+
+These are Tailwind palette steps, not Preline tokens, because the token set has no success or warning role. They are used only for status badges.
+
+## Data tables
+
+Staff screens show records in plain tables:
+
+- A sortable column's header is a button carrying `aria-sort`; clicking it again reverses the order. Amounts sort numerically.
+- Only an editable cell renders a control (a select), and every other cell is text.
+- Row selection is a leading checkbox column.
+- A read-only table renders no controls at all.
+- A table with no rows keeps its header and shows no body rows.
+
+## Dialogs
+
+A decision that interrupts the page is a modal built on `@headlessui/react` `Dialog`:
+
+- It has a title and one line of copy, and focus is trapped and returned on close.
+- A confirmation offers Cancel and one action button whose label names the consequence ("Discard and refresh"), never "OK".
+- A blocking error dialog ("Fatal Error!") shows the message and no action that continues the session.
+
+The browser's own `confirm`/`alert` are never used.
+
+## Charts
+
+Charts are inline SVG with `role="img"` and an `aria-label` that states the chart title. Series colours come from the `chart-*` tokens in order. Every chart has a legend or table beside it that gives each value in text, so a reader never needs the colour to read the chart.
 
 ## State frames
 

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Administrator landing page</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:13px;color:#27272a;background:#fafafa;width:1200px}
+a{color:inherit}
+.util{display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 24px;background:#f4f4f5;border-bottom:1px solid #d4d4d8;font-size:12px;color:#52525b}
+.util .on{border:1px solid #a1a1aa;border-radius:10px;padding:1px 8px;background:#fff}
+.util span{margin-right:8px}
+header{display:flex;align-items:center;gap:20px;height:56px;padding:0 24px;background:#fff;border-bottom:1px solid #d4d4d8}
+.logo{font-weight:700;display:flex;gap:8px;align-items:center}.logo i{width:26px;height:26px;background:#d4d4d8;border:1px solid #a1a1aa;border-radius:6px}
+.search{flex:1;max-width:440px;display:flex}.search div{flex:1;height:34px;border:1px solid #a1a1aa;border-radius:6px 0 0 6px;padding:8px 10px;color:#a1a1aa}.search b{height:34px;border:1px solid #71717a;border-radius:0 6px 6px 0;padding:8px 14px;background:#e4e4e7}
+.acts{margin-left:auto;display:flex;gap:16px;align-items:center}.acts .btn{margin-left:4px}
+.btn{display:inline-block;min-height:34px;padding:8px 14px;border:1px solid #71717a;border-radius:6px;background:#fff;font-weight:600;text-decoration:none}
+.btn.pri{background:#3f3f46;color:#fff;border-color:#3f3f46}
+.body{display:flex;gap:24px;padding:24px}
+aside{width:190px;flex:none;border:1px solid #d4d4d8;border-radius:10px;background:#fff;padding:8px}
+aside h4{font-size:11px;text-transform:uppercase;color:#71717a;padding:4px 8px}
+aside a{display:block;padding:9px 8px;text-decoration:none}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.crumb{font-size:12px;color:#71717a}
+h1{font-size:22px}
+.card{background:#fff;border:1px solid #d4d4d8;border-radius:10px;padding:20px}
+.note{font-size:11px;color:#71717a;font-style:italic}
+footer{display:flex;justify-content:space-between;padding:18px 24px;border-top:1px solid #d4d4d8;background:#fff;font-size:12px;color:#71717a}
+ul.can{margin:10px 0 0 18px;line-height:1.9}
+.row{display:flex;gap:10px;margin-top:18px}
+</style></head><body>
+<div class="util"><div><span>Language</span><span class="on">English</span><span>日本語</span><span>中文</span></div><div>Store staff: <u>Administration</u> &nbsp; Supplier</div></div>
+<header><div class="logo"><i></i>Pet Store</div><div class="search"><div>Search pets by name or description</div><b>Search</b></div><div class="acts"><a>Account</a><a>Cart (0)</a><a class="btn">Sign out</a></div></header>
+<div class="body">
+<aside><h4>Pets</h4><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></aside>
+<main>
+<div class="crumb">Home › Administration</div>
+<h1>Administration</h1>
+<section class="card">
+<h3>What you can do here</h3>
+<ul class="can">
+<li>View sales revenue and ordered quantity by category over a date range</li>
+<li>View orders by status</li>
+<li>Approve or deny orders that are waiting for a decision</li>
+</ul>
+<div class="row"><a class="btn pri" href="#">Open order management</a><a class="btn" href="#">Log out</a></div>
+</section>
+<p class="note">Only signed-in administrators reach this page; everyone else gets the Administrator sign-in (drawn in sign-on).</p>
+</main></div>
+<footer><span>Pet Store</span><span>Footer links (shell)</span></footer>
+</body></html>
