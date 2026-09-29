@@ -50,6 +50,7 @@ test.describe("Checkout journey", () => {
   }, testInfo) => {
     await checkOutAs(page, testInfo.retry === 0 ? "hana" : `hana-retry${testInfo.retry}`);
 
+    await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
     await page.getByRole("button", { name: "Submit" }).click();
     await expect(page).toHaveURL("/order-complete");
     await expect(page.getByRole("heading", { name: "Your Order is Complete" })).toBeVisible();
