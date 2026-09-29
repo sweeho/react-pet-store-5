@@ -1,9 +1,9 @@
 ## 1. Data model
 
-- [ ] 1.1 Add a Drizzle schema in `db/` for session-scoped cart lines (session id, item id, integer quantity, added-at) with a unique constraint on session id plus item id (SWHR-T-0096)
-- [ ] 1.2 Generate and commit the migration in `drizzle/` with `db-generate` (SWHR-T-0096)
-- [ ] 1.3 Define the CartLine and CartView types (lines, count, subtotal) shared by server and SPA (SWHR-T-0096)
-- [ ] 1.4 Choose and implement the money representation (integer minor units or decimal) per the OQ-2 decision (SWHR-T-0096)
+- [x] 1.1 Add a Drizzle schema in `db/` for session-scoped cart lines (session id, item id, integer quantity, added-at) with a unique constraint on session id plus item id (SWHR-T-0096)
+- [x] 1.2 Generate and commit the migration in `drizzle/` with `db-generate` (SWHR-T-0096)
+- [x] 1.3 Define the CartLine and CartView types (lines, count, subtotal) shared by server and SPA (SWHR-T-0096)
+- [x] 1.4 Choose and implement the money representation (integer minor units or decimal) per the OQ-2 decision (SWHR-T-0096)
 
 ## 2. Cart service
 
