@@ -73,3 +73,82 @@ test.describe("Site shell", () => {
     await expect(dialog).not.toBeVisible();
   });
 });
+
+/**
+ * UI / E2E TEST
+ *
+ * Global navigation area labels (design.md §D1): resolved from the `shell`
+ * screen by area id, not the removed PRIMARY_AREAS.label field, so they
+ * move with the session locale. The category half (AC-4) is a regression
+ * check only — S-0005 already fixed it (design.md § Context).
+ */
+test.describe("Global navigation locale labels", () => {
+  // The top language bar is `hidden sm:flex` (SiteHeader.tsx), so on a
+  // 375px viewport it isn't actionable — switch language from inside the
+  // drawer instead, then reopen the (now-relabelled) menu button, mirroring
+  // SiteLayout.test.tsx's "switching language from the mobile drawer..." test.
+  async function switchToJapaneseFromMobileDrawer(page: import("@playwright/test").Page) {
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "日本語" }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await page.getByRole("button", { name: "メニューを開く" }).click();
+  }
+
+  test("[SWHR-C-0436] mobile menu storefront entries render in Japanese", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    await switchToJapaneseFromMobileDrawer(page);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    for (const name of ["検索", "カート", "購入手続き", "アカウント", "管理", "サプライヤー"]) {
+      await expect(dialog.getByRole("link", { name })).toBeVisible();
+    }
+    for (const name of ["Search", "Cart", "Checkout", "Account", "Administration", "Supplier"]) {
+      await expect(dialog.getByRole("link", { name, exact: true })).toHaveCount(0);
+    }
+  });
+
+  test("[SWHR-C-0431] mobile menu lists pet categories in Japanese", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+    await switchToJapaneseFromMobileDrawer(page);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    for (const name of ["鳥", "猫", "犬", "魚", "爬虫類"]) {
+      await expect(dialog.getByRole("link", { name })).toBeVisible();
+    }
+    for (const name of ["Birds", "Cats", "Dogs", "Fish", "Reptiles"]) {
+      await expect(dialog.getByRole("link", { name, exact: true })).toHaveCount(0);
+    }
+  });
+
+  test("[SWHR-C-0438] desktop global navigation shows Search and Checkout in Chinese", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "中文" }).click();
+
+    const nav = page.getByRole("navigation", { name: "Global" });
+    await expect(nav.getByRole("link", { name: "搜索" })).toHaveAttribute("href", "/search");
+    await expect(nav.getByRole("link", { name: "结账" })).toHaveAttribute("href", "/checkout");
+  });
+
+  test("[SWHR-C-0440] mobile menu storefront entries render in English by default", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/");
+
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    for (const name of ["Search", "Cart", "Checkout", "Account", "Administration", "Supplier"]) {
+      await expect(dialog.getByRole("link", { name })).toBeVisible();
+    }
+  });
+});
