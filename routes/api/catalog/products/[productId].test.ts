@@ -20,7 +20,7 @@ function eventFor(productId: string, url: string, locale?: string): H3Event {
 
 describe("GET /api/catalog/products/:productId", () => {
   it("[AC-2] returns Japanese name, description, image and price when context.locale is ja_JP", async () => {
-    const event = eventFor("BULLDOG", "http://localhost/api/catalog/products/BULLDOG", "ja_JP");
+    const event = eventFor("K9-BD-01", "http://localhost/api/catalog/products/K9-BD-01", "ja_JP");
 
     const result = await getProductRoute(event);
 
@@ -29,13 +29,13 @@ describe("GET /api/catalog/products/:productId", () => {
       "EST-6",
       "EST-7",
     ]);
-    expect(result.items[0]).toMatchObject({ image: "bulldog.gif" });
+    expect(result.items[0]).toMatchObject({ image: "dogs.svg" });
   });
 
   it("a parseable ?locale= query overrides the session locale for this request", async () => {
     const event = eventFor(
-      "BULLDOG",
-      "http://localhost/api/catalog/products/BULLDOG?locale=zh_CN",
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?locale=zh_CN",
       "en_US",
     );
 
@@ -46,8 +46,8 @@ describe("GET /api/catalog/products/:productId", () => {
 
   it("an unparseable ?locale= query is ignored, falling back to the session locale", async () => {
     const event = eventFor(
-      "BULLDOG",
-      "http://localhost/api/catalog/products/BULLDOG?locale=ja",
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?locale=ja",
       "ja_JP",
     );
 
@@ -57,7 +57,7 @@ describe("GET /api/catalog/products/:productId", () => {
   });
 
   it("[AC-3] responds 404 for a product with no details in the requested locale", () => {
-    const event = eventFor("POODLE", "http://localhost/api/catalog/products/POODLE", "zh_CN");
+    const event = eventFor("K9-PO-02", "http://localhost/api/catalog/products/K9-PO-02", "zh_CN");
 
     try {
       getProductRoute(event);

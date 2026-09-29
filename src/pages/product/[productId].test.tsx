@@ -15,7 +15,7 @@ interface ProductPayload {
 
 const BULLDOG_EN: ProductPayload = {
   product: {
-    productId: "BULLDOG",
+    productId: "K9-BD-01",
     categoryId: "DOGS",
     name: "Bulldog",
     description: "Friendly, loyal family dog.",
@@ -25,12 +25,12 @@ const BULLDOG_EN: ProductPayload = {
   items: [
     {
       itemId: "EST-6",
-      productId: "BULLDOG",
+      productId: "K9-BD-01",
       name: "Male Adult Bulldog",
       description: "Friendly dog from England",
-      image: "bulldog.gif",
+      image: "dogs.svg",
       listPrice: 1850,
-      unitCost: 1850,
+      unitCost: 1200,
       locale: "en_US",
     },
   ],
@@ -98,7 +98,7 @@ describe("ProductPage", () => {
   });
 
   it("[AC-2] renders the product name, item name and formatted en_US price", async () => {
-    renderProduct("/product/BULLDOG", "en_US");
+    renderProduct("/product/K9-BD-01", "en_US");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Bulldog" })).toBeInTheDocument();
     expect(screen.getByText("Male Adult Bulldog")).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("ProductPage", () => {
   });
 
   it("[AC-5] renders the Japanese content and the Japanese-format price with no conversion", async () => {
-    renderProduct("/product/BULLDOG?locale=ja_JP", "en_US");
+    renderProduct("/product/K9-BD-01?locale=ja_JP", "en_US");
 
     expect(
       await screen.findByRole("heading", { level: 1, name: "ブルドッグ" }),
@@ -116,7 +116,7 @@ describe("ProductPage", () => {
   });
 
   it("[AC-3] shows the not-found frame, not English content, for a locale with no details", async () => {
-    renderProduct("/product/POODLE?locale=zh_CN", "en_US");
+    renderProduct("/product/K9-PO-02?locale=zh_CN", "en_US");
 
     expect(await screen.findByText("未找到商品")).toBeInTheDocument();
     expect(screen.queryByText("Poodle")).not.toBeInTheDocument();
@@ -124,7 +124,7 @@ describe("ProductPage", () => {
 
   it("posts the item id to /api/cart/items and shows a confirmation when Add to Cart is activated", async () => {
     const user = userEvent.setup();
-    renderProduct("/product/BULLDOG", "en_US");
+    renderProduct("/product/K9-BD-01", "en_US");
 
     const addButton = await screen.findByRole("button", { name: "Add to Cart" });
     await user.click(addButton);

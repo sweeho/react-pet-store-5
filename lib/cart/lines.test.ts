@@ -86,7 +86,7 @@ describe("getCartWithDetails", () => {
     // item.id must exist for the FK on cartLines.itemId, but this item has
     // no itemDetails row at all, so getItem's inner join never resolves it
     // in any locale — exactly the "doesn't resolve" case this test pins.
-    db.insert(item).values({ id: "GHOST-ITEM", productId: "BULLDOG" }).run();
+    db.insert(item).values({ id: "GHOST-ITEM", productId: "K9-BD-01" }).run();
     addCartItem(sessionId, "GHOST-ITEM");
 
     const details = await getCartWithDetails(event(), sessionId);

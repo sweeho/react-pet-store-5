@@ -28,12 +28,12 @@ const BULLDOG_LINE = {
   quantity: 2,
   item: {
     itemId: "EST-6",
-    productId: "BULLDOG",
+    productId: "K9-BD-01",
     name: "Male Adult Bulldog",
     description: "Friendly dog from England",
-    image: "bulldog.gif",
+    image: "dogs.svg",
     listPrice: 1850,
-    unitCost: 1850,
+    unitCost: 1200,
     locale: "en_US",
   },
 };
