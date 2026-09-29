@@ -46,6 +46,11 @@ export interface StoredOrder {
  * never recomputed from the lines. A second call with the same `orderId`
  * does nothing and returns false, which gives exactly-once delivery.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- red-phase stub
+export function createPurchaseOrder(_tx: Executor, _po: PurchaseOrder): void {
+  throw new Error("VortexNotImplemented");
+}
+
 export function persistPurchaseOrder(tx: Executor, po: PurchaseOrder): boolean {
   const existing = tx
     .select({ orderId: purchaseOrders.orderId })
