@@ -31,11 +31,11 @@
 
 ## 4. Account screens
 
-- [ ] 4.1 Build the account information page with contact, card, expiry, language, category and Yes/No preferences (SWHR-T-0083)
-- [ ] 4.2 Add the edit control on the account page opening the edit form (SWHR-T-0083)
-- [ ] 4.3 Build the account creation form with the fixed choice lists and English/Birds defaults (SWHR-T-0083)
-- [ ] 4.4 Build the account edit form preselecting stored values (SWHR-T-0083)
-- [ ] 4.5 Block submission and show "<field name> is empty." for empty validated fields (SWHR-T-0083)
+- [x] 4.1 Build the account information page with contact, card, expiry, language, category and Yes/No preferences (SWHR-T-0083)
+- [x] 4.2 Add the edit control on the account page opening the edit form (SWHR-T-0083)
+- [x] 4.3 Build the account creation form with the fixed choice lists and English/Birds defaults (SWHR-T-0083)
+- [x] 4.4 Build the account edit form preselecting stored values (SWHR-T-0083)
+- [x] 4.5 Block submission and show "<field name> is empty." for empty validated fields (SWHR-T-0083)
 
 ## 5. Personalisation
 
