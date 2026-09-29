@@ -42,5 +42,5 @@
 
 ## 6. End-to-end
 
-- [ ] 6.1 Playwright spec: a pending order is approved, committed and appears in the non-pending view after processing (SWHR-T-0124)
-- [ ] 6.2 Playwright spec: sales chart reloads for a new date range and rejects a malformed date (SWHR-T-0124)
+- [x] 6.1 Playwright spec: a pending order is approved, committed and appears in the non-pending view after processing (SWHR-T-0124)
+- [x] 6.2 Playwright spec: sales chart reloads for a new date range and rejects a malformed date (SWHR-T-0124)
