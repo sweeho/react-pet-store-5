@@ -238,9 +238,9 @@ export const creditCards = sqliteTable("creditCards", {
   expiryDate: text("expiryDate"),
 });
 
-// Sign-on (design.md P9): the anonymous-cart seam, in shopping-cart's
-// (swhr-i-0008) shape — one line per item per session; ending a storefront
-// session deletes its lines. Remove/update/subtotal remain that change's.
+// Shopping cart (swhr-i-0008): one line per item per session, unique on
+// (sessionId, itemId); ending a storefront session deletes its lines. Read
+// through the CartLine/CartView contract in lib/cart/types.ts.
 export const cartLines = sqliteTable(
   "cartLines",
   {
