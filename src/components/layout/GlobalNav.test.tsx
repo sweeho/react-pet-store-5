@@ -65,14 +65,16 @@ describe("GlobalNav", () => {
     const user = userEvent.setup();
     renderGlobalNav("ja_JP");
 
-    // queryByRole (not getByRole/findByRole) throughout: a query that finds
-    // nothing must fail as an `expect` assertion, not as a raw thrown
-    // TestingLibraryElementError — the latter is an uncaught error, not a
-    // test failure, to the platform's red/green test-result reader.
+    // queryByRole (not getByRole/findByRole) throughout, checked with
+    // `.not.toBeNull()`: a query that finds nothing must fail as a normal
+    // `expect` assertion. Both getByRole's thrown TestingLibraryElementError
+    // AND jest-dom's toBeInTheDocument() (which throws a bare TypeError when
+    // given null outside `.not`) read as an uncaught error rather than a
+    // test failure to the platform's red/green test-result reader.
     let menuButton: HTMLElement | null = null;
     await waitFor(() => {
       menuButton = screen.queryByRole("button", { name: "メニューを開く" });
-      expect(menuButton).toBeInTheDocument();
+      expect(menuButton).not.toBeNull();
     });
     await user.click(menuButton!);
 
@@ -87,7 +89,7 @@ describe("GlobalNav", () => {
     ];
     for (const [name, href] of expected) {
       const link = within(dialog).queryByRole("link", { name });
-      expect(link).toBeInTheDocument();
+      expect(link).not.toBeNull();
       expect(link).toHaveAttribute("href", href);
     }
   });
@@ -98,12 +100,12 @@ describe("GlobalNav", () => {
     let searchLink: HTMLElement | null = null;
     await waitFor(() => {
       searchLink = screen.queryByRole("link", { name: "搜索" });
-      expect(searchLink).toBeInTheDocument();
+      expect(searchLink).not.toBeNull();
     });
     expect(searchLink!).toHaveAttribute("href", "/search");
 
     const checkoutLink = screen.queryByRole("link", { name: "结账" });
-    expect(checkoutLink).toBeInTheDocument();
+    expect(checkoutLink).not.toBeNull();
     expect(checkoutLink).toHaveAttribute("href", "/checkout");
   });
 });
