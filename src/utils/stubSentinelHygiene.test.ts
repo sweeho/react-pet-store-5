@@ -21,7 +21,8 @@ import { describe, expect, it } from "vitest";
  * files are legitimate; documentation and configuration must not carry it.
  */
 function buildSentinel(): string {
-  throw new Error("VortexNotImplemented");
+  // Escaped like .vortex/config.yaml so this file never carries the literal.
+  return "Vortex\x4EotImplemented";
 }
 
 const ROOT = process.cwd();
