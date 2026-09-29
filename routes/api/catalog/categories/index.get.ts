@@ -1,5 +1,11 @@
 import { defineHandler } from "nitro/h3";
 
-export default defineHandler(() => {
-  throw new Error("VortexNotImplemented");
+import { listCategories } from "../../../../lib/catalog/queries";
+import { resolveLocale, withCatalogErrorHandling } from "../../../../lib/catalog/request";
+
+// Anonymous, read-only (SWHR-R-0097/0098): never gated, never writes.
+export default defineHandler((event) => {
+  const locale = resolveLocale(event);
+
+  return withCatalogErrorHandling(() => ({ categories: listCategories(locale) }));
 });
