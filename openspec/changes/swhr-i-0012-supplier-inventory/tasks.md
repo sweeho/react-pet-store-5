@@ -27,10 +27,10 @@
 
 ## 5. Initial stock load
 
-- [ ] 5.1 Add the seed data set for EST-1 through EST-29 at quantity 10000 (SWHR-T-0151)
-- [ ] 5.2 Implement the initial load with skip-when-populated and forced replace (SWHR-T-0151)
-- [ ] 5.3 Gate the initial load behind the decision on who may run it (design Q1) (SWHR-T-0151)
-- [ ] 5.4 Test empty, already-populated and forced load scenarios (SWHR-T-0151)
+- [x] 5.1 Add the seed data set for EST-1 through EST-29 at quantity 10000 (SWHR-T-0151)
+- [x] 5.2 Implement the initial load with skip-when-populated and forced replace (SWHR-T-0151)
+- [x] 5.3 Gate the initial load behind the decision on who may run it (design Q1) (SWHR-T-0151)
+- [x] 5.4 Test empty, already-populated and forced load scenarios (SWHR-T-0151)
 
 ## 6. Screens
 
