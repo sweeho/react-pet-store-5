@@ -74,3 +74,42 @@ test.describe("Account journeys", () => {
     await expect(page.getByLabel("My favourite category")).toHaveValue("CATS");
   });
 });
+
+test.describe("Account journeys — creation and editing", () => {
+  test("New shopper creates an account and lands on the page first requested", async ({
+    page,
+  }, testInfo) => {
+    const userId = testInfo.retry === 0 ? "erin" : `erin-retry${testInfo.retry}`;
+
+    await page.goto("/account");
+    await expect(page).toHaveURL("/signin");
+    await signUp(page, userId, "Secret1");
+
+    await expect(page).toHaveURL("/account");
+    await expect(
+      page.getByRole("navigation", { name: "Global" }).getByRole("button", { name: "Sign out" }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Your Account" })).toBeVisible();
+  });
+
+  test("Shopper views and edits their account: the city changes to San Jose", async ({
+    page,
+  }, testInfo) => {
+    await signUpWithStoredAccount(page, "frida", testInfo.retry);
+    await page.goto("/account");
+
+    const value = (label: string) =>
+      page.locator("dt", { hasText: new RegExp(`^${label}$`) }).locator("xpath=..");
+    await expect(value("City")).toContainText("Palo Alto");
+    await expect(value("First Name")).toContainText("Maria");
+
+    await page.getByRole("link", { name: "Edit Your Account Information" }).click();
+    await expect(page).toHaveURL("/account-edit");
+    await page.getByLabel("City").fill("San Jose");
+    await page.getByRole("button", { name: "Submit" }).click();
+
+    await expect(page).toHaveURL("/account");
+    await expect(value("City")).toContainText("San Jose");
+    await expect(value("First Name")).toContainText("Maria");
+  });
+});

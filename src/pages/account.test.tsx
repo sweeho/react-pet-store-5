@@ -77,8 +77,9 @@ describe("AccountPage", () => {
     stubFetch(stored);
     renderAccount();
 
+    // The heading renders while the account is still loading; wait for the data.
     await waitFor(() =>
-      expect(screen.queryByRole("heading", { level: 1, name: "Your Account" })).not.toBeNull(),
+      expect(screen.queryByText("First Name", { selector: "dt" })).not.toBeNull(),
     );
     expect(within(field("First Name")).getByText("Maria")).toBeVisible();
     expect(within(field("Last Name")).getByText("Chen")).toBeVisible();
