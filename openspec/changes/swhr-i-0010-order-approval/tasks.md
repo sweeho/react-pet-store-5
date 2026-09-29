@@ -28,17 +28,17 @@
 
 ## 5. Administrator screens
 
-- [ ] 5.1 Build the administrator landing page with launch and logout controls (SWHR-T-0123)
-- [ ] 5.2 Build the order-management workspace with pending, non-pending and sales views plus Refresh, About and Exit (SWHR-T-0123)
-- [ ] 5.3 Build the Process Pending Orders table with sortable columns and status colour cues (SWHR-T-0123)
-- [ ] 5.4 Add status editing, Approve, Deny and Commit controls with approve and deny batches and empty-commit no-op (SWHR-T-0123)
-- [ ] 5.5 Build the read-only View Non-Pending Orders table (SWHR-T-0123)
-- [ ] 5.6 Build the sales view with pie and bar charts, date fields, Get Data and default range (SWHR-T-0123)
-- [ ] 5.7 Validate report dates as MM/dd/yyyy and omit invalid report groups (SWHR-T-0123)
-- [ ] 5.8 Add the uncommitted-changes refresh warning (SWHR-T-0123)
-- [ ] 5.9 Add the busy state that disables actions and shows the retrieving/updating message (SWHR-T-0123)
-- [ ] 5.10 Add the fatal server-error dialog that blocks further actions (SWHR-T-0123)
-- [ ] 5.11 UI-test each screen (SWHR-T-0123)
+- [x] 5.1 Build the administrator landing page with launch and logout controls (SWHR-T-0123)
+- [x] 5.2 Build the order-management workspace with pending, non-pending and sales views plus Refresh, About and Exit (SWHR-T-0123)
+- [x] 5.3 Build the Process Pending Orders table with sortable columns and status colour cues (SWHR-T-0123)
+- [x] 5.4 Add status editing, Approve, Deny and Commit controls with approve and deny batches and empty-commit no-op (SWHR-T-0123)
+- [x] 5.5 Build the read-only View Non-Pending Orders table (SWHR-T-0123)
+- [x] 5.6 Build the sales view with pie and bar charts, date fields, Get Data and default range (SWHR-T-0123)
+- [x] 5.7 Validate report dates as MM/dd/yyyy and omit invalid report groups (SWHR-T-0123)
+- [x] 5.8 Add the uncommitted-changes refresh warning (SWHR-T-0123)
+- [x] 5.9 Add the busy state that disables actions and shows the retrieving/updating message (SWHR-T-0123)
+- [x] 5.10 Add the fatal server-error dialog that blocks further actions (SWHR-T-0123)
+- [x] 5.11 UI-test each screen (SWHR-T-0123)
 
 ## 6. End-to-end
 
