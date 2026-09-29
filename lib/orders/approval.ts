@@ -5,6 +5,7 @@ import {
 } from "../b2b/documents/orderApproval";
 import type { SupplierOrder } from "../b2b/documents/supplierOrder";
 import { sendSupplierPurchaseOrders } from "../b2b/exchange/supplierChannel";
+import { runStep } from "../messaging/errors";
 import { enqueue, type Handler, type Tx } from "../messaging/outbox";
 import { minorToDecimal } from "./money";
 import { getStoredOrder } from "./store";
@@ -60,7 +61,7 @@ export function createOrderApprovalHandler(): Handler {
   return async (payload) => {
     const entries = await readOrderApproval(payload);
     return (tx) => {
-      applyApprovalBatch(tx, entries);
+      runStep("order-approval", () => applyApprovalBatch(tx, entries));
     };
   };
 }
