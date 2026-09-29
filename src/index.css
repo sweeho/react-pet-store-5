@@ -12,7 +12,9 @@
   --radius-full: calc(infinity * 1px);
 
   /* Templates ship on Inter; swap in your own if needed */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   --font-custom-default: var(--font-sans);
   --font-custom-serif: "Domine", ui-serif, Georgia, serif;
   --font-custom-mono: "Kode Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
