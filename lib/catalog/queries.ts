@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { db } from "../../db/client";
-import { product, productDetails } from "../../db/schema";
+import { item, itemDetails, product, productDetails } from "../../db/schema";
 import type { LocaleId } from "../locale/model";
 import type { Page } from "./paging";
 
@@ -25,17 +25,24 @@ export interface ProductView {
 export interface ItemView {
   itemId: string;
   productId: string;
-  categoryId: string;
-  productName: string;
   name: string;
   description: string;
   image: string;
-  /** Always length 5; an unset attribute is null (D4, SD2). */
-  attributes: (string | null)[];
   listPrice: number;
   unitCost: number;
   locale: LocaleId;
 }
+
+const ITEM_VIEW_COLUMNS = {
+  itemId: item.id,
+  productId: item.productId,
+  name: itemDetails.name,
+  description: itemDetails.description,
+  image: itemDetails.image,
+  listPrice: itemDetails.listPrice,
+  unitCost: itemDetails.unitCost,
+  locale: itemDetails.locale,
+};
 
 /**
  * Every query below filters by locale and joins on that same locale (D4,
@@ -63,16 +70,38 @@ export function getProduct(productId: string, locale: LocaleId): ProductView | n
   return row ?? null;
 }
 
+/**
+ * An item is listed only when both its own details AND its product's
+ * details exist in this same locale (SWHR-R-0014.03) — the join against
+ * `productDetails` is what excludes an item whose product lacks the locale,
+ * even when the item's own row for that locale exists.
+ */
 export function listProductItems(productId: string, locale: LocaleId): ItemView[] {
-  void productId;
-  void locale;
-  throw new Error("VortexNotImplemented");
+  return db
+    .select(ITEM_VIEW_COLUMNS)
+    .from(item)
+    .innerJoin(itemDetails, and(eq(itemDetails.itemId, item.id), eq(itemDetails.locale, locale)))
+    .innerJoin(
+      productDetails,
+      and(eq(productDetails.productId, item.productId), eq(productDetails.locale, locale)),
+    )
+    .where(eq(item.productId, productId))
+    .all();
 }
 
 export function getItem(itemId: string, locale: LocaleId): ItemView | null {
-  void itemId;
-  void locale;
-  throw new Error("VortexNotImplemented");
+  const row = db
+    .select(ITEM_VIEW_COLUMNS)
+    .from(item)
+    .innerJoin(itemDetails, and(eq(itemDetails.itemId, item.id), eq(itemDetails.locale, locale)))
+    .innerJoin(
+      productDetails,
+      and(eq(productDetails.productId, item.productId), eq(productDetails.locale, locale)),
+    )
+    .where(eq(item.id, itemId))
+    .get();
+
+  return row ?? null;
 }
 
 export function listCategories(locale: LocaleId): CategoryView[] {

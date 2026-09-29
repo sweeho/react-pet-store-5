@@ -11,8 +11,6 @@ export class CatalogError extends Error {
 }
 
 export function toCatalogError(error: unknown): CatalogError {
-  if (error instanceof CatalogError) {
-    return error;
-  }
-  return new CatalogError(error instanceof Error ? error.message : String(error));
+  void error;
+  throw new Error("VortexNotImplemented");
 }
