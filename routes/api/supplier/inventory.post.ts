@@ -31,6 +31,7 @@ export default defineHandler(async (event) => {
       event.res.status = 400;
       return { error: "INVALID_BATCH", invalid: result.invalid, unknown: result.unknown };
     }
+    event.res.status = 200;
     return { updated: result.updated };
   } catch {
     event.res.status = 500;
