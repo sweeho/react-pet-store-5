@@ -4,16 +4,9 @@ import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 
 import { migrateDatabase } from "../lib/db/migrate";
-import {
-  category,
-  groupMembers,
-  profiles,
-  roleAssignments,
-  supplierInventory,
-  users,
-} from "./schema";
+import { category, groupMembers, profiles, roleAssignments, users } from "./schema";
 import { seedCatalog } from "./seed/catalog";
-import { seedInventory } from "./seed/inventory";
+import { loadInitialStock } from "./seed/inventory";
 
 // Vitest sets VITEST=true in every worker; an in-memory db keeps route
 // integration tests isolated from the file-backed dev/prod db and from
@@ -80,7 +73,5 @@ if (db.select().from(category).all().length === 0) {
   seedCatalog(db);
 }
 
-// Supplier stock (order-fulfillment P6), seeded once per fresh database.
-if (db.select().from(supplierInventory).all().length === 0) {
-  seedInventory(db);
-}
+// Supplier stock (order-fulfillment P6), loaded unforced: skipped when any record exists.
+loadInitialStock(db);
