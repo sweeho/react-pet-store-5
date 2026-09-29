@@ -11,7 +11,13 @@ import {
   profiles,
   users,
 } from "../../db/schema";
-import { createAccount, createCustomer, getCustomerAccount, listCustomers } from "./customer";
+import {
+  createAccount,
+  createCustomer,
+  deleteCustomer,
+  getCustomerAccount,
+  listCustomers,
+} from "./customer";
 import type { ContactInfoValue, CreditCardValue } from "./types";
 
 beforeEach(() => {
@@ -168,5 +174,13 @@ describe("customer lookups and seeded accounts", () => {
     expect(account?.status).toBe("active");
     expect(account?.contactInfo).toEqual(contactInfo);
     expect(account?.creditCard).toEqual(creditCard);
+  });
+
+  test("deleting a customer removes its account graph through the cascade", () => {
+    addUser("gone");
+    createCustomer("gone");
+    deleteCustomer("gone");
+    expect(getCustomerAccount("gone")).toBeNull();
+    expect(db.select().from(accounts).where(eq(accounts.userId, "gone")).all()).toHaveLength(0);
   });
 });
