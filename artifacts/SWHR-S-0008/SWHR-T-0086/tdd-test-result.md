@@ -14,7 +14,7 @@ No separate red run. The change's implementing tickets had already written a nam
 
 - `bun --bun vitest run lib/account/scenarios`: 1 passed.
 - Playwright (`e2e/account.spec.ts`, `e2e/personalisation.spec.ts`): 5 passed (two are the earlier SWHR-C-0230/0231 tests in the same file). Also re-ran `e2e/sign-on.spec.ts` (8 passed) after the registration-step change from SWHR-T-0083.
-- Full gate `bun run verify` exit 0: 143 files, 692 tests passed.
+- Full gate `bun run verify` exit 0: 145 files, 706 tests passed.
 
 `bun run test:e2e` cannot start here (its preflight expects Chromium 1155; the container has 1223). I ran the specs with a throwaway Playwright config outside the commit that points at the installed Chromium; it is not committed.
 
