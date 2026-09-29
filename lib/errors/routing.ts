@@ -1,3 +1,10 @@
+import {
+  DuplicateAccountFailure,
+  EmptyCartFailure,
+  GeneralFailure,
+  MissingFormDataFailure,
+} from "./failures";
+
 export interface FailureBody {
   kind: string;
   screen: string | null;
@@ -5,9 +12,33 @@ export interface FailureBody {
   missing?: string[];
 }
 
-export const ERROR_SCREENS: [new (...args: never[]) => Error, string, number][] = [];
+type ErrorClass = abstract new (...args: never[]) => Error;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- red-phase stub
-export function failureResponse(_error: unknown): { status: number; body: FailureBody } {
-  throw new Error("VortexNotImplemented");
+// The first entry the error is an instance of wins, so a subtype is covered
+// by its parent's entry.
+export const ERROR_SCREENS: readonly (readonly [ErrorClass, string, number])[] = [
+  [EmptyCartFailure, "/order-error", 409],
+  [DuplicateAccountFailure, "/user-creation-error", 409],
+  [GeneralFailure, "/error", 400],
+];
+
+function kindOf(error: unknown): string {
+  if (typeof error === "object" && error !== null) {
+    const { kind, name } = error as { kind?: unknown; name?: unknown };
+    if (typeof kind === "string") return kind;
+    if (typeof name === "string") return name;
+  }
+  return "Unknown";
+}
+
+export function failureResponse(error: unknown): { status: number; body: FailureBody } {
+  const kind = kindOf(error);
+  for (const [failureClass, screen, status] of ERROR_SCREENS) {
+    if (error instanceof failureClass) {
+      const body: FailureBody = { kind, screen, message: error.message };
+      if (error instanceof MissingFormDataFailure) body.missing = error.missing;
+      return { status, body };
+    }
+  }
+  return { status: 500, body: { kind, screen: null, message: `Unhandled failure: ${kind}` } };
 }

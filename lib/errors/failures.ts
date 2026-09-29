@@ -3,21 +3,28 @@ export class Failure extends Error {
 
   constructor(message?: string) {
     super(message);
-    throw new Error("VortexNotImplemented");
+    this.name = new.target.name;
   }
 }
 
-export class GeneralFailure extends Failure {}
+export class GeneralFailure extends Failure {
+  override readonly kind: string = "General";
+}
 
 export class MissingFormDataFailure extends GeneralFailure {
+  override readonly kind: string = "MissingFormData";
   readonly missing: string[];
 
   constructor(missing: string[]) {
-    super();
+    super(`Missing form data: ${missing.join(", ")}`);
     this.missing = missing;
   }
 }
 
-export class EmptyCartFailure extends Failure {}
+export class EmptyCartFailure extends Failure {
+  override readonly kind: string = "EmptyCart";
+}
 
-export class DuplicateAccountFailure extends Failure {}
+export class DuplicateAccountFailure extends Failure {
+  override readonly kind: string = "DuplicateAccount";
+}
