@@ -98,3 +98,8 @@ export function listSupplierOrders(): SupplierOrderRecord[] {
     .map((order) => getSupplierOrder(order.orderId))
     .filter((record): record is SupplierOrderRecord => record !== null);
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- red-phase stub
+export function listSupplierOrderIdsByStatus(status: string): string[] {
+  throw new Error("VortexNotImplemented");
+}
