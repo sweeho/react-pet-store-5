@@ -5,6 +5,7 @@ import { getSupplierOrder } from "../b2b/exchange/supplierOrders";
 import { publishInvoices } from "../b2b/exchange/invoiceChannel";
 import type { PartnerInvoice } from "../b2b/partner/tpaInvoice";
 import type { Tx } from "../messaging/outbox";
+import { InvoiceBuildError } from "./errors";
 import { buildSupplierInvoice, fulfil } from "./fulfilment";
 
 /**
@@ -31,7 +32,12 @@ export function fulfilSupplierOrder(tx: Tx, orderId: string, now: Date): Partner
   const result = fulfil(order.lineItems, stock);
   if (result.shipped.length === 0) return null;
 
-  const invoice = buildSupplierInvoice(order, result.shipped, now);
+  let invoice: PartnerInvoice;
+  try {
+    invoice = buildSupplierInvoice(order, result.shipped, now);
+  } catch (error) {
+    throw new InvoiceBuildError(error);
+  }
   for (const itemId of Object.keys(stock)) {
     if (result.stock[itemId] !== stock[itemId]) {
       tx.update(supplierInventory)
@@ -59,8 +65,8 @@ export function fulfilSupplierOrder(tx: Tx, orderId: string, now: Date): Partner
 
 /**
  * Retries every PENDING supplier order in ascending order id, each in its own
- * savepoint: an order whose fulfilment or invoice build throws is rolled back
- * and skipped (SWHR-R-0220.02).
+ * savepoint: an order whose invoice build fails is rolled back and skipped
+ * (SWHR-R-0220.02). Any other failure propagates and aborts the caller's update.
  */
 export function refulfilPendingSupplierOrders(tx: Tx, now: Date): PartnerInvoice[] {
   const invoices: PartnerInvoice[] = [];
@@ -68,7 +74,8 @@ export function refulfilPendingSupplierOrders(tx: Tx, now: Date): PartnerInvoice
     try {
       const invoice = tx.transaction((inner) => fulfilSupplierOrder(inner, orderId, now));
       if (invoice) invoices.push(invoice);
-    } catch {
+    } catch (error) {
+      if (!(error instanceof InvoiceBuildError)) throw error;
       // Rolled back to the savepoint; the order stays PENDING for the next stock update.
     }
   }
