@@ -61,3 +61,125 @@ Identifier counters use `CounterEJBTable`: `name VARCHAR(255)` is the primary ke
 - Order approval, supplier fulfilment and the confirmation e-mail itself, which belong to order processing and notification.
 - Payment authorisation. The legacy code never charges a card.
 - Tax, shipping charges and discounts. The legacy code has none.
+
+## Sprint planning — SWHR-S-0011
+
+Tickets: EPIC SWHR-T-0105, STORY SWHR-T-0106. One TASK per `tasks.md` group: 1 → SWHR-T-0107, 2 → SWHR-T-0108, 3 → SWHR-T-0109, 4 → SWHR-T-0110, 5 → SWHR-T-0111, 6 → SWHR-T-0112, 7 → SWHR-T-0113. Mockups: `artifacts/SWHR-S-0011/design/` (index `MANIFEST.md`).
+
+### Codebase findings
+
+- **No order or counter tables.** `db/schema.ts` has accounts, cart, outbox and supplier-order tables only. The latest migration is `drizzle/0006_parched_may_parker.sql`, so this sprint adds 0007.
+- **The outbox already exists.** `lib/messaging/outbox.ts` has `enqueue(tx, channel, payload)`, fixed `SUBSCRIBERS` per `Channel` (`supplier.purchase-order`, `opc.invoice`), and `registerConsumer`. `lib/messaging/dispatcher.ts` `dispatchPending()` runs each handler's commit and the "delivered" mark in one transaction, and retries until `OUTBOX_MAX_ATTEMPTS`. `plugins/outbox-dispatcher.ts` polls it; polling is off under Vitest. No production code calls `registerConsumer` yet.
+- **The purchase-order document exists.** `lib/b2b/documents/purchaseOrder.ts` has `writePurchaseOrder(po: PurchaseOrder): string` and `readPurchaseOrder(xml)`. `PurchaseOrder` carries `locale, orderId, userId, emailId, orderDate, shippingInfo, billingInfo, totalPrice (decimal string), creditCard {cardNumber, cardType, expiryDate}, lineItems [{categoryId, productId, itemId, lineNum, quantity, unitPrice (decimal string)}]`.
+- **The cart is ready for checkout.** `lib/cart/lines.ts` has `getCart(event, sessionId): Promise<CartView>`, priced at list price in integer minor units, and `emptyCart(sessionId, tx)`, which exists for the order transaction (ARCHITECTURE Key Decision "The cart is priced when it is read").
+- **The account has what the form needs.** `lib/account/customer.ts` `getCustomerAccount(userId)` returns `contactInfo {givenName, familyName, telephone, email, address {streetName1, streetName2, city, state, zipCode, country}}` and `creditCard {cardLastFour, cardType, expiryDate}`. Only the last four digits exist (Key Decision). `lib/account/reference.ts` has `COUNTRIES` (PRD decided behaviour 19) and `STATES`. `lib/account/cardNumber.ts` has `maskCardNumber`.
+- **Sign-on already gates `/checkout`.** `configs/signon-config.json` lists `/checkout` (`enter_order_information.screen`). `middleware/signon.ts` and `src/components/auth/SignOnGate.tsx` send an anonymous visitor to `/signin`, and sign-in returns them to `session.originalUrl` (e2e SWHR-C-0132, SWHR-C-0236). `requireSignOn(event)` throws 401 for API routes.
+- **Placeholders and frames.** `src/pages/checkout.tsx` is a "Coming soon" placeholder with its own test. `src/components/state/` has `ErrorState` and `EmptyState`. `/user-creation-error` is the existing duplicate-account screen. There is no general error page and no central failure-to-screen mapping; routes throw h3 `createError` directly.
+- **Money.** `lib/locale/money.ts` `formatPrice(minor, locale)` divides by 100 for USD and CNY and by 1 for JPY. No shared minor-units-to-decimal-string helper exists. `lib/b2b/exchange/supplierIntake.ts` has a private `unitPriceToCents`, which is left alone.
+- **Tests.** The Vitest `server` project covers `routes/`, `lib/`, `plugins/` and `middleware/`. Under Vitest, `db/client.ts` is in-memory. `lib/db/migrate.ts` `migrateDatabase(sqlite, folder)` can migrate a second, file-backed connection. CI (`.github/workflows/ci.yml`) already runs on push and pull request to `vortex/**`.
+
+### Planning decisions
+
+- **P1 — Resolved open questions.** These implement the decided behaviours, which PRD constraint 4 says win over the spec.
+  - **OQ-1:** the order card is the card on the customer's account (PRD decided behaviour 5). The purchase order's `cardNumber` is the masked form `•••• •••• •••• 4242`, never a full number (Key Decision on last four only), `cardType` is the stored type, and `expiryDate` is `MM/YYYY`. Resolved in `lib/checkout/card.ts` (SWHR-T-0113).
+  - **OQ-3:** money is integer minor units everywhere it is stored or computed. The purchase-order document carries decimal strings produced by exact conversion: 2 fraction digits for en_US and zh_CN, 0 for ja_JP, the same split as `formatPrice`. Conversion never goes through a binary float. Resolved in `lib/orders/money.ts` (SWHR-T-0113). The existing Key Decision "Locale-keyed data, no fallback" already states integer minor units, so no new Key Decision is needed for 7.2.
+  - **OQ-5:** the stored order keeps one contact, the shipping snapshot (PRD decided behaviour 8). Billing is not persisted separately. It travels only in the document. Resolved in `lib/orders/store.ts` (SWHR-T-0107).
+  - **OQ-2:** raise, as the spec says. **OQ-6:** keep the prefix `1001`. **OQ-4:** see SD-1.
+- **P2 — Helpers (SWHR-T-0113).**
+  - `lib/orders/money.ts` exports `minorToDecimal(minor: number, locale: LocaleId): string` and `decimalToMinor(value: string, locale: LocaleId): number`. `decimalToMinor` throws an error naming the value when there are too many fraction digits or the value is not numeric.
+  - `lib/checkout/card.ts` exports `orderCardFromAccount(card: CreditCardValue): CreditCard`, where `CreditCard` is the type from `lib/b2b/elements/creditCard`.
+- **P3 — Data model (SWHR-T-0107).** Everything goes in `db/schema.ts` with migration 0007:
+  - `counters`: `name` is a text primary key with `CHECK(length(name) <= 255)`; `value` is a non-null integer.
+  - `purchaseOrders`: `orderId` text primary key; `userId`, `emailId`, `orderDate` (timestamp_ms), `locale`; `totalValue`, integer minor units, taken from the supplied `totalPrice` and never recomputed; `status`, non-null, default `'PENDING'`, `CHECK IN ('PENDING','APPROVED','DENIED','SHIPPED_PART','COMPLETED')` (PRD decided behaviour 2); `createdAt`.
+  - `orderContacts`: one per order, with a unique `orderId` foreign key (cascade); `givenName`, `familyName`, `telephone`, and `email` (nullable).
+  - `orderAddresses`: one per contact, with a unique `contactId` foreign key (cascade); `streetName1`, `streetName2` (nullable), `city`, `state`, `zipCode`, `country`.
+  - `orderCards`: one per order, with a unique `orderId` foreign key (cascade); `cardNumber` (masked), `cardType`, `expiryDate`.
+  - `orderLines`: primary key `(orderId, lineNum)`; `categoryId`, `productId`, `itemId`, `quantity`, and `unitPrice` in integer minor units.
+  - `sessions` gains nullable `lastOrderId` and `lastOrderEmail`, read by the order complete screen (P8).
+  - `lib/messaging/outbox.ts` gains channel `"opc.purchase-order"` with subscribers `["order-intake"]`. There is no new outbox table (SD-3).
+  - `lib/orders/store.ts` exports `persistPurchaseOrder(tx: Executor, po: PurchaseOrder): void`. It writes one order with its shipping-contact snapshot, address, card and lines, and does nothing if `orderId` is already stored, which gives exactly-once delivery. It also exports `getStoredOrder(orderId: string, tx?: Executor): StoredOrder | null`.
+- **P4 — Identifiers (SWHR-T-0108).** `lib/ids/counter.ts` exports `ORDER_ID_PREFIX = "1001"` and `nextId(prefix: string, tx?: Executor): string`.
+  - It inserts with `INSERT … ON CONFLICT DO NOTHING`, then runs `UPDATE … SET value = value + 1 RETURNING value`, and returns `prefix + value` with no padding.
+  - With `tx`, it runs inside the caller's transaction. Without one, it opens its own `db.transaction(…, { behavior: "immediate" })`.
+  - A failed counter creation throws `CounterCreationError`, whose message names the prefix.
+  - SWHR-C-0278 runs two bun:sqlite connections on a temporary file database migrated with `migrateDatabase`.
+- **P5 — Failure kinds and screens (SWHR-T-0112).**
+  - `lib/errors/failures.ts` exports `class Failure extends Error { readonly kind: string }` and four subclasses:
+    - `GeneralFailure`, kind `"General"`
+    - `MissingFormDataFailure extends GeneralFailure`, kind `"MissingFormData"`, with `missing: string[]`
+    - `EmptyCartFailure`, kind `"EmptyCart"`
+    - `DuplicateAccountFailure`, kind `"DuplicateAccount"`
+  - `lib/errors/routing.ts` exports `ERROR_SCREENS`, an ordered list of `[FailureClass, screen, status]`:
+    - EmptyCart → `/order-error`, 409
+    - DuplicateAccount → `/user-creation-error`, 409
+    - General → `/error`, 400
+  - The first entry whose class the error is an instance of wins, so a subtype is covered by its parent's entry.
+  - `routing.ts` also exports `failureResponse(error: unknown): { status: number; body: FailureBody }`, where `FailureBody = { kind: string; screen: string | null; message: string; missing?: string[] }`.
+  - An unmapped error answers status 500, `screen: null` and `message: "Unhandled failure: <kind>"`, where kind is `error.kind ?? error.name`.
+  - `routes/api/customers.post.ts` is not changed.
+- **P6 — Order placement (SWHR-T-0109).**
+  - `lib/checkout/contact.ts` exports `validateOrderContacts(form: OrderForm): { billing: ContactInfo; shipping: ContactInfo }`.
+    - `OrderForm = { billing: OrderContactInput; shipping: OrderContactInput }`, and each `OrderContactInput` has string fields `givenName, familyName, streetName1, streetName2, city, state, zipCode, country, telephone, email`.
+    - Values are trimmed. A blank required field adds `"<section>.<field>"` (for example `"shipping.telephone"`) to a `MissingFormDataFailure`.
+    - A blank `streetName2` becomes `null`, and country is not checked (PRD decided behaviour 7).
+  - `lib/checkout/placeOrder.ts` exports `placeOrder(event: H3Event, form: OrderForm, opts?: { now?: Date }): Promise<{ orderId: string; email: string }>`. The steps are:
+    1. Validate, then read the cart with `getCart`. An empty cart throws `EmptyCartFailure`.
+    2. In one `db.transaction`:
+       - re-check that cart lines still exist, throwing `EmptyCartFailure` if not (double submit)
+       - call `nextId(ORDER_ID_PREFIX, tx)`
+       - build the `PurchaseOrder`, with lines in cart order from `lineNum` 0, `unitPrice` and `totalPrice` from `minorToDecimal`, and the card from `orderCardFromAccount`
+       - call `enqueue(tx, "opc.purchase-order", writePurchaseOrder(po))`
+       - call `emptyCart(sessionId, tx)`
+       - set the session's `lastOrderId` and `lastOrderEmail`
+    3. The order e-mail is the billing e-mail, or the account e-mail when billing's is blank (SD-9).
+  - `routes/api/orders/index.post.ts`:
+    - `requireSignOn` (401)
+    - 200 `{ orderId, email }` on success
+    - on a thrown error, answers `failureResponse(error)`: status plus `FailureBody`
+- **P7 — Intake (SWHR-T-0110).** `lib/orders/intake.ts` exports `createOrderIntakeHandler(): Handler`. Its prepare step is `readPurchaseOrder(payload)`, and its commit step is `(tx) => persistPurchaseOrder(tx, po)`. `plugins/order-intake.ts` registers it with `registerConsumer("opc.purchase-order", "order-intake", …)` at startup. Order approval (swhr-i-0010) extends intake later and must not add a second consumer for this channel.
+- **P8 — Screens (SWHR-T-0111).** All screens are built from the mockups in `artifacts/SWHR-S-0011/design/`.
+  - `/checkout` (`src/pages/checkout.tsx`) replaces the placeholder:
+    - Billing Information and Shipping Information are pre-filled from `GET /api/account`; state and country are selects from `STATES` and `COUNTRIES`.
+    - A Payment panel shows the masked account card and links to the account page.
+    - Submit is disabled while the request is pending.
+    - On a failure, it navigates to `body.screen`.
+    - On success, it dispatches `cart:changed` and navigates to `/order-complete`.
+  - `/order-complete` reads `GET /api/orders/last`, which answers `{ orderId, email }` from the session through `withReadTransaction`, or 404 when there is none. The page shows the heading, order number, e-mail statement and thank-you line.
+  - `/order-error` shows the empty-cart Order Error copy.
+  - `/error` is the general error page ("Something went wrong").
+  - `lib/db/readTransaction.ts` exports `withReadTransaction<T>(fn: (tx: Executor) => T): T`. If a transaction cannot begin, it runs `fn(db)`. A commit failure is ignored and the result is returned (SD-5).
+  - Copy is in en_US, ja_JP and zh_CN.
+- **P9 — Sequencing.** SWHR-T-0113 → SWHR-T-0107 → SWHR-T-0108 → SWHR-T-0112 → SWHR-T-0109 → (SWHR-T-0110 ∥ SWHR-T-0111). Each step builds on the previous step's modules. SWHR-T-0110 and SWHR-T-0111 share no files.
+
+### Phases
+
+1. **Helpers** (SWHR-T-0113): exact money conversion and the order card.
+2. **Data model** (SWHR-T-0107): migration 0007, the order channel, and `persistPurchaseOrder`.
+3. **Identifiers** (SWHR-T-0108).
+4. **Error routing** (SWHR-T-0112).
+5. **Placement** (SWHR-T-0109): the service and the POST route.
+6. **Hand-off and screens**, in parallel: intake consumer and plugin (SWHR-T-0110); pages, the last-order route, and E2E (SWHR-T-0111).
+7. **Test harness.** No new Vitest project is needed.
+   - New server tests live under `lib/`, `routes/` and `plugins/` (the `server` project); page tests sit next to their pages (`client`).
+   - "Queue captured" means reading `outboxMessages` rows for channel `opc.purchase-order` from the in-memory database. A fake clock is the `now` option.
+   - SWHR-C-0278 uses a temporary file database with two connections.
+   - Every test is titled with its case key (`[SWHR-C-0xxx]`).
+   - `e2e/checkout.spec.ts` covers SWHR-C-0257 and SWHR-C-0265 against the Playwright server, which has a fresh database per run through `SQLITE_PATH`.
+8. **CI.** `.github/workflows/ci.yml` already triggers on push and pull request to `vortex/**`, `dev` and `main`, and runs the full gate including E2E, so no workflow changes. Test evidence continues through `test:evidence`.
+
+### Spec discrepancies
+
+- **SD-1 — Blank required field.** Scenario SWHR-R-0147.01 says "the telephone number is reported as missing", and task 5.3 asks for per-field messages on the form. PRD decided behaviour 6 and the idea's non-scope say the shopper sees the general error page with no field-level message. The resolution:
+  - The API reports the missing fields (`missing: ["shipping.telephone"]` in the 400 body), which satisfies the scenario at the API level.
+  - The screen navigates to `/error`, which satisfies decided behaviour 6.
+  - Task 5.3 is delivered as that routing.
+  - PRD open question 2 already lists the spec correction as owed.
+- **SD-2 — Card source.** SWHR-R-0151 only requires "a card". Decided behaviour 5 says it is the account's card, and the Key Decision limits it to the last four digits, so the document's `cardNumber` is masked (P1).
+- **SD-3 — Order outbox (task 1.2).** The spec's design proposes a new outbox table. The ARCHITECTURE Key Decision "One outbox for every asynchronous hop" forbids a second queue. Task 1.2 is delivered as the new channel `opc.purchase-order` on the existing outbox tables.
+- **SD-4 — Messaging connection (SWHR-R-0154, SWHR-C-0272).** An enqueue here is a row insert in the caller's own SQLite transaction, so no separate messaging connection exists to open or leak. The test makes `enqueue` throw inside a unit of work. It then asserts that the error reaches the caller, that the counter increment and outbox rows are rolled back, and that no transaction is left open: a following `db.transaction` succeeds.
+- **SD-5 — Page-render transactions (SWHR-R-0164).** The SPA renders in the browser, where no server transaction exists. The requirement applies to the server read behind the order complete screen, `GET /api/orders/last`, through `withReadTransaction` (P8).
+- **SD-6 — Where the order is stored.** The spec's design leaves purchase-order persistence to order processing. The scenarios SWHR-R-0160 and SWHR-R-0161 are in this change, so this sprint builds the tables and `persistPurchaseOrder` and stores orders through the intake consumer (P7). The order-approval change (swhr-i-0010, task 1.1, "add order status values") will find the status column already present, with all five decided statuses.
+- **SD-7 — Money literals.** The scenarios state decimals, such as 51.50. The database stores integer minor units (5150), and the document carries decimal strings ("51.50"). Tests assert both forms.
+- **SD-8 — Billing contact.** SWHR-R-0149 puts both contacts on the purchase order, and the document carries both. Only the shipping snapshot is stored (SWHR-R-0161, decided behaviour 8).
+- **SD-9 — Blank billing e-mail.** E-mail is optional (decided behaviour 7), but the order's contact e-mail and the confirmation statement need an address. When the billing e-mail is blank, the account's stored e-mail is used. This is provisional; the idea canvas lists it as an open question for a human.
+- **SD-10 — Empty-cart check order.** The legacy code issues the id before checking the cart. Here, the check runs first and again inside the transaction. The outcome is the same, because a rollback undoes the id.
