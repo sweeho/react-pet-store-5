@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -48,7 +48,10 @@ describe("PetsMenu", () => {
   it("lists the five categories from the API, each linking to its category page", async () => {
     renderPetsMenu();
 
-    const nav = await screen.findByRole("navigation", { name: "Pets" });
+    const nav = screen.getByRole("navigation", { name: "Pets" });
+    await waitFor(() => {
+      expect(within(nav).getAllByRole("link")).toHaveLength(CATEGORIES.length);
+    });
     for (const category of CATEGORIES) {
       expect(within(nav).getByRole("link", { name: category.name })).toHaveAttribute(
         "href",
@@ -60,7 +63,10 @@ describe("PetsMenu", () => {
   it("marks the active category current, and no other", async () => {
     renderPetsMenu("CATS");
 
-    const nav = await screen.findByRole("navigation", { name: "Pets" });
+    const nav = screen.getByRole("navigation", { name: "Pets" });
+    await waitFor(() => {
+      expect(within(nav).getAllByRole("link")).toHaveLength(CATEGORIES.length);
+    });
     expect(within(nav).getByRole("link", { name: "Cats" })).toHaveAttribute("aria-current", "page");
     expect(within(nav).getByRole("link", { name: "Dogs" })).not.toHaveAttribute("aria-current");
   });

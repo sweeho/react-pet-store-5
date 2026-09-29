@@ -58,7 +58,10 @@ describe("Home page", () => {
 
   it("[SWHR-C-0003] links to every primary area", async () => {
     renderHome();
-    await screen.findByRole("group", { name: "Choose a pet to start" });
+    const map = screen.getByRole("group", { name: "Choose a pet to start" });
+    await waitFor(() => {
+      expect(within(map).getAllByRole("link")).toHaveLength(5);
+    });
 
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
     for (const area of PRIMARY_AREAS) {
@@ -68,7 +71,10 @@ describe("Home page", () => {
 
   it("[SWHR-C-0003] links to every pet category", async () => {
     renderHome();
-    const map = await screen.findByRole("group", { name: "Choose a pet to start" });
+    const map = screen.getByRole("group", { name: "Choose a pet to start" });
+    await waitFor(() => {
+      expect(within(map).getAllByRole("link")).toHaveLength(5);
+    });
 
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
     for (const category of CATEGORIES) {
@@ -80,10 +86,10 @@ describe("Home page", () => {
   it("[SWHR-C-0182] the picture map offers exactly five regions: Birds, Cats, Dogs, Fish and Reptiles", async () => {
     renderHome();
 
-    await waitFor(() => {
-      expect(screen.queryByRole("group", { name: "Choose a pet to start" })).not.toBeNull();
-    });
     const map = screen.getByRole("group", { name: "Choose a pet to start" });
+    await waitFor(() => {
+      expect(within(map).getAllByRole("link")).toHaveLength(5);
+    });
     const links = within(map).getAllByRole("link");
 
     expect(links).toHaveLength(5);
