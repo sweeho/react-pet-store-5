@@ -33,16 +33,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // bun, not npx — the agent containers are npm/npx-free (bun-only runner).
-    //
-    // Run the bin FILE under `bun --bun` rather than going through `bun x`. Two
-    // reasons: Vite's bin carries a `#!/usr/bin/env node` shebang, so anything
-    // that honours it starts the dev server under node — where db/client.ts's
+    // Start through the project's own `dev` script rather than invoking Vite's
+    // bin directly, so E2E exercises the same entry point developers and CI
+    // actually run (SWHR-T-0050). `dev` itself is `bun --bun ./node_modules/vite/bin/vite.js`
+    // — Vite's bin carries a `#!/usr/bin/env node` shebang, so anything that
+    // honours it starts the dev server under node, where db/client.ts's
     // `bun:sqlite` import dies with ERR_UNSUPPORTED_ESM_URL_SCHEME and every
-    // database-backed route 500s, while routes that never touch the database
-    // keep working. And naming the file skips bunx's resolution/auto-install
-    // step, which can silently eat the whole startup budget on a cold runner.
-    command: `rm -f ${E2E_DB_PATH} ${E2E_DB_PATH}-wal ${E2E_DB_PATH}-shm ${E2E_DB_PATH}-journal && bun --bun ./node_modules/vite/bin/vite.js --port ${PORT} --strictPort`,
+    // database-backed route 500s. `bun run dev` on a machine with Node on PATH
+    // (CI's ubuntu-latest) is exactly the case that regressed, so routing E2E
+    // through it makes the suite the regression guard.
+    command: `rm -f ${E2E_DB_PATH} ${E2E_DB_PATH}-wal ${E2E_DB_PATH}-shm ${E2E_DB_PATH}-journal && bun run dev --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     env: { SQLITE_PATH: E2E_DB_PATH },
