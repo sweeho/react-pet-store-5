@@ -25,10 +25,10 @@
 
 ## 4. Message dispatch
 
-- [ ] 4.1 Implement the outbox writer that enqueues outbound messages inside the step's transaction (SWHR-T-0136)
-- [ ] 4.2 Implement the dispatcher that delivers committed messages and leaves failed ones for retry, with a retry cap and dead-letter state (SWHR-T-0136)
-- [ ] 4.3 Implement the workflow-step error type preserving the root cause (SWHR-T-0136)
-- [ ] 4.4 Resolve configured channel names and settings at startup and fail fast on a missing one (SWHR-T-0136)
+- [x] 4.1 Implement the outbox writer that enqueues outbound messages inside the step's transaction (SWHR-T-0136)
+- [x] 4.2 Implement the dispatcher that delivers committed messages and leaves failed ones for retry, with a retry cap and dead-letter state (SWHR-T-0136)
+- [x] 4.3 Implement the workflow-step error type preserving the root cause (SWHR-T-0136)
+- [x] 4.4 Resolve configured channel names and settings at startup and fail fast on a missing one (SWHR-T-0136)
 
 ## 5. Order processing centre
 
