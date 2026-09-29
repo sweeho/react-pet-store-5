@@ -5,8 +5,8 @@
 
 ## 2. End-to-end browser matches the pinned test runner
 
-- [ ] 2.1 Bump `@playwright/test` to 1.60.x, regenerate the lockfile, adapt config/specs only where the suite breaks (SWHR-T-0072)
-- [ ] 2.2 Run the browser preflight and the full E2E suite in the standard container (SWHR-T-0072)
+- [x] 2.1 Bump `@playwright/test` to 1.60.x, regenerate the lockfile, adapt config/specs only where the suite breaks (SWHR-T-0072)
+- [x] 2.2 Run the browser preflight and the full E2E suite in the standard container (SWHR-T-0072)
 
 ## 3. End-to-end tests produce test evidence
 
