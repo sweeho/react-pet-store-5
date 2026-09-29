@@ -35,6 +35,9 @@ async function submitBatch(
 }
 
 test.describe("Supplier inventory journey", () => {
+  // The tests share one stock table, so they must not interleave.
+  test.describe.configure({ mode: "serial" });
+
   test("[SWHR-C-0405] Display Inventory on home opens the inventory update screen", async ({
     page,
   }) => {

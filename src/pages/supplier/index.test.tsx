@@ -87,7 +87,7 @@ describe("SupplierInventoryPage", () => {
   });
 
   it("logout posts the supplier sign-off and follows its redirect", async () => {
-    const fetchMock = vi.fn((url: string) =>
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>((url) =>
       Promise.resolve(
         url.startsWith("/api/staff/signoff")
           ? jsonResponse({ redirect: "/supplier/signed-out" })
