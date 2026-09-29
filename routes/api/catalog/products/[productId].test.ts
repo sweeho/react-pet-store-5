@@ -1,6 +1,8 @@
 import { H3Event } from "nitro/h3";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { CatalogError } from "../../../../lib/catalog/errors";
+import * as queries from "../../../../lib/catalog/queries";
 import getProductRoute from "./[productId].get";
 
 /**
@@ -30,6 +32,7 @@ describe("GET /api/catalog/products/:productId", () => {
       "EST-7",
     ]);
     expect(result.items[0]).toMatchObject({ image: "dogs.svg" });
+    expect(result.paging).toMatchObject({ start: 0, count: 2, hasNext: false });
   });
 
   it("a parseable ?locale= query overrides the session locale for this request", async () => {
@@ -75,6 +78,57 @@ describe("GET /api/catalog/products/:productId", () => {
       expect.fail("expected getProductRoute to throw");
     } catch (error) {
       expect(error).toMatchObject({ status: 404 });
+    }
+  });
+
+  it("responds 400 when count is not a positive integer", () => {
+    const event = eventFor(
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?count=0",
+      "en_US",
+    );
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({ status: 400 });
+    }
+  });
+
+  it("responds 400 when start is not an integer", () => {
+    const event = eventFor(
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?start=abc",
+      "en_US",
+    );
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({ status: 400 });
+    }
+  });
+
+  it("[AC-4] responds 503 with CATALOG_ERROR and no partial body when the store is unreachable", () => {
+    const spy = vi.spyOn(queries, "getProduct").mockImplementation(() => {
+      throw new CatalogError("connection refused");
+    });
+
+    const event = eventFor("K9-BD-01", "http://localhost/api/catalog/products/K9-BD-01", "en_US");
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({
+        status: 503,
+        data: { code: "CATALOG_ERROR", message: "connection refused" },
+      });
+      expect((error as { data?: { items?: unknown } }).data?.items).toBeUndefined();
+    } finally {
+      spy.mockRestore();
     }
   });
 });

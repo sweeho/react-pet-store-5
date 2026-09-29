@@ -1,27 +1,30 @@
-import { createError, defineHandler, getQuery, getRouterParam } from "nitro/h3";
+import { createError, defineHandler, getRouterParam } from "nitro/h3";
 
-import { getProduct, listProductItems } from "../../../../lib/catalog/queries";
-import { parseLocale } from "../../../../lib/locale/model";
+import { getProduct, listItems } from "../../../../lib/catalog/queries";
+import {
+  resolveLocale,
+  resolvePaging,
+  withCatalogErrorHandling,
+} from "../../../../lib/catalog/request";
 
+// Anonymous, read-only (SWHR-R-0097/0098). Missing in the requested locale
+// is a 404 (SD6), never a catalog error.
 export default defineHandler((event) => {
   const productId = getRouterParam(event, "productId") as string;
+  const locale = resolveLocale(event);
+  const { start, count } = resolvePaging(event);
 
-  // Effective locale (D3, PLAN step 5): the request's own `?locale=` when it
-  // parses, else the session locale the middleware already put in context.
-  const query = getQuery(event);
-  const requestedLocale = typeof query.locale === "string" ? query.locale : undefined;
-  const parsedRequestLocale = requestedLocale ? parseLocale(requestedLocale) : null;
-  const locale = parsedRequestLocale ? parsedRequestLocale.id : (event.context.locale as string);
+  return withCatalogErrorHandling(() => {
+    const product = getProduct(productId, locale);
+    if (!product) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: `Product ${productId} not found in ${locale}`,
+      });
+    }
 
-  const product = getProduct(productId, locale);
-  if (!product) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: `Product ${productId} not found in ${locale}`,
-    });
-  }
+    const { items, paging } = listItems(productId, locale, start, count);
 
-  const items = listProductItems(productId, locale);
-
-  return { product, items };
+    return { product, items, paging };
+  });
 });
