@@ -156,6 +156,8 @@ export const sessions = sqliteTable(
     userId: text("userId").references(() => users.userId),
     signedOn: integer("signedOn", { mode: "boolean" }).notNull().default(false),
     originalUrl: text("originalUrl"),
+    lastOrderId: text("lastOrderId"),
+    lastOrderEmail: text("lastOrderEmail"),
     lastSeenAt: integer("lastSeenAt", { mode: "timestamp_ms" }).notNull(),
     createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
   },
@@ -374,3 +376,89 @@ export const supplierLineItems = sqliteTable("supplierLineItems", {
   unitPrice: integer("unitPrice").notNull(),
   quantityShipped: integer("quantityShipped").notNull().default(0),
 });
+
+// Checkout (swhr-i-0009 design.md P3): identifier counters and the stored
+// purchase-order snapshot. Money is integer minor units; `totalValue` is the
+// supplied total, never recomputed from the lines. The contact and address
+// are copies, not references to the customer's profile (SWHR-R-0161).
+export const counters = sqliteTable(
+  "counters",
+  {
+    name: text("name").primaryKey(),
+    value: integer("value").notNull(),
+  },
+  (table) => [check("counters_name_check", sql`length(${table.name}) <= 255`)],
+);
+
+export const purchaseOrders = sqliteTable(
+  "purchaseOrders",
+  {
+    orderId: text("orderId").primaryKey(),
+    userId: text("userId").notNull(),
+    emailId: text("emailId").notNull(),
+    orderDate: integer("orderDate", { mode: "timestamp_ms" }).notNull(),
+    locale: text("locale").notNull(),
+    totalValue: integer("totalValue").notNull(),
+    status: text("status").notNull().default("PENDING"),
+    createdAt: integer("createdAt", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    check(
+      "purchaseOrders_status_check",
+      sql`${table.status} IN ('PENDING', 'APPROVED', 'DENIED', 'SHIPPED_PART', 'COMPLETED')`,
+    ),
+  ],
+);
+
+export const orderContacts = sqliteTable("orderContacts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  orderId: text("orderId")
+    .notNull()
+    .unique()
+    .references(() => purchaseOrders.orderId, { onDelete: "cascade" }),
+  givenName: text("givenName").notNull(),
+  familyName: text("familyName").notNull(),
+  telephone: text("telephone").notNull(),
+  email: text("email"),
+});
+
+export const orderAddresses = sqliteTable("orderAddresses", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contactId: integer("contactId")
+    .notNull()
+    .unique()
+    .references(() => orderContacts.id, { onDelete: "cascade" }),
+  streetName1: text("streetName1").notNull(),
+  streetName2: text("streetName2"),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zipCode: text("zipCode").notNull(),
+  country: text("country").notNull(),
+});
+
+export const orderCards = sqliteTable("orderCards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  orderId: text("orderId")
+    .notNull()
+    .unique()
+    .references(() => purchaseOrders.orderId, { onDelete: "cascade" }),
+  cardNumber: text("cardNumber").notNull(),
+  cardType: text("cardType").notNull(),
+  expiryDate: text("expiryDate").notNull(),
+});
+
+export const orderLines = sqliteTable(
+  "orderLines",
+  {
+    orderId: text("orderId")
+      .notNull()
+      .references(() => purchaseOrders.orderId, { onDelete: "cascade" }),
+    lineNum: integer("lineNum").notNull(),
+    categoryId: text("categoryId").notNull(),
+    productId: text("productId").notNull(),
+    itemId: text("itemId").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPrice: integer("unitPrice").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.orderId, table.lineNum] })],
+);
