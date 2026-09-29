@@ -51,7 +51,8 @@ NODE_ENV=test bun --bun vitest run
 
 `bun run verify:full` was attempted; its E2E preflight reports Chromium is genuinely not installed in
 this container, so E2E was not run here (per AGENTS.md, this is the documented fallback — E2E runs in
-the QA/CI containers). See `tdd-test-result.md` — `TDD-RESULT: 507 passed, 0 failed`.
+the QA/CI containers). This ticket carries platform-linked test cases, so `tdd-test-result.md` carries
+the recorded run ids rather than a `TDD-RESULT:` marker (see below).
 
 ## Notes
 
@@ -71,3 +72,10 @@ obtainable without deliberately regressing unrelated, already-shipped behavior �
 instructions say not to do. Disputed all four via `a2a_dispute_test_case` rather than game the gate;
 see `tdd-test-result.md` and the ticket comments for detail. The tests themselves are written, cited,
 and passing regardless of how the dispute resolves.
+
+The dispute resolved with all four cases re-approved unchanged, and the ticket auto-unblocked. The
+`a2a_run_tests(phase: "green")` run at the implementation commit reports `pass` for all five cases
+(including SWHR-C-0152) with no case modified after red; its overall `invalid` verdict is caused solely
+by stub-sentinel text in unrelated pre-existing artifact files from other tickets (`SWHR-S-0003`,
+`SWHR-S-0004`), not by anything this ticket owns. Per this project, DONE does not gate on this run —
+see `tdd-test-result.md` for the full breakdown.
