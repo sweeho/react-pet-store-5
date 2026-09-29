@@ -3,7 +3,7 @@ import { H3Event } from "nitro/h3";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
-import { customers, profiles, sessions, users } from "../../db/schema";
+import { customers, groupMembers, profiles, sessions, users } from "../../db/schema";
 import { createCredential } from "../../lib/auth/credentials";
 import { ACCOUNT_CHANGE_PATH } from "../../lib/auth/protection";
 import { getAuthSession, updateAuthSession } from "../../lib/auth/session";
@@ -13,6 +13,9 @@ beforeEach(() => {
   db.delete(customers).run();
   db.delete(profiles).run();
   db.delete(sessions).run();
+  // groupMembers.userId references users.userId (FK now enforced) — the
+  // dev seed's admin_member row must go before users.
+  db.delete(groupMembers).run();
   db.delete(users).run();
 });
 

@@ -2,7 +2,13 @@ import { H3Event } from "nitro/h3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../db/client";
-import { sessions, supplierAddresses, supplierContacts, supplierOrders } from "../../../db/schema";
+import {
+  sessions,
+  supplierAddresses,
+  supplierContacts,
+  supplierOrders,
+  users,
+} from "../../../db/schema";
 import { IDLE_TIMEOUT_MS, updateAuthSession } from "../../../lib/auth/session";
 import getAdminOrders from "./orders.get";
 
@@ -86,6 +92,8 @@ describe("GET /api/admin/orders", () => {
   it("returns the supplier orders for a signed-on admin session (role not required)", async () => {
     seedOrder("1001");
     const signOn = new H3Event(new Request("http://localhost/"));
+    // sessions.userId references users.userId (FK now enforced).
+    db.insert(users).values({ userId: "not-an-administrator", passwordHash: "test-hash" }).run();
     await updateAuthSession(signOn, "admin", { userId: "not-an-administrator", signedOn: true });
 
     const event = new H3Event(

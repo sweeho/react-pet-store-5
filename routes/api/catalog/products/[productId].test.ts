@@ -1,6 +1,8 @@
 import { H3Event } from "nitro/h3";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { CatalogError } from "../../../../lib/catalog/errors";
+import * as queries from "../../../../lib/catalog/queries";
 import getProductRoute from "./[productId].get";
 
 /**
@@ -20,7 +22,7 @@ function eventFor(productId: string, url: string, locale?: string): H3Event {
 
 describe("GET /api/catalog/products/:productId", () => {
   it("[AC-2] returns Japanese name, description, image and price when context.locale is ja_JP", async () => {
-    const event = eventFor("BULLDOG", "http://localhost/api/catalog/products/BULLDOG", "ja_JP");
+    const event = eventFor("K9-BD-01", "http://localhost/api/catalog/products/K9-BD-01", "ja_JP");
 
     const result = await getProductRoute(event);
 
@@ -29,13 +31,14 @@ describe("GET /api/catalog/products/:productId", () => {
       "EST-6",
       "EST-7",
     ]);
-    expect(result.items[0]).toMatchObject({ image: "bulldog.gif" });
+    expect(result.items[0]).toMatchObject({ image: "dogs.svg" });
+    expect(result.paging).toMatchObject({ start: 0, count: 2, hasNext: false });
   });
 
   it("a parseable ?locale= query overrides the session locale for this request", async () => {
     const event = eventFor(
-      "BULLDOG",
-      "http://localhost/api/catalog/products/BULLDOG?locale=zh_CN",
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?locale=zh_CN",
       "en_US",
     );
 
@@ -46,8 +49,8 @@ describe("GET /api/catalog/products/:productId", () => {
 
   it("an unparseable ?locale= query is ignored, falling back to the session locale", async () => {
     const event = eventFor(
-      "BULLDOG",
-      "http://localhost/api/catalog/products/BULLDOG?locale=ja",
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?locale=ja",
       "ja_JP",
     );
 
@@ -57,7 +60,7 @@ describe("GET /api/catalog/products/:productId", () => {
   });
 
   it("[AC-3] responds 404 for a product with no details in the requested locale", () => {
-    const event = eventFor("POODLE", "http://localhost/api/catalog/products/POODLE", "zh_CN");
+    const event = eventFor("K9-PO-02", "http://localhost/api/catalog/products/K9-PO-02", "zh_CN");
 
     try {
       getProductRoute(event);
@@ -75,6 +78,57 @@ describe("GET /api/catalog/products/:productId", () => {
       expect.fail("expected getProductRoute to throw");
     } catch (error) {
       expect(error).toMatchObject({ status: 404 });
+    }
+  });
+
+  it("responds 400 when count is not a positive integer", () => {
+    const event = eventFor(
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?count=0",
+      "en_US",
+    );
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({ status: 400 });
+    }
+  });
+
+  it("responds 400 when start is not an integer", () => {
+    const event = eventFor(
+      "K9-BD-01",
+      "http://localhost/api/catalog/products/K9-BD-01?start=abc",
+      "en_US",
+    );
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({ status: 400 });
+    }
+  });
+
+  it("[AC-4] responds 503 with CATALOG_ERROR and no partial body when the store is unreachable", () => {
+    const spy = vi.spyOn(queries, "getProduct").mockImplementation(() => {
+      throw new CatalogError("connection refused");
+    });
+
+    const event = eventFor("K9-BD-01", "http://localhost/api/catalog/products/K9-BD-01", "en_US");
+
+    try {
+      getProductRoute(event);
+      expect.fail("expected getProductRoute to throw");
+    } catch (error) {
+      expect(error).toMatchObject({
+        status: 503,
+        data: { code: "CATALOG_ERROR", message: "connection refused" },
+      });
+      expect((error as { data?: { items?: unknown } }).data?.items).toBeUndefined();
+    } finally {
+      spy.mockRestore();
     }
   });
 });

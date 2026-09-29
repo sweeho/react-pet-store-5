@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
-import { users } from "../../db/schema";
+import { groupMembers, users } from "../../db/schema";
 import {
   authenticate,
   createCredential,
@@ -13,6 +13,10 @@ import {
 } from "./credentials";
 
 beforeEach(() => {
+  // groupMembers.userId references users.userId (SWHR-T-0057 turned FK
+  // enforcement on); the dev seed's admin_member row must go first or
+  // deleting users fails.
+  db.delete(groupMembers).run();
   db.delete(users).run();
 });
 

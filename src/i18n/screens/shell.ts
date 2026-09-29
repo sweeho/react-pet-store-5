@@ -24,6 +24,10 @@ export default {
     footerAdministration: "Administration",
     footerSupplier: "Supplier",
     footerLanguage: "Language",
+    petsMenuHeading: "Pets",
+    breadcrumbHome: "Home",
+    previous: "Previous",
+    next: "Next",
   },
   ja_JP: {
     language: "言語",
@@ -47,6 +51,10 @@ export default {
     footerAdministration: "管理",
     footerSupplier: "サプライヤー",
     footerLanguage: "言語",
+    petsMenuHeading: "ペット",
+    breadcrumbHome: "ホーム",
+    previous: "前へ",
+    next: "次へ",
   },
   zh_CN: {
     language: "语言",
@@ -70,5 +78,9 @@ export default {
     footerAdministration: "管理",
     footerSupplier: "供应商",
     footerLanguage: "语言",
+    petsMenuHeading: "宠物",
+    breadcrumbHome: "首页",
+    previous: "上一页",
+    next: "下一页",
   },
 } satisfies ScreenDefinition;

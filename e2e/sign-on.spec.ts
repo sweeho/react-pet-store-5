@@ -29,7 +29,7 @@ async function signUpAndCompleteRegistration(page: Page, userId: string, passwor
 
 // Scoped to the item card named `itemName` (defaulting to the page's first
 // item) rather than a bare `.first()` on every "Add to Cart" button — a
-// product with more than one item (BULLDOG has two) has no ORDER BY on its
+// product with more than one item (K9-BD-01/Bulldog has two) has no ORDER BY on its
 // item list, so which item is DOM-first isn't a contract worth relying on.
 // The button inside is targeted by role alone, not its "Add to Cart" text —
 // each card has exactly one button, and the text is locale-dependent
@@ -81,7 +81,9 @@ test.describe("Sign-on journeys", () => {
     await page.getByRole("button", { name: "Search" }).click();
 
     await expect(page).toHaveURL("/search?keywords=dog");
-    await expect(page.getByRole("heading", { name: 'Search results for "dog"' })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Search results" })).toBeVisible();
+    await expect(page.getByText("Items matching any of:")).toBeVisible();
+    await expect(page.getByText("dog", { exact: true })).toBeVisible();
   });
 
   test("[SWHR-C-0117] gated shopper signing on as alice is returned to the account page", async ({
@@ -119,7 +121,7 @@ test.describe("Sign-on journeys", () => {
   test("[SWHR-C-0130] anonymous shopper adds an item to the cart without sign-on", async ({
     page,
   }) => {
-    await addToCart(page, "BULLDOG", "Male Adult Bulldog");
+    await addToCart(page, "K9-BD-01", "Male Adult Bulldog");
 
     await page.goto("/cart");
     await expect(page).toHaveURL("/cart");
@@ -133,7 +135,7 @@ test.describe("Sign-on journeys", () => {
     // Suffixed only on a retry — see SWHR-C-0117's comment.
     const userId = testInfo.retry === 0 ? "dave" : `dave-retry${testInfo.retry}`;
 
-    await addToCart(page, "POODLE");
+    await addToCart(page, "K9-PO-02");
 
     await page.goto("/checkout");
     await expect(page).toHaveURL("/signin");
@@ -152,7 +154,7 @@ test.describe("Sign-on journeys", () => {
     // Suffixed only on a retry — see SWHR-C-0117's comment.
     const userId = testInfo.retry === 0 ? "frank" : `frank-retry${testInfo.retry}`;
 
-    await addToCart(page, "DALMATIAN");
+    await addToCart(page, "K9-DL-01");
 
     await page.goto("/signin");
     await signUpAndCompleteRegistration(page, userId, "Secret1");
@@ -185,7 +187,7 @@ test.describe("Sign-on journeys", () => {
 
     // Japanese item name (catalog seed's EST-6 ja_JP details) — the locale
     // switch above means the product page renders in Japanese from here on.
-    await addToCart(page, "BULLDOG", "オス成犬ブルドッグ", 3);
+    await addToCart(page, "K9-BD-01", "オス成犬ブルドッグ", 3);
     await page.goto("/cart");
     await expect(page.getByText("数量: 3")).toBeVisible();
 

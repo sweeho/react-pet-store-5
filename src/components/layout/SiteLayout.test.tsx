@@ -21,9 +21,19 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+const MENU_CATEGORIES = [
+  { categoryId: "BIRDS", name: "Birds", description: null, image: null, locale: "en_US" },
+  { categoryId: "CATS", name: "Cats", description: null, image: null, locale: "en_US" },
+  { categoryId: "DOGS", name: "Dogs", description: null, image: null, locale: "en_US" },
+  { categoryId: "FISH", name: "Fish", description: null, image: null, locale: "en_US" },
+  { categoryId: "REPTILES", name: "Reptiles", description: null, image: null, locale: "en_US" },
+];
+
 // SiteLayout hardwires SignOnSessionProvider (no injectable prop — pages and
 // the shell are rendered with no props of their own, same reasoning as
 // ProductPage's test), so the seam under test is `fetch`, stubbed per test.
+// GlobalNav's mobile "Pets" section also fetches the live category list
+// (design.md P5), so every test stubs that endpoint too.
 function stubSignOnFetch(session: SessionState = { signedOn: false, userId: null }) {
   vi.stubGlobal(
     "fetch",
@@ -34,6 +44,9 @@ function stubSignOnFetch(session: SessionState = { signedOn: false, userId: null
       }
       if (url.includes("/api/signoff") && init?.method === "POST") {
         return Promise.resolve(jsonResponse({ redirect: "/signed-out" }));
+      }
+      if (url.includes("/api/catalog/categories")) {
+        return Promise.resolve(jsonResponse({ categories: MENU_CATEGORIES }));
       }
       return Promise.resolve(jsonResponse({ message: "not found" }, 404));
     }),
@@ -104,7 +117,7 @@ describe("SiteLayout", () => {
     ).toBeInTheDocument();
   });
 
-  it("the Global nav contains a link with href '/' and one link per PRIMARY_AREAS and PET_CATEGORIES entry", () => {
+  it("the Global nav contains a link with href '/' and one link per non-catalog PRIMARY_AREAS entry", () => {
     renderShell("/cart");
 
     const nav = screen.getByRole("navigation", { name: "Global" });
@@ -116,12 +129,34 @@ describe("SiteLayout", () => {
     // SIGNIN is excluded: SD-6 gives the header's Sign in link a
     // session-dependent target (/signon-welcome, not PRIMARY_AREAS'
     // /signin) and a Sign out state with no href at all — covered below.
-    for (const area of PRIMARY_AREAS.filter((a) => a.id !== "SIGNIN")) {
+    // The pet-category entries are excluded too: SWHR-T-0060 moves category
+    // navigation out of the Global nav's desktop row entirely, into the
+    // per-page Pets panel and the mobile drawer's "Pets" section (both fed
+    // by the live category list, not this static one) — see below.
+    for (const area of PRIMARY_AREAS.filter(
+      (a) => a.id !== "SIGNIN" && !PET_CATEGORIES.some((category) => category.id === a.id),
+    )) {
       expect(hrefs).toContain(area.href);
     }
     for (const category of PET_CATEGORIES) {
-      expect(hrefs).toContain(category.href);
+      expect(hrefs).not.toContain(category.href);
     }
+  });
+
+  it("the mobile drawer's 'Pets' section lists the live categories, not the static PET_CATEGORIES labels", async () => {
+    const user = userEvent.setup();
+    renderShell("/cart");
+
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    const dialog = screen.getByRole("dialog");
+
+    for (const category of MENU_CATEGORIES) {
+      expect(await within(dialog).findByRole("link", { name: category.name })).toHaveAttribute(
+        "href",
+        `/category/${category.categoryId}`,
+      );
+    }
+    expect(within(dialog).getByText("Pets")).toBeInTheDocument();
   });
 
   it("[SWHR-C-0104] anonymous shopper: header shows logo, search, Account, Cart and Sign in (to /signon-welcome, SD-6), no Sign out", async () => {
@@ -162,7 +197,7 @@ describe("SiteLayout", () => {
     await user.click(screen.getByRole("button", { name: "Open menu" }));
 
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByRole("link", { name: "Birds" })).toBeInTheDocument();
+    expect(await within(dialog).findByRole("link", { name: "Birds" })).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("button", { name: "Close menu" }));
 

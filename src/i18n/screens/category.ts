@@ -3,17 +3,22 @@ import type { ScreenDefinition } from "../screens";
 export default {
   en_US: {
     fallbackTitle: "Category",
-    comingSoonTitle: "Coming soon",
-    comingSoonDescription: "Browsing this category is coming soon.",
+    emptyTitle: "No pets to show here",
+    emptyDescription:
+      "There are no pets in this category right now. Pick another kind of pet from the Pets menu, or search by name.",
+    backToHome: "Back to home",
   },
   ja_JP: {
     fallbackTitle: "カテゴリー",
-    comingSoonTitle: "近日公開",
-    comingSoonDescription: "このカテゴリーの閲覧機能は近日公開予定です。",
+    emptyTitle: "表示できるペットがありません",
+    emptyDescription:
+      "現在このカテゴリーにはペットがいません。Petsメニューから別の種類を選ぶか、名前で検索してください。",
+    backToHome: "ホームに戻る",
   },
   zh_CN: {
     fallbackTitle: "分类",
-    comingSoonTitle: "即将推出",
-    comingSoonDescription: "浏览此分类的功能即将推出。",
+    emptyTitle: "此分类下暂无宠物",
+    emptyDescription: "此分类目前没有宠物。请从宠物菜单选择其他种类，或按名称搜索。",
+    backToHome: "返回首页",
   },
 } satisfies ScreenDefinition;

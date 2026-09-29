@@ -1,42 +1,194 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LocaleProvider } from "@/i18n/LocaleProvider";
 
-import SearchPlaceholder from "./search";
+import SearchPage from "./search";
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+const MENU_CATEGORIES = [
+  { categoryId: "DOGS", name: "Dogs", description: null, image: null, locale: "en_US" },
+];
+
+function stubFetch(searchHandler: (url: URL) => Response) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = new URL(String(input), "http://localhost");
+      if (url.pathname === "/api/catalog/categories") {
+        return Promise.resolve(jsonResponse({ categories: MENU_CATEGORIES }));
+      }
+      return Promise.resolve(searchHandler(url));
+    }),
+  );
+}
 
 function renderSearch(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <LocaleProvider fetchLocale={() => Promise.resolve({ locale: "en_US", cartLocale: "en_US" })}>
-        <SearchPlaceholder />
+        <SearchPage />
       </LocaleProvider>
     </MemoryRouter>,
   );
 }
 
+const BULLDOG_ITEM = {
+  itemId: "EST-6",
+  productId: "K9-BD-01",
+  categoryId: "DOGS",
+  productName: "Bulldog",
+  name: "Male Adult Bulldog",
+  description: "Friendly dog from England.",
+  image: "dogs.svg",
+  attributes: ["Male Adult", null, null, null, null],
+  listPrice: 1850,
+  unitCost: 1200,
+  locale: "en_US",
+};
+
 /**
  * UI / PAGE TEST
  *
- * [AC-1] every page renders content authored for the requested locale
- * (SWHR-R-0005.01), exercised here through `?locale=` (P3, SD-10).
+ * Replaces the "coming soon" placeholder (SWHR-T-0060). Fetches
+ * GET /api/catalog/search?keywords=, showing the unit cost per row (Q7) and
+ * "No results were found for your search." for no match or a blank field
+ * (SWHR-R-0107).
  */
-describe("SearchPlaceholder", () => {
-  it("renders the en_US screen content by default", () => {
+describe("SearchPage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("[SWHR-C-0190] shows 'Items matching any of: bulldog' and one row per matching item", async () => {
+    stubFetch(() =>
+      jsonResponse({
+        keywords: ["bulldog"],
+        items: [BULLDOG_ITEM],
+        paging: {
+          start: 0,
+          count: 2,
+          hasNext: false,
+          nextStart: null,
+          hasPrevious: false,
+          previousStart: null,
+        },
+      }),
+    );
+
+    renderSearch("/search?keywords=bulldog");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("search-keywords")).not.toBeNull();
+    });
+    expect(screen.getByTestId("search-keywords")).toHaveTextContent(
+      "Items matching any of: bulldog",
+    );
+    const row = screen.getByRole("link", { name: /Male Adult Bulldog/ });
+    expect(row).toHaveAttribute("href", "/item/EST-6");
+    expect(screen.getByText("Friendly dog from England.")).toBeInTheDocument();
+    expect(screen.getByText("$12.00")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
+  });
+
+  it("[SWHR-C-0106][SWHR-C-0191] shows the no-results message when nothing matches", async () => {
+    stubFetch(() =>
+      jsonResponse({
+        keywords: ["zebra"],
+        items: [],
+        paging: {
+          start: 0,
+          count: 2,
+          hasNext: false,
+          nextStart: null,
+          hasPrevious: false,
+          previousStart: null,
+        },
+      }),
+    );
+
+    renderSearch("/search?keywords=zebra");
+
+    await waitFor(() => {
+      expect(screen.queryByText("No results were found for your search.")).not.toBeNull();
+    });
+    expect(screen.queryByRole("link", { name: /Add to Cart/ })).not.toBeInTheDocument();
+  });
+
+  it("[SWHR-C-0192] shows the no-results message for an empty keyword field", async () => {
+    stubFetch(() =>
+      jsonResponse({
+        keywords: [],
+        items: [],
+        paging: {
+          start: 0,
+          count: 2,
+          hasNext: false,
+          nextStart: null,
+          hasPrevious: false,
+          previousStart: null,
+        },
+      }),
+    );
+
     renderSearch("/search");
-    expect(screen.getByRole("heading", { level: 1, name: "Search" })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByText("No results were found for your search.")).not.toBeNull();
+    });
   });
 
-  it("[AC-1] renders the Japanese screen content for ?locale=ja_JP", () => {
+  it("[AC-1] renders the Japanese heading for ?locale=ja_JP", async () => {
+    stubFetch(() =>
+      jsonResponse({
+        keywords: [],
+        items: [],
+        paging: {
+          start: 0,
+          count: 2,
+          hasNext: false,
+          nextStart: null,
+          hasPrevious: false,
+          previousStart: null,
+        },
+      }),
+    );
+
     renderSearch("/search?locale=ja_JP");
-    expect(screen.getByRole("heading", { level: 1, name: "検索" })).toBeInTheDocument();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "検索結果" })).toBeInTheDocument();
   });
 
-  it("[SWHR-C-0106] states the keyword in the heading when the header search routes here", () => {
-    renderSearch("/search?keywords=dog");
-    expect(
-      screen.getByRole("heading", { level: 1, name: 'Search results for "dog"' }),
-    ).toBeInTheDocument();
+  it("requests locale, start and count as query parameters, defaulting start=0 count=2", async () => {
+    let requestedUrl: URL | undefined;
+    stubFetch((url) => {
+      requestedUrl = url;
+      return jsonResponse({
+        keywords: ["bulldog"],
+        items: [],
+        paging: {
+          start: 0,
+          count: 2,
+          hasNext: false,
+          nextStart: null,
+          hasPrevious: false,
+          previousStart: null,
+        },
+      });
+    });
+
+    renderSearch("/search?keywords=bulldog&start=2&count=2");
+
+    await waitFor(() => expect(requestedUrl).toBeDefined());
+    expect(requestedUrl?.searchParams.get("keywords")).toBe("bulldog");
+    expect(requestedUrl?.searchParams.get("start")).toBe("2");
+    expect(requestedUrl?.searchParams.get("count")).toBe("2");
   });
 });

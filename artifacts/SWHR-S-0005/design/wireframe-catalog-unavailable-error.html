@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;font-size:13px;color:#27272a;background:#fafafa;width:720px}
+.util{display:flex;justify-content:space-between;padding:6px 16px;border-bottom:1px solid #e4e4e7;font-size:11px;color:#71717a}
+.util .on{border:1px solid #a1a1aa;border-radius:10px;padding:1px 6px;color:#27272a}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid #e4e4e7}
+.logo{font-weight:700}.search{flex:1;display:flex}.search .in{flex:1;border:1px solid #a1a1aa;border-radius:6px 0 0 6px;padding:7px;color:#a1a1aa}.search b{border:1px solid #52525b;background:#52525b;color:#fff;padding:7px 10px;border-radius:0 6px 6px 0;font-weight:600}
+.acts{display:flex;gap:10px}.acts span{padding:6px 8px}.acts .btn{border:1px solid #a1a1aa;border-radius:6px}
+.body{display:flex;gap:16px;padding:16px}
+aside{width:140px;flex:none;background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:6px}
+aside h3{font-size:10px;letter-spacing:.06em;color:#71717a;padding:4px 8px}aside a{display:block;padding:7px 8px;border-radius:6px}
+main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.err{background:#fff;border:2px solid #71717a;border-radius:8px;padding:40px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ico{width:48px;height:48px;border-radius:50%;background:#e4e4e7;border:2px solid #71717a;display:grid;place-items:center;font-weight:700}
+.btns{display:flex;gap:8px;margin-top:6px}.b1{border:1px solid #52525b;background:#52525b;color:#fff;border-radius:6px;padding:9px 14px;font-weight:600}.b2{border:1px solid #a1a1aa;border-radius:6px;padding:9px 14px;font-weight:600}
+.note{font-size:11px;color:#71717a}
+footer{border-top:1px solid #e4e4e7;background:#fff;padding:12px 16px;font-size:11px;color:#71717a;display:flex;justify-content:space-between}
+</style></head><body>
+<div class="util"><span>Language <span class="on">English</span> 日本語 中文</span><span>Store staff: Administration · Supplier</span></div>
+<header><span class="logo">▣ Pet Store</span><div class="search"><span class="in">Search pets by name or description</span><b>Search</b></div><div class="acts"><span>Account</span><span>Cart 0</span><span class="btn">Sign in</span></div></header>
+<div class="body"><aside><h3>PETS</h3><a>Birds</a><a>Cats</a><a>Dogs</a><a>Fish</a><a>Reptiles</a></aside>
+<main>
+<div class="err"><span class="ico">!</span><p style="font-weight:600">This page could not be loaded.</p><div class="btns"><span class="b1">Try again</span><span class="b2">Go to Home</span></div></div>
+<p class="note">Shared error frame (shell). Used when the catalogue can't be read: no partial listing, and the catalogue is not retried automatically.</p>
+</main></div>
+<footer><span>© Pet Store</span><span>Footer links (shell)</span></footer>
+</body></html>
