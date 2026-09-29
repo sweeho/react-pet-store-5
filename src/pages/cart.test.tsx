@@ -117,7 +117,7 @@ describe("CartPage", () => {
   });
 
   it("Remove sends DELETE for the item and re-renders from the returned cart", async () => {
-    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "DELETE") {
         return Promise.resolve(jsonResponse(cartView([ANGELFISH_LINE])));
       }
@@ -132,11 +132,11 @@ describe("CartPage", () => {
 
     await waitFor(() => expect(screen.queryByText("Male Adult Bulldog")).not.toBeInTheDocument());
     expect(fetchMock).toHaveBeenCalledWith("/api/cart/items/EST-6", { method: "DELETE" });
-    expect(screen.getByText("Large Angelfish")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Large Angelfish" })).toBeInTheDocument();
   });
 
   it("Update Cart sends every raw quantity in one PATCH and re-renders", async () => {
-    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "PATCH") {
         return Promise.resolve(jsonResponse(cartView([{ ...BULLDOG_LINE, quantity: 5 }])));
       }
@@ -170,7 +170,7 @@ describe("CartPage", () => {
     renderCart("/cart?locale=ja_JP");
 
     expect(screen.getByRole("heading", { level: 1, name: "カート" })).toBeInTheDocument();
-    expect(await screen.findByText("カートは空です")).toBeInTheDocument();
+    expect(await screen.findByText("ショッピングカートは空です。")).toBeInTheDocument();
   });
 
   function stubCartAndAccount(accountStatus: number, profile?: object) {

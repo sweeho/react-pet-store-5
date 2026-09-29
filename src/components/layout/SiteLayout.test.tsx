@@ -45,6 +45,9 @@ function stubSignOnFetch(session: SessionState = { signedOn: false, userId: null
       if (url.includes("/api/signoff") && init?.method === "POST") {
         return Promise.resolve(jsonResponse({ redirect: "/signed-out" }));
       }
+      if (url.includes("/api/cart")) {
+        return Promise.resolve(jsonResponse({ lines: [], count: 3, subtotal: 0, locale: "en_US" }));
+      }
       if (url.includes("/api/catalog/categories")) {
         return Promise.resolve(jsonResponse({ categories: MENU_CATEGORIES }));
       }
@@ -157,6 +160,13 @@ describe("SiteLayout", () => {
       );
     }
     expect(within(dialog).getByText("Pets")).toBeInTheDocument();
+  });
+
+  it("shows the distinct-item count on the header Cart link", async () => {
+    stubSignOnFetch();
+    renderShell("/cart");
+
+    expect(await screen.findByRole("link", { name: "Cart (3)" })).toHaveAttribute("href", "/cart");
   });
 
   it("[SWHR-C-0104] anonymous shopper: header shows logo, search, Account, Cart and Sign in (to /signon-welcome, SD-6), no Sign out", async () => {

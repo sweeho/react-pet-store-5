@@ -126,8 +126,8 @@ test.describe("Sign-on journeys", () => {
 
     await page.goto("/cart");
     await expect(page).toHaveURL("/cart");
-    await expect(page.getByText("Male Adult Bulldog")).toBeVisible();
-    await expect(page.getByText("Quantity: 1")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Male Adult Bulldog" })).toBeVisible();
+    await expect(page.getByLabel("Quantity for Male Adult Bulldog")).toHaveValue("1");
   });
 
   test("[SWHR-C-0132] registration from checkout signs on as dave and returns to order information", async ({
@@ -192,7 +192,7 @@ test.describe("Sign-on journeys", () => {
     await addToCart(page, "K9-BD-01", "メス子犬ブルドッグ");
     await addToCart(page, "K9-RT-01", "メス成犬ゴールデンレトリバー");
     await page.goto("/cart");
-    await expect(page.getByText("数量: 1")).toHaveCount(3);
+    await expect(page.getByRole("textbox", { name: /^数量:/ })).toHaveCount(3);
 
     await page
       .getByRole("navigation", { name: "Global" })
