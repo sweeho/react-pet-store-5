@@ -7,6 +7,8 @@ export const AUTO_APPROVAL_THRESHOLDS: Record<LocaleId, number | null> = {
   zh_CN: null,
 };
 
-export function shouldAutoApprove(): boolean {
-  throw new Error("VortexNotImplemented");
+/** Strictly below the locale's threshold; no conversion, and never for a null threshold or unknown locale. */
+export function shouldAutoApprove(locale: LocaleId, totalMinor: number): boolean {
+  const threshold = AUTO_APPROVAL_THRESHOLDS[locale];
+  return threshold != null && totalMinor < threshold;
 }
