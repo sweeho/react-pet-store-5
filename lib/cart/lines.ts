@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars -- red-phase stubs, removed at green */
 import { and, eq } from "drizzle-orm";
 import type { H3Event } from "nitro/h3";
 
@@ -5,6 +6,7 @@ import { db } from "../../db/client";
 import { cartLines } from "../../db/schema";
 import { getCartItemDetails } from "../catalog/cart";
 import type { ItemView } from "../catalog/queries";
+import type { CartView } from "./types";
 
 /** +1, one line per item (design.md P9) — a repeat add increments the existing line. */
 export function addCartItem(sessionId: string, itemId: string): void {
@@ -37,6 +39,33 @@ export function listCartLines(sessionId: string): { itemId: string; quantity: nu
 // lib/auth/session.ts, which owns when a session ends.
 export function deleteCartLinesForSession(sessionId: string): void {
   db.delete(cartLines).where(eq(cartLines.sessionId, sessionId)).run();
+}
+
+export function removeCartItem(_sessionId: string, _itemId: string): void {
+  throw new Error("VortexNotImplemented");
+}
+
+export function parseQuantity(_value: unknown): number {
+  throw new Error("VortexNotImplemented");
+}
+
+export function updateCartQuantities(
+  _sessionId: string,
+  _quantities: Record<string, unknown>,
+): void {
+  throw new Error("VortexNotImplemented");
+}
+
+export function countCartLines(_sessionId: string): number {
+  throw new Error("VortexNotImplemented");
+}
+
+export function emptyCart(_sessionId: string, _tx?: unknown): void {
+  throw new Error("VortexNotImplemented");
+}
+
+export async function getCart(_event: H3Event, _sessionId: string): Promise<CartView> {
+  throw new Error("VortexNotImplemented");
 }
 
 export interface CartLineView {
