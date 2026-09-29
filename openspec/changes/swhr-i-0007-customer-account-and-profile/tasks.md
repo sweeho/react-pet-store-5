@@ -50,8 +50,8 @@
 
 ## 7. Tests
 
-- [ ] 7.1 Unit-test expiry composition, derivation and fallback (SWHR-T-0086)
-- [ ] 7.2 Integration-test atomic creation, defaults and cascading deletion against the in-memory database (SWHR-T-0086)
-- [ ] 7.3 Integration-test registration, update and required-field validation routes (SWHR-T-0086)
-- [ ] 7.4 UI-test the account page, create/edit forms and empty-field check (SWHR-T-0086)
-- [ ] 7.5 UI-test the My List panel and banner visibility and selection (SWHR-T-0086)
+- [x] 7.1 Unit-test expiry composition, derivation and fallback (SWHR-T-0086)
+- [x] 7.2 Integration-test atomic creation, defaults and cascading deletion against the in-memory database (SWHR-T-0086)
+- [x] 7.3 Integration-test registration, update and required-field validation routes (SWHR-T-0086)
+- [x] 7.4 UI-test the account page, create/edit forms and empty-field check (SWHR-T-0086)
+- [x] 7.5 UI-test the My List panel and banner visibility and selection (SWHR-T-0086)
