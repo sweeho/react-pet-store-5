@@ -37,11 +37,11 @@
 
 ## 5. Tests
 
-- [ ] 5.1 Route integration tests for add, including re-add of an existing item (SWHR-T-0100)
-- [ ] 5.2 Route integration tests for remove, including removal of an absent item (SWHR-T-0100)
-- [ ] 5.3 Route integration tests for batch update covering positive, zero, negative, non-numeric and absent-item quantities (SWHR-T-0100)
-- [ ] 5.4 Unit tests for count and subtotal, including unresolvable items and the empty cart (SWHR-T-0100)
-- [ ] 5.5 Test that catalog price changes are reflected at read time (SWHR-T-0100)
-- [ ] 5.6 Test session isolation and discard on sign-out (SWHR-T-0100)
-- [ ] 5.7 UI test for the cart page empty and populated states (SWHR-T-0100)
-- [ ] 5.8 Playwright spec for add to cart, update quantities, remove, and check out (SWHR-T-0100)
+- [x] 5.1 Route integration tests for add, including re-add of an existing item (SWHR-T-0100)
+- [x] 5.2 Route integration tests for remove, including removal of an absent item (SWHR-T-0100)
+- [x] 5.3 Route integration tests for batch update covering positive, zero, negative, non-numeric and absent-item quantities (SWHR-T-0100)
+- [x] 5.4 Unit tests for count and subtotal, including unresolvable items and the empty cart (SWHR-T-0100)
+- [x] 5.5 Test that catalog price changes are reflected at read time (SWHR-T-0100)
+- [x] 5.6 Test session isolation and discard on sign-out (SWHR-T-0100)
+- [x] 5.7 UI test for the cart page empty and populated states (SWHR-T-0100)
+- [x] 5.8 Playwright spec for add to cart, update quantities, remove, and check out (SWHR-T-0100)
