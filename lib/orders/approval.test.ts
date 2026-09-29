@@ -79,6 +79,23 @@ const payloads = (channel: string) =>
     .filter((m) => m.channel === channel)
     .map((m) => m.payload);
 
+// A failing commit is reported as a workflow step failure and changes nothing.
+async function expectStepFailureWrapped(): Promise<void> {
+  seed("WRAP");
+  vi.spyOn(supplierChannel, "sendSupplierPurchaseOrders").mockImplementationOnce(() => {
+    throw new Error("send failed");
+  });
+  decide([{ orderId: "WRAP", status: "APPROVED" }]);
+  await dispatchPending({ now: new Date(Date.now() + 3_600_000) });
+  expect(statusOf("WRAP")).toBe("PENDING");
+  const failed = db
+    .select()
+    .from(outboxDeliveries)
+    .all()
+    .filter((d) => d.lastError !== null);
+  expect(failed.map((d) => d.lastError)).toEqual(['workflow step "order-approval" failed']);
+}
+
 describe("order approval consumer", () => {
   it("[SWHR-C-0306] approving an already-approved order changes only the pending one", async () => {
     seed("1001", "APPROVED");
@@ -186,6 +203,7 @@ describe("order approval consumer", () => {
     expect(pos[0]).toContain("1 Main");
     expect(pos[0]).toContain("EST-1");
     expect(pos[0]).toContain("EST-6");
+    await expectStepFailureWrapped();
   });
 
   it("[SWHR-C-0364] denying 1002 sends no supplier PO", async () => {
@@ -195,6 +213,7 @@ describe("order approval consumer", () => {
 
     expect(statusOf("1002")).toBe("DENIED");
     expect(payloads("supplier.purchase-order")).toHaveLength(0);
+    await expectStepFailureWrapped();
   });
 
   it("[SWHR-C-0365] a mixed batch sends the 1001 supplier PO then one notice for both", async () => {
@@ -218,6 +237,7 @@ describe("order approval consumer", () => {
     const notices = payloads("opc.approval-notice");
     expect(notices).toHaveLength(1);
     expect(await readOrderApproval(notices[0]!)).toEqual(entries);
+    await expectStepFailureWrapped();
   });
 
   it("[SWHR-C-0371] a supplier PO send failure leaves 1001 PENDING and the batch is redelivered", async () => {

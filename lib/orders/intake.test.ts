@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../db/client";
 import { orderWorkflow, outboxDeliveries, outboxMessages, purchaseOrders } from "../../db/schema";
+import { writeOrderApproval } from "../b2b/documents/orderApproval";
 import { type PurchaseOrder, writePurchaseOrder } from "../b2b/documents/purchaseOrder";
+import * as supplierChannel from "../b2b/exchange/supplierChannel";
 import { dispatchPending } from "../messaging/dispatcher";
 import * as outbox from "../messaging/outbox";
 import * as approvalPolicy from "./approvalPolicy";
@@ -130,6 +132,27 @@ describe("order intake", () => {
     expect(storedAtEvaluation).toBe(true);
     expect(statusAtEvaluation).toBe("PENDING");
     expect(statusOf("1001")).toBe("PENDING");
+
+    // A failing approval step is reported as a workflow step failure.
+    vi.spyOn(supplierChannel, "sendSupplierPurchaseOrders").mockImplementationOnce(() => {
+      throw new Error("send failed");
+    });
+    db.transaction((tx) =>
+      enqueue(
+        tx,
+        "opc.order-approval",
+        writeOrderApproval([{ orderId: "1001", status: "APPROVED" }]),
+      ),
+    );
+    await dispatchPending();
+    expect(statusOf("1001")).toBe("PENDING");
+    expect(
+      db
+        .select()
+        .from(outboxDeliveries)
+        .all()
+        .map((d) => d.lastError),
+    ).toContain('workflow step "order-approval" failed');
   });
 
   it("stores a committed order once and a redelivery is a no-op", async () => {
