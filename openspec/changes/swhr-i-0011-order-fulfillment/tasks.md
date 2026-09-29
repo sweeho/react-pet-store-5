@@ -50,8 +50,8 @@
 
 ## 7. Tests
 
-- [ ] 7.1 Unit-test the fulfilment function for insufficient stock, sufficient stock, missing stock record, partial shipment and re-attempt (SWHR-T-0140)
-- [ ] 7.2 Unit-test invoice application and completion including partial, final and over-shipment cases (SWHR-T-0140)
-- [ ] 7.3 Integration-test workflow tracking: duplicate start, unknown-order read and update, list by status (SWHR-T-0140)
-- [ ] 7.4 Integration-test atomicity: a failing outbound send leaves status and records unchanged and the message retried (SWHR-T-0140)
-- [ ] 7.5 Integration-test the end-to-end flow from intake through approval, supplier fulfilment, stock update and COMPLETED (SWHR-T-0140)
+- [x] 7.1 Unit-test the fulfilment function for insufficient stock, sufficient stock, missing stock record, partial shipment and re-attempt (SWHR-T-0140)
+- [x] 7.2 Unit-test invoice application and completion including partial, final and over-shipment cases (SWHR-T-0140)
+- [x] 7.3 Integration-test workflow tracking: duplicate start, unknown-order read and update, list by status (SWHR-T-0140)
+- [x] 7.4 Integration-test atomicity: a failing outbound send leaves status and records unchanged and the message retried (SWHR-T-0140)
+- [x] 7.5 Integration-test the end-to-end flow from intake through approval, supplier fulfilment, stock update and COMPLETED (SWHR-T-0140)
