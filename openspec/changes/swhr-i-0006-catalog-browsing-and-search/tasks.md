@@ -18,12 +18,12 @@
 
 ## 3. Server routes
 
-- [ ] 3.1 Add the read-only category list and category detail routes (SWHR-T-0059)
-- [ ] 3.2 Add the product list route for a category with paging parameters (SWHR-T-0059)
-- [ ] 3.3 Add the item list route for a product and the item detail route (SWHR-T-0059)
-- [ ] 3.4 Add the search route with keyword and paging parameters (SWHR-T-0059)
-- [ ] 3.5 Validate paging and locale input and map catalog store failures to an error response with no partial result (SWHR-T-0059)
-- [ ] 3.6 Add integration tests for every catalog route, including anonymous access and store failure (SWHR-T-0059)
+- [x] 3.1 Add the read-only category list and category detail routes (SWHR-T-0059)
+- [x] 3.2 Add the product list route for a category with paging parameters (SWHR-T-0059)
+- [x] 3.3 Add the item list route for a product and the item detail route (SWHR-T-0059)
+- [x] 3.4 Add the search route with keyword and paging parameters (SWHR-T-0059)
+- [x] 3.5 Validate paging and locale input and map catalog store failures to an error response with no partial result (SWHR-T-0059)
+- [x] 3.6 Add integration tests for every catalog route, including anonymous access and store failure (SWHR-T-0059)
 
 ## 4. Storefront screens
 
