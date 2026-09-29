@@ -47,6 +47,7 @@ describe("enqueue", () => {
   it.each([
     ["opc.order-approval", "order-approval"],
     ["opc.approval-notice", "customer-notification"],
+    ["opc.completed-order", "customer-notification"],
   ] as const)("creates one delivery for %s", (channel, consumer) => {
     const id = db.transaction((tx) => enqueue(tx, channel, "payload"));
     const deliveries = db
