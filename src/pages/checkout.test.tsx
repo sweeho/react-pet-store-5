@@ -87,7 +87,7 @@ describe("CheckoutPage", () => {
   });
 
   it("posts the form, announces cart:changed and goes to the order complete page", async () => {
-    const fetchMock = vi.fn((url: string, init?: RequestInit) =>
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) =>
       Promise.resolve(
         init?.method === "POST"
           ? json({ orderId: "10017", email: "jane@example.com" })
@@ -109,11 +109,13 @@ describe("CheckoutPage", () => {
     window.removeEventListener("cart:changed", changed);
   });
 
-  it("goes to the screen named by a failure response, else to /error", async () => {
-    let screenName: string | null = "/order-error";
+  it.each([
+    ["/order-error", "/order-error"],
+    [null, "/error"],
+  ])("a failure naming screen %s goes to %s", async (screenName, expected) => {
     vi.stubGlobal(
       "fetch",
-      vi.fn((url: string, init?: RequestInit) =>
+      vi.fn((_url: string, init?: RequestInit) =>
         Promise.resolve(
           init?.method === "POST"
             ? json({ kind: "EmptyCart", screen: screenName, message: "x" }, 409)
@@ -124,8 +126,8 @@ describe("CheckoutPage", () => {
 
     renderCheckout();
     await userEvent.click(await screen.findByRole("button", { name: "Submit" }));
-    await waitFor(() => expect(screen.getByTestId("where")).toHaveTextContent("/order-error"));
-    screenName = null;
+
+    await waitFor(() => expect(screen.getByTestId("where")).toHaveTextContent(expected));
   });
 
   it("renders the Chinese screen content for ?locale=zh_CN", async () => {

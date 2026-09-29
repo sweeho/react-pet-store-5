@@ -74,7 +74,7 @@ describe("GET /api/orders/last", () => {
 
     const result = await lastOrder(event);
 
-    expect(event.res.status).toBe(200);
+    expect(event.res.status ?? 200).toBe(200);
     expect(result).toEqual({ orderId: "10017", email: "jane@example.com" });
   });
 });

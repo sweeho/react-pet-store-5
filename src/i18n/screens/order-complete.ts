@@ -1,0 +1,43 @@
+import type { ScreenDefinition } from "../screens";
+
+export default {
+  en_US: {
+    crumbCart: "Cart",
+    crumbCheckout: "Checkout",
+    crumbComplete: "Order complete",
+    title: "Your Order is Complete",
+    thanks: "Thank you for shopping at Pet Store.",
+    orderNumber: "Order number",
+    emailBefore: "A confirmation e-mail will be sent to ",
+    emailAfter: ".",
+    keep: "Keep your order number — updates on approval and shipping arrive by e-mail only.",
+    continueShopping: "Continue shopping",
+    loadError: "We couldn't load your order.",
+  },
+  ja_JP: {
+    crumbCart: "カート",
+    crumbCheckout: "購入手続き",
+    crumbComplete: "注文完了",
+    title: "ご注文が完了しました",
+    thanks: "Pet Store をご利用いただきありがとうございます。",
+    orderNumber: "注文番号",
+    emailBefore: "確認メールを次のアドレスに送信します: ",
+    emailAfter: "",
+    keep: "注文番号を保管してください。承認と発送の連絡はメールのみでお届けします。",
+    continueShopping: "買い物を続ける",
+    loadError: "注文情報を読み込めませんでした。",
+  },
+  zh_CN: {
+    crumbCart: "购物车",
+    crumbCheckout: "结账",
+    crumbComplete: "订单完成",
+    title: "您的订单已完成",
+    thanks: "感谢您在 Pet Store 购物。",
+    orderNumber: "订单号",
+    emailBefore: "确认邮件将发送至 ",
+    emailAfter: "。",
+    keep: "请保留您的订单号——审批和发货动态仅通过电子邮件通知。",
+    continueShopping: "继续购物",
+    loadError: "无法加载您的订单。",
+  },
+} satisfies ScreenDefinition;
