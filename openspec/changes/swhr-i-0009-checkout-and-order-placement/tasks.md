@@ -1,9 +1,9 @@
 ## 1. Data model
 
-- [ ] 1.1 Add the identifier counter schema (unique name up to 255 chars, non-null integer value) in `db/` and generate its migration (SWHR-T-0107)
-- [ ] 1.2 Add the order outbox schema (order id, XML payload, created-at, delivery state) in `db/` and generate its migration (SWHR-T-0107)
-- [ ] 1.3 Ensure the stored purchase order holds its own contact, address and card snapshot rather than a reference to the profile contact (SWHR-T-0107)
-- [ ] 1.4 Store the purchase order total verbatim as supplied, with no recomputation on persist (SWHR-T-0107)
+- [x] 1.1 Add the identifier counter schema (unique name up to 255 chars, non-null integer value) in `db/` and generate its migration (SWHR-T-0107)
+- [x] 1.2 Add the order outbox schema (order id, XML payload, created-at, delivery state) in `db/` and generate its migration (SWHR-T-0107)
+- [x] 1.3 Ensure the stored purchase order holds its own contact, address and card snapshot rather than a reference to the profile contact (SWHR-T-0107)
+- [x] 1.4 Store the purchase order total verbatim as supplied, with no recomputation on persist (SWHR-T-0107)
 
 ## 2. Identifier generation
 
