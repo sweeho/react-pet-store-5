@@ -112,7 +112,9 @@ describe("migrateDatabase", () => {
     const sqlite = open();
     expect(() => migrateDatabase(sqlite, realFolder)).not.toThrow();
     expect(migrationCount(sqlite)).toBe(journalLength());
-    expect(snapshot(sqlite)).toEqual(before);
+    // Later migrations add columns (itemDetails attr1..5); every pre-upgrade
+    // column must keep its value, so match each row as a subset.
+    expect(snapshot(sqlite)).toMatchObject(before);
   });
 
   it("[SWHR-C-0449] rejects a product with an unknown category after upgrade", () => {

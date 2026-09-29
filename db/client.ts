@@ -2,8 +2,8 @@ import path from "node:path";
 
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
+import { migrateDatabase } from "../lib/db/migrate";
 import { category, groupMembers, profiles, roleAssignments, users } from "./schema";
 import { seedCatalog } from "./seed/catalog";
 
@@ -22,15 +22,13 @@ const sqlite = new Database(
     : (process.env.SQLITE_PATH ?? path.join(process.cwd(), "sqlite.db")),
 );
 
-// SD3: bun:sqlite defaults foreign_keys off, which makes every
-// `references()` in schema.ts decorative. Must run before `migrate` so the
-// enforcement also covers the table rebuilds a CHECK-constraint migration
-// performs (SQLite can only add a CHECK by recreating the table).
-sqlite.exec("PRAGMA foreign_keys = ON");
-
 export const db = drizzle(sqlite, { schema: { users, profiles } });
 
-migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+// SD3: bun:sqlite defaults foreign_keys off, which makes every
+// `references()` in schema.ts decorative. migrateDatabase runs the migrations
+// with enforcement OFF (a table rebuild drops parents that children still
+// reference) and leaves it ON for the running app.
+migrateDatabase(sqlite, path.join(process.cwd(), "drizzle"));
 
 // Sign-on (design.md P10, SD-8): staff seeds are development data only —
 // production has no seeded staff user, so provisioning is an operator step
