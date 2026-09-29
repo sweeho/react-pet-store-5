@@ -72,3 +72,5 @@ $ NODE_ENV=test bun --bun vitest run
 `pretest:e2e` step — Chromium isn't installed here (`ensure-playwright-browser.mjs`
 reports it explicitly and instructs against retrying). Per AGENTS.md this falls back to
 `bun run verify`, run above and green.
+
+TDD-RESULT: 619 passed, 0 failed
