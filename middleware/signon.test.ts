@@ -1,8 +1,17 @@
 import { H3Event } from "nitro/h3";
 import { describe, expect, it, vi } from "vitest";
 
+import { db } from "../db/client";
+import { users } from "../db/schema";
 import { getAuthSession, IDLE_TIMEOUT_MS, updateAuthSession } from "../lib/auth/session";
 import signonMiddleware from "./signon";
+
+// sessions.userId references users.userId (FK now enforced). Several cases
+// below sign "alice" on with no cleanup between them, so this must tolerate
+// being called more than once.
+function ensureUser(userId: string): void {
+  db.insert(users).values({ userId, passwordHash: "test-hash" }).onConflictDoNothing().run();
+}
 
 /**
  * INTEGRATION TEST
@@ -46,6 +55,7 @@ describe("signon middleware", () => {
 
   it("[SWHR-C-0123] serves a protected page directly to a signed-on session", async () => {
     const first = newEvent("/");
+    ensureUser("alice");
     await updateAuthSession(first, "storefront", { userId: "alice", signedOn: true });
 
     const second = newEvent("/account", first);
@@ -94,6 +104,7 @@ describe("signon middleware", () => {
       try {
         vi.setSystemTime(0);
         const first = newEvent("/");
+        ensureUser("alice");
         await updateAuthSession(first, "storefront", { userId: "alice", signedOn: true });
 
         vi.setSystemTime(IDLE_TIMEOUT_MS.storefront + 60_000);
@@ -116,6 +127,7 @@ describe("signon middleware", () => {
       try {
         vi.setSystemTime(0);
         const first = newEvent("/");
+        ensureUser("alice");
         await updateAuthSession(first, "storefront", { userId: "alice", signedOn: true });
 
         vi.setSystemTime(IDLE_TIMEOUT_MS.storefront - 60_000);

@@ -22,6 +22,12 @@ const sqlite = new Database(
     : (process.env.SQLITE_PATH ?? path.join(process.cwd(), "sqlite.db")),
 );
 
+// SD3: bun:sqlite defaults foreign_keys off, which makes every
+// `references()` in schema.ts decorative. Must run before `migrate` so the
+// enforcement also covers the table rebuilds a CHECK-constraint migration
+// performs (SQLite can only add a CHECK by recreating the table).
+sqlite.exec("PRAGMA foreign_keys = ON");
+
 export const db = drizzle(sqlite, { schema: { users, profiles } });
 
 migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });

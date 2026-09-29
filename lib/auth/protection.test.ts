@@ -1,6 +1,8 @@
 import { H3Event } from "nitro/h3";
 import { describe, expect, it, vi } from "vitest";
 
+import { db } from "../../db/client";
+import { users } from "../../db/schema";
 import { updateAuthSession } from "./session";
 import {
   ACCOUNT_CHANGE_PATH,
@@ -14,6 +16,13 @@ import {
 
 function event(): H3Event {
   return new H3Event(new Request("http://localhost/"));
+}
+
+// sessions.userId references users.userId (FK now enforced). Two cases
+// below sign "alice" on with no cleanup between them, so this must tolerate
+// being called more than once.
+function ensureUser(userId: string): void {
+  db.insert(users).values({ userId, passwordHash: "test-hash" }).onConflictDoNothing().run();
 }
 
 const CONFIG: ProtectionConfig = {
@@ -103,6 +112,7 @@ describe("checkGate", () => {
       protectedPages: [{ name: "customer.screen", path: "/account", roles: ["gold"] }],
     };
     const request = event();
+    ensureUser("alice");
     await updateAuthSession(request, "storefront", { userId: "alice", signedOn: true });
 
     await expect(checkGate(request, "/account", goldConfig)).resolves.toEqual({ allowed: true });
@@ -116,6 +126,7 @@ describe("checkGate", () => {
 describe("requireSignOn", () => {
   it("returns the session for a signed-on request", async () => {
     const request = event();
+    ensureUser("alice");
     await updateAuthSession(request, "storefront", { userId: "alice", signedOn: true });
 
     await expect(requireSignOn(request)).resolves.toMatchObject({

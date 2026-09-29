@@ -1,6 +1,8 @@
 import { H3Event } from "nitro/h3";
 import { describe, expect, it, vi } from "vitest";
 
+import { db } from "../../db/client";
+import { users } from "../../db/schema";
 import { addCartItem, listCartLines } from "../cart/lines";
 import {
   IDLE_TIMEOUT_MS,
@@ -29,6 +31,13 @@ function nextRequest(event: H3Event, url = "http://localhost/"): Request {
 
 function newEvent(previous?: H3Event): H3Event {
   return new H3Event(previous ? nextRequest(previous) : new Request("http://localhost/"));
+}
+
+// sessions.userId references users.userId (FK now enforced). Several cases
+// below sign "alice" on with no cleanup between them, so this must tolerate
+// being called more than once.
+function ensureUser(userId: string): void {
+  db.insert(users).values({ userId, passwordHash: "test-hash" }).onConflictDoNothing().run();
 }
 
 describe("getAuthSession", () => {
@@ -72,6 +81,7 @@ describe("getAuthSession", () => {
       vi.setSystemTime(0);
       const first = newEvent();
       const initial = await getAuthSession(first, "storefront");
+      ensureUser("alice");
       await updateAuthSession(first, "storefront", { userId: "alice", signedOn: true });
 
       vi.setSystemTime(IDLE_TIMEOUT_MS.storefront + 60_000);
@@ -136,6 +146,7 @@ describe("findAuthSessionById", () => {
 describe("updateAuthSession", () => {
   it("persists the patch across requests", async () => {
     const first = newEvent();
+    ensureUser("alice");
     await updateAuthSession(first, "storefront", {
       userId: "alice",
       signedOn: true,
@@ -153,7 +164,7 @@ describe("endAuthSession", () => {
   it("deletes the session row and its cart lines, and a later request gets a fresh session", async () => {
     const first = newEvent();
     const original = await getAuthSession(first, "storefront");
-    addCartItem(original.id, "item-1");
+    addCartItem(original.id, "EST-6");
 
     await endAuthSession(first, "storefront");
 

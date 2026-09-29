@@ -29,9 +29,13 @@ export const profiles = sqliteTable("profiles", {
 // constraint on the base table's own columns beyond its id — a row missing
 // in a locale means the entity does not exist in that locale; queries never
 // fall back (SWHR-R-0014). Prices are integer minor units (SD-8).
-export const category = sqliteTable("category", {
-  id: text("id").primaryKey(),
-});
+export const category = sqliteTable(
+  "category",
+  {
+    id: text("id").primaryKey(),
+  },
+  (table) => [check("category_id_length_check", sql`length(${table.id}) <= 10`)],
+);
 
 export const categoryDetails = sqliteTable(
   "categoryDetails",
@@ -44,15 +48,30 @@ export const categoryDetails = sqliteTable(
     image: text("image"),
     description: text("description"),
   },
-  (table) => [primaryKey({ columns: [table.categoryId, table.locale] })],
+  (table) => [
+    primaryKey({ columns: [table.categoryId, table.locale] }),
+    check("categoryDetails_name_length_check", sql`length(${table.name}) <= 80`),
+    check(
+      "categoryDetails_image_length_check",
+      sql`${table.image} IS NULL OR length(${table.image}) <= 255`,
+    ),
+    check(
+      "categoryDetails_description_length_check",
+      sql`${table.description} IS NULL OR length(${table.description}) <= 255`,
+    ),
+  ],
 );
 
-export const product = sqliteTable("product", {
-  id: text("id").primaryKey(),
-  categoryId: text("categoryId")
-    .notNull()
-    .references(() => category.id),
-});
+export const product = sqliteTable(
+  "product",
+  {
+    id: text("id").primaryKey(),
+    categoryId: text("categoryId")
+      .notNull()
+      .references(() => category.id),
+  },
+  (table) => [check("product_id_length_check", sql`length(${table.id}) <= 10`)],
+);
 
 export const productDetails = sqliteTable(
   "productDetails",
@@ -65,15 +84,22 @@ export const productDetails = sqliteTable(
     image: text("image"),
     description: text("description"),
   },
-  (table) => [primaryKey({ columns: [table.productId, table.locale] })],
+  (table) => [
+    primaryKey({ columns: [table.productId, table.locale] }),
+    check("productDetails_name_length_check", sql`length(${table.name}) <= 80`),
+  ],
 );
 
-export const item = sqliteTable("item", {
-  id: text("id").primaryKey(),
-  productId: text("productId")
-    .notNull()
-    .references(() => product.id),
-});
+export const item = sqliteTable(
+  "item",
+  {
+    id: text("id").primaryKey(),
+    productId: text("productId")
+      .notNull()
+      .references(() => product.id),
+  },
+  (table) => [check("item_id_length_check", sql`length(${table.id}) <= 10`)],
+);
 
 export const itemDetails = sqliteTable(
   "itemDetails",
@@ -89,8 +115,39 @@ export const itemDetails = sqliteTable(
     // see lib/locale/money.ts, the one place that knows the divisor.
     listPrice: integer("listPrice").notNull(),
     unitCost: integer("unitCost").notNull(),
+    // Five optional free-text attributes (SD2) — e.g. color, size — shown
+    // alongside the product name in the item's display title.
+    attr1: text("attr1"),
+    attr2: text("attr2"),
+    attr3: text("attr3"),
+    attr4: text("attr4"),
+    attr5: text("attr5"),
   },
-  (table) => [primaryKey({ columns: [table.itemId, table.locale] })],
+  (table) => [
+    primaryKey({ columns: [table.itemId, table.locale] }),
+    check("itemDetails_name_length_check", sql`length(${table.name}) <= 80`),
+    check("itemDetails_description_length_check", sql`length(${table.description}) <= 255`),
+    check(
+      "itemDetails_attr1_length_check",
+      sql`${table.attr1} IS NULL OR length(${table.attr1}) <= 80`,
+    ),
+    check(
+      "itemDetails_attr2_length_check",
+      sql`${table.attr2} IS NULL OR length(${table.attr2}) <= 80`,
+    ),
+    check(
+      "itemDetails_attr3_length_check",
+      sql`${table.attr3} IS NULL OR length(${table.attr3}) <= 80`,
+    ),
+    check(
+      "itemDetails_attr4_length_check",
+      sql`${table.attr4} IS NULL OR length(${table.attr4}) <= 80`,
+    ),
+    check(
+      "itemDetails_attr5_length_check",
+      sql`${table.attr5} IS NULL OR length(${table.attr5}) <= 80`,
+    ),
+  ],
 );
 
 // Sign-on (design.md P4): one server-side session row per realm, keyed by a
