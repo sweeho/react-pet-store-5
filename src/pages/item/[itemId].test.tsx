@@ -69,14 +69,16 @@ describe("ItemPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows the title, image, description, list price, your price and Add to Cart", async () => {
+  it("[SWHR-C-0183] shows the title, image, description, list price, your price and Add to Cart", async () => {
     stubFetch(() => jsonResponse({ item: EST6 }));
 
     renderItem("/item/EST-6");
 
-    expect(
-      await screen.findByRole("heading", { level: 1, name: "Male Adult Bulldog" }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { level: 1, name: "Male Adult Bulldog" }),
+      ).not.toBeNull();
+    });
     expect(screen.getByRole("img", { name: "Male Adult Bulldog" })).toHaveAttribute(
       "src",
       "/images/dogs.svg",
@@ -97,7 +99,7 @@ describe("ItemPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Item not found");
   });
 
-  it("POSTs the itemId to /api/cart/items when Add to Cart is activated", async () => {
+  it("[SWHR-C-0184] POSTs the itemId to /api/cart/items when Add to Cart is activated", async () => {
     const cartPost = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
       () => Promise.resolve(jsonResponse({ lines: [] })),
     );
@@ -117,7 +119,9 @@ describe("ItemPage", () => {
     const user = userEvent.setup();
 
     renderItem("/item/EST-6");
-    await screen.findByRole("heading", { level: 1, name: "Male Adult Bulldog" });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Add to Cart" })).not.toBeNull();
+    });
 
     await user.click(screen.getByRole("button", { name: "Add to Cart" }));
 

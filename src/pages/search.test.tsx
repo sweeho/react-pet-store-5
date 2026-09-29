@@ -67,7 +67,7 @@ describe("SearchPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows 'Items matching any of: bulldog' and one row per matching item", async () => {
+  it("[SWHR-C-0190] shows 'Items matching any of: bulldog' and one row per matching item", async () => {
     stubFetch(() =>
       jsonResponse({
         keywords: ["bulldog"],
@@ -85,7 +85,10 @@ describe("SearchPage", () => {
 
     renderSearch("/search?keywords=bulldog");
 
-    expect(await screen.findByText(/Items matching any of:/)).toHaveTextContent(
+    await waitFor(() => {
+      expect(screen.queryByText(/Items matching any of:/)).not.toBeNull();
+    });
+    expect(screen.getByText(/Items matching any of:/)).toHaveTextContent(
       "Items matching any of: bulldog",
     );
     const row = screen.getByRole("link", { name: /Male Adult Bulldog/ });
@@ -95,7 +98,7 @@ describe("SearchPage", () => {
     expect(screen.getByRole("button", { name: "Add to Cart" })).toBeInTheDocument();
   });
 
-  it("[SWHR-C-0106] shows the no-results message when nothing matches", async () => {
+  it("[SWHR-C-0106][SWHR-C-0191] shows the no-results message when nothing matches", async () => {
     stubFetch(() =>
       jsonResponse({
         keywords: ["zebra"],
@@ -113,11 +116,13 @@ describe("SearchPage", () => {
 
     renderSearch("/search?keywords=zebra");
 
-    expect(await screen.findByText("No results were found for your search.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("No results were found for your search.")).not.toBeNull();
+    });
     expect(screen.queryByRole("link", { name: /Add to Cart/ })).not.toBeInTheDocument();
   });
 
-  it("shows the no-results message for an empty keyword field", async () => {
+  it("[SWHR-C-0192] shows the no-results message for an empty keyword field", async () => {
     stubFetch(() =>
       jsonResponse({
         keywords: [],
@@ -135,7 +140,9 @@ describe("SearchPage", () => {
 
     renderSearch("/search");
 
-    expect(await screen.findByText("No results were found for your search.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("No results were found for your search.")).not.toBeNull();
+    });
   });
 
   it("[AC-1] renders the Japanese heading for ?locale=ja_JP", async () => {

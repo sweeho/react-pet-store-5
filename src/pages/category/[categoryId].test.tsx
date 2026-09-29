@@ -74,7 +74,7 @@ describe("CategoryPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the category name and a linked, described row per product, with a Next link", async () => {
+  it("[SWHR-C-0173][SWHR-C-0186] renders the category name and a linked, described row per product, with a Next link and no Previous link", async () => {
     stubFetch(() =>
       jsonResponse({
         category: {
@@ -98,7 +98,10 @@ describe("CategoryPage", () => {
 
     renderCategory("/category/DOGS");
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Dogs" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: /Bulldog/ })).not.toBeNull();
+    });
+    expect(screen.getByRole("heading", { level: 1, name: "Dogs" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Bulldog/ })).toHaveAttribute(
       "href",
       "/product/K9-BD-01",

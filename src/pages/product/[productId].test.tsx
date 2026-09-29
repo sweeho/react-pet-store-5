@@ -182,7 +182,10 @@ describe("ProductPage", () => {
     const user = userEvent.setup();
     renderProduct("/product/K9-BD-01", "en_US");
 
-    const addButton = await screen.findByRole("button", { name: "Add to Cart" });
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Add to Cart" })).not.toBeNull();
+    });
+    const addButton = screen.getByRole("button", { name: "Add to Cart" });
     await user.click(addButton);
 
     const fetchMock = vi.mocked(fetch);
