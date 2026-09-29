@@ -87,6 +87,8 @@ Every spec file under `e2e/` — none of the suite's 54 tests across 9 files exe
 | `e2e/smoke.spec.ts`                    | 3     | Chromium revision unavailable in this container (see Failures) |
 
 This is reported as fully skipped, not silently passed — per this file's own evidence discipline, a
-spec file that ran none of its tests is an outage in the suite, never a pass.
+spec file that ran none of its tests is an outage in the suite, never a pass. It genuinely cannot run
+in this environment: no Chromium build compatible with this repo's pinned `@playwright/test` exists
+anywhere on this container, and downloading one is blocked (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`).
 
-E2E-RESULT: chromium 0 passed, 0 failed, 54 skipped
+E2E-RESULT: not applicable

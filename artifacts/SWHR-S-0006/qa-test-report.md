@@ -50,7 +50,7 @@ attempted; `bun run verify` was run instead (see § Unit Test Results). Full com
 preflight output, root-cause analysis and the per-file skip table are in
 `artifacts/SWHR-S-0006/integration-test-result.md`.
 
-`E2E-RESULT: chromium 0 passed, 0 failed, 54 skipped`
+`E2E-RESULT: not applicable`
 
 ## Unit Test Results
 
