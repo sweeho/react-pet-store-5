@@ -2,7 +2,7 @@ import { H3Event } from "nitro/h3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "../../../db/client";
-import { roleAssignments, sessions } from "../../../db/schema";
+import { roleAssignments, sessions, users } from "../../../db/schema";
 import { IDLE_TIMEOUT_MS, updateAuthSession } from "../../../lib/auth/session";
 import getStaffSession from "./session.get";
 
@@ -50,6 +50,8 @@ describe("GET /api/staff/session", () => {
 
   it("reports isAdministrator false for a signed-on user without the role", async () => {
     const event = new H3Event(new Request("http://localhost/api/staff/session?realm=admin"));
+    // sessions.userId references users.userId (FK now enforced).
+    db.insert(users).values({ userId: "carol", passwordHash: "test-hash" }).run();
     await updateAuthSession(event, "admin", { userId: "carol", signedOn: true });
 
     await expect(getStaffSession(event)).resolves.toEqual({

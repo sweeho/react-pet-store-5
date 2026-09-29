@@ -2,7 +2,7 @@ import { H3Event } from "nitro/h3";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "../../db/client";
-import { cartLines, sessions } from "../../db/schema";
+import { cartLines, sessions, users } from "../../db/schema";
 import { getAuthSession, updateAuthSession } from "../../lib/auth/session";
 import { addCartItem, listCartLines } from "../../lib/cart/lines";
 import { getSessionLocale, setSessionLocale } from "../../lib/locale/session";
@@ -23,6 +23,9 @@ function cookieFrom(event: H3Event): string {
 describe("POST /api/signoff", () => {
   /** SWHR-R-0073.01 — server half of SWHR-C-0135 (SWHR-T-0048 drives the browser flow). */
   it("ends the signed-on session, empties the cart and keeps the locale", async () => {
+    // sessions.userId references users.userId (FK now enforced).
+    db.insert(users).values({ userId: "alice", passwordHash: "test-hash" }).run();
+
     const setup = new H3Event(new Request("http://localhost/"));
     await setSessionLocale(setup, "ja_JP");
     const session = await updateAuthSession(setup, "storefront", {

@@ -8,6 +8,7 @@ import {
   supplierAddresses,
   supplierContacts,
   supplierOrders,
+  users,
 } from "../../../db/schema";
 import { updateAuthSession } from "../../../lib/auth/session";
 import getAdminLaunch from "./launch.get";
@@ -31,6 +32,8 @@ function cookieFrom(event: H3Event): string {
 describe("GET /api/admin/launch", () => {
   it("rejects a caller without the administrator role", async () => {
     const signOn = new H3Event(new Request("http://localhost/"));
+    // sessions.userId references users.userId (FK now enforced).
+    db.insert(users).values({ userId: "not-an-administrator", passwordHash: "test-hash" }).run();
     await updateAuthSession(signOn, "admin", { userId: "not-an-administrator", signedOn: true });
 
     const event = new H3Event(

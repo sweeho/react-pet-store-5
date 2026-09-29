@@ -1,35 +1,53 @@
 import { H3Event } from "nitro/h3";
 import { describe, expect, it } from "vitest";
 
+import { db } from "../../db/client";
+import { item, sessions } from "../../db/schema";
 import { addCartItem, deleteCartLinesForSession, getCartWithDetails, listCartLines } from "./lines";
 
 function event(): H3Event {
   return new H3Event(new Request("http://localhost/"));
 }
 
+// cartLines.sessionId references sessions.id (FK now enforced) — a cart
+// line needs a real session row to attach to.
+function createSession(): string {
+  const id = crypto.randomUUID();
+  db.insert(sessions)
+    .values({
+      id,
+      realm: "storefront",
+      signedOn: false,
+      lastSeenAt: new Date(),
+      createdAt: new Date(),
+    })
+    .run();
+  return id;
+}
+
 describe("addCartItem / listCartLines", () => {
   it("adds a new line at quantity 1", () => {
-    const sessionId = crypto.randomUUID();
+    const sessionId = createSession();
 
-    addCartItem(sessionId, "item-1");
+    addCartItem(sessionId, "EST-6");
 
-    expect(listCartLines(sessionId)).toEqual([{ itemId: "item-1", quantity: 1 }]);
+    expect(listCartLines(sessionId)).toEqual([{ itemId: "EST-6", quantity: 1 }]);
   });
 
   it("increments the existing line instead of adding a second one", () => {
-    const sessionId = crypto.randomUUID();
+    const sessionId = createSession();
 
-    addCartItem(sessionId, "item-1");
-    addCartItem(sessionId, "item-1");
+    addCartItem(sessionId, "EST-6");
+    addCartItem(sessionId, "EST-6");
 
-    expect(listCartLines(sessionId)).toEqual([{ itemId: "item-1", quantity: 2 }]);
+    expect(listCartLines(sessionId)).toEqual([{ itemId: "EST-6", quantity: 2 }]);
   });
 
   it("keeps lines for different sessions separate", () => {
-    const sessionA = crypto.randomUUID();
-    const sessionB = crypto.randomUUID();
+    const sessionA = createSession();
+    const sessionB = createSession();
 
-    addCartItem(sessionA, "item-1");
+    addCartItem(sessionA, "EST-6");
 
     expect(listCartLines(sessionB)).toEqual([]);
   });
@@ -37,9 +55,9 @@ describe("addCartItem / listCartLines", () => {
 
 describe("deleteCartLinesForSession", () => {
   it("removes every line for that session", () => {
-    const sessionId = crypto.randomUUID();
-    addCartItem(sessionId, "item-1");
-    addCartItem(sessionId, "item-2");
+    const sessionId = createSession();
+    addCartItem(sessionId, "EST-6");
+    addCartItem(sessionId, "EST-7");
 
     deleteCartLinesForSession(sessionId);
 
@@ -49,7 +67,7 @@ describe("deleteCartLinesForSession", () => {
 
 describe("getCartWithDetails", () => {
   it("merges a line with its item details", async () => {
-    const sessionId = crypto.randomUUID();
+    const sessionId = createSession();
     addCartItem(sessionId, "EST-6");
 
     const details = await getCartWithDetails(event(), sessionId);
@@ -64,8 +82,12 @@ describe("getCartWithDetails", () => {
   });
 
   it("drops a line whose item doesn't resolve", async () => {
-    const sessionId = crypto.randomUUID();
-    addCartItem(sessionId, "does-not-exist");
+    const sessionId = createSession();
+    // item.id must exist for the FK on cartLines.itemId, but this item has
+    // no itemDetails row at all, so getItem's inner join never resolves it
+    // in any locale — exactly the "doesn't resolve" case this test pins.
+    db.insert(item).values({ id: "GHOST-ITEM", productId: "BULLDOG" }).run();
+    addCartItem(sessionId, "GHOST-ITEM");
 
     const details = await getCartWithDetails(event(), sessionId);
 
