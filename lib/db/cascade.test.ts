@@ -29,11 +29,14 @@ describe("deleting an order header", () => {
         VALUES (1, 1, '1 Main', 'X', 'CA', '94303', 'US');
       INSERT INTO orderCards (id, orderId, cardNumber, cardType, expiryDate)
         VALUES (1, '10001', '4111', 'Visa', '03/2030');
-      INSERT INTO orderLines (orderId, lineNum, categoryId, productId, itemId, quantity, unitPrice, quantityShipped)
-        VALUES ('10001', 0, 'FISH', 'FI-1', 'EST-1', 1, 10, 0),
-               ('10001', 1, 'FISH', 'FI-1', 'EST-2', 1, 10, 0),
-               ('10001', 2, 'FISH', 'FI-1', 'EST-3', 1, 10, 0);
+      INSERT INTO orderLines (orderId, lineNum, categoryId, productId, itemId, quantity, unitPrice)
+        VALUES ('10001', 0, 'FISH', 'FI-1', 'EST-1', 1, 10),
+               ('10001', 1, 'FISH', 'FI-1', 'EST-2', 1, 10),
+               ('10001', 2, 'FISH', 'FI-1', 'EST-3', 1, 10);
     `);
+
+    const columns = sqlite.query("PRAGMA table_info(orderLines)").all() as { name: string }[];
+    expect(columns.map((c) => c.name)).toContain("quantityShipped");
 
     sqlite.exec("DELETE FROM purchaseOrders WHERE orderId = '10001'");
 
@@ -55,7 +58,12 @@ describe("deleting a supplier order header", () => {
         VALUES ('S1', 'FISH', 'FI-1', 'EST-1', 0, 1, 10), ('S1', 'FISH', 'FI-1', 'EST-2', 1, 2, 10);
     `);
 
-    sqlite.exec("DELETE FROM supplierOrders WHERE orderId = 'S1'");
+    // A restricting foreign key makes this throw; the row counts below then fail the test.
+    try {
+      sqlite.exec("DELETE FROM supplierOrders WHERE orderId = 'S1'");
+    } catch {
+      /* asserted through the remaining rows */
+    }
 
     for (const t of ["supplierContacts", "supplierAddresses", "supplierLineItems"]) {
       expect(count(t), t).toBe(0);
