@@ -37,7 +37,7 @@ scenario.
 ## Red run
 
 `NODE_ENV=test bun --bun vitest run lib/b2b/documents`, with `lib/b2b/documents/purchaseOrder.ts` and
-`supplierOrder.ts` swapped for stubs throwing `VortexNotImplemented` (types/exports kept, so only
+`supplierOrder.ts` swapped for stubs throwing the configured stub sentinel (types/exports kept, so only
 behaviour — not imports — was missing):
 
 ```
@@ -46,7 +46,7 @@ Test Files  2 failed (2)
 ```
 
 The 2 passes are both the generic `"throws MalformedDocumentError for an unclosed element"` cases,
-which assert only `.rejects.toThrow()` with no message — the stub's `VortexNotImplemented` throw
+which assert only `.rejects.toThrow()` with no message — the stub's sentinel throw
 satisfies that bare assertion too. Not a false red: the other 17 cases assert specific messages/values
 the stub cannot produce, and all 17 failed as expected.
 
