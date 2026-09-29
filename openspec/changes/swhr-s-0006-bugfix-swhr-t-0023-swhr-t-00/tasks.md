@@ -1,8 +1,8 @@
 ## 1. Shell area labels follow the session locale
 
-- [ ] 1.1 Resolve Global navigation area labels from the shell screen by area id and add the `checkout` shell key in en_US/ja_JP/zh_CN (SWHR-T-0023)
-- [ ] 1.2 Drop the display-only `label`/`sampleBreeds` fields from the navigation constants and update their unit-test consumers (SWHR-T-0023)
-- [ ] 1.3 Add regression coverage for ja_JP/zh_CN area labels, the ja_JP Pets menu and the ja_JP category heading (SWHR-T-0023)
+- [x] 1.1 Resolve Global navigation area labels from the shell screen by area id and add the `checkout` shell key in en_US/ja_JP/zh_CN (SWHR-T-0023)
+- [x] 1.2 Drop the display-only `label`/`sampleBreeds` fields from the navigation constants and update their unit-test consumers (SWHR-T-0023)
+- [x] 1.3 Add regression coverage for ja_JP/zh_CN area labels, the ja_JP Pets menu and the ja_JP category heading (SWHR-T-0023)
 
 ## 2. Development server runs under Bun
 
