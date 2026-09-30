@@ -9,7 +9,8 @@ export type Channel =
   | "opc.purchase-order"
   | "opc.order-approval"
   | "opc.approval-notice"
-  | "opc.completed-order";
+  | "opc.completed-order"
+  | "mail.request";
 export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 export type Handler = (payload: string) => Promise<(tx: Tx) => void>;
 
@@ -24,6 +25,7 @@ const SUBSCRIBERS: Record<Channel, readonly string[]> = {
   "opc.order-approval": ["order-approval"],
   "opc.approval-notice": ["customer-notification"],
   "opc.completed-order": ["customer-notification"],
+  "mail.request": ["mailer"],
 };
 
 /** Every channel the outbox knows, for `resolveChannel`'s default registry. */
