@@ -22,10 +22,10 @@
 
 ## 4. Notification producers
 
-- [ ] 4.1 Enqueue one approval decision email per order when an approval batch is recorded, gated by the approval switch (SWHR-T-0161)
-- [ ] 4.2 Enqueue a shipment email on each invoice received, gated by the shipment switch and independent of completion (SWHR-T-0161)
-- [ ] 4.3 Enqueue a completed-order email when an order becomes completed, gated by the completed-order switch (SWHR-T-0161)
-- [ ] 4.4 Ensure a disabled switch consumes the trigger without affecting order processing (SWHR-T-0161)
+- [x] 4.1 Enqueue one approval decision email per order when an approval batch is recorded, gated by the approval switch (SWHR-T-0161)
+- [x] 4.2 Enqueue a shipment email on each invoice received, gated by the shipment switch and independent of completion (SWHR-T-0161)
+- [x] 4.3 Enqueue a completed-order email when an order becomes completed, gated by the completed-order switch (SWHR-T-0161)
+- [x] 4.4 Ensure a disabled switch consumes the trigger without affecting order processing (SWHR-T-0161)
 
 ## 5. Tests
 
