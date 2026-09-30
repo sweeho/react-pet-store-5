@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "../../db/client";
 import { outboxDeliveries, outboxMessages } from "../../db/schema";
 import { dispatchPending } from "./dispatcher";
+import { NonRetryableError } from "./errors";
 import { enqueue, registerConsumer, type Tx } from "./outbox";
 
 beforeEach(() => {
@@ -112,5 +113,63 @@ describe("dispatchPending", () => {
       attempts: 1,
       lastError: "prepare failed",
     });
+  });
+});
+
+describe("dispatchPending non-retryable failures and channel filters", () => {
+  it("marks a delivery dead on its first attempt when the handler throws NonRetryableError, and never reruns it", async () => {
+    let runs = 0;
+    registerConsumer("supplier.purchase-order", SUPPLIER_INTAKE, async () => {
+      runs++;
+      throw new NonRetryableError("malformed");
+    });
+    db.transaction((tx) => enqueue(tx, "supplier.purchase-order", "x"));
+
+    const first = await dispatchPending();
+    const later = await dispatchPending({ now: new Date(Date.now() + 3_600_000) });
+
+    expect(first).toEqual({ delivered: 0, failed: 1 });
+    expect(later).toEqual({ delivered: 0, failed: 0 });
+    expect(runs).toBe(1);
+    const row = soleDelivery(SUPPLIER_INTAKE);
+    expect(row.status).toBe("dead");
+    expect(row.attempts).toBe(1);
+    expect(row.lastError).toBe("malformed");
+  });
+
+  it("still reschedules an ordinary handler failure", async () => {
+    registerConsumer("supplier.purchase-order", SUPPLIER_INTAKE, async () => {
+      throw new Error("flaky");
+    });
+    db.transaction((tx) => enqueue(tx, "supplier.purchase-order", "x"));
+
+    await dispatchPending();
+
+    const row = soleDelivery(SUPPLIER_INTAKE);
+    expect(row.status).toBe("pending");
+    expect(row.attempts).toBe(1);
+  });
+
+  it("only and except select deliveries by channel", async () => {
+    const ran: string[] = [];
+    registerConsumer("supplier.purchase-order", SUPPLIER_INTAKE, async () => () => {
+      ran.push("supplier");
+    });
+    registerConsumer("opc.order-approval", "order-approval", async () => () => {
+      ran.push("approval");
+    });
+    db.transaction((tx) => {
+      enqueue(tx, "supplier.purchase-order", "a");
+      enqueue(tx, "opc.order-approval", "b");
+    });
+
+    await dispatchPending({ only: ["opc.order-approval"] });
+    expect(ran).toEqual(["approval"]);
+
+    await dispatchPending({ except: ["supplier.purchase-order"] });
+    expect(ran).toEqual(["approval"]);
+
+    await dispatchPending({ except: ["opc.order-approval"] });
+    expect(ran).toEqual(["approval", "supplier"]);
   });
 });

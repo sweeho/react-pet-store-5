@@ -20,9 +20,20 @@ export default definePlugin(() => {
     return;
   }
 
+  // mail.request has its own poller (plugins/mail-sender.ts). A tick is
+  // skipped while the previous pass is still running.
+  let running = false;
   setInterval(() => {
-    dispatchPending().catch((error) => {
-      console.error("outbox dispatch failed", error);
-    });
+    if (running) {
+      return;
+    }
+    running = true;
+    dispatchPending({ except: ["mail.request"] })
+      .catch((error) => {
+        console.error("outbox dispatch failed", error);
+      })
+      .finally(() => {
+        running = false;
+      });
   }, pollIntervalMs());
 });
