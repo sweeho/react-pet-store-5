@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { getConsumer } from "../lib/messaging/outbox";
 import plugin from "./customer-notification";
 
 const fakeNitroApp = {} as Parameters<typeof plugin>[0];
@@ -27,5 +28,14 @@ describe("customer-notification plugin", () => {
   it("starts with the committed config file", () => {
     delete process.env.NOTIFICATION_CONFIG_PATH;
     expect(() => plugin(fakeNitroApp)).not.toThrow();
+  });
+
+  it("registers the customer-notification consumer on the three trigger channels", () => {
+    delete process.env.NOTIFICATION_CONFIG_PATH;
+    plugin(fakeNitroApp);
+
+    for (const channel of ["opc.approval-notice", "opc.invoice", "opc.completed-order"] as const) {
+      expect(getConsumer(channel, "customer-notification")).toBeTypeOf("function");
+    }
   });
 });
