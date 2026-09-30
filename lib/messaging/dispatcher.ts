@@ -2,6 +2,7 @@ import { and, eq, lte } from "drizzle-orm";
 
 import { db } from "../../db/client";
 import { outboxDeliveries, outboxMessages } from "../../db/schema";
+import { NonRetryableError } from "./errors";
 import { type Channel, getConsumer } from "./outbox";
 
 const DEFAULT_MAX_ATTEMPTS = 10;
@@ -26,10 +27,13 @@ function maxAttempts(): number {
  * Failure (either phase): a *separate* write (the failed transaction is
  * already rolled back) increments `attempts`, records `lastError`, and
  * either reschedules `nextAttemptAt` or marks the delivery `dead` past
- * `OUTBOX_MAX_ATTEMPTS`.
+ * `OUTBOX_MAX_ATTEMPTS`; a `NonRetryableError` marks it `dead` at once.
+ * `only` / `except` restrict the pass by channel.
  */
 export async function dispatchPending(opts?: {
   now?: Date;
+  only?: readonly Channel[];
+  except?: readonly Channel[];
 }): Promise<{ delivered: number; failed: number }> {
   const now = opts?.now ?? new Date();
   let delivered = 0;
@@ -49,7 +53,14 @@ export async function dispatchPending(opts?: {
     .all();
 
   for (const row of due) {
-    const handler = getConsumer(row.channel as Channel, row.consumer);
+    const channel = row.channel as Channel;
+    if (opts?.only && !opts.only.includes(channel)) {
+      continue;
+    }
+    if (opts?.except?.includes(channel)) {
+      continue;
+    }
+    const handler = getConsumer(channel, row.consumer);
     if (!handler) {
       continue;
     }
@@ -66,7 +77,7 @@ export async function dispatchPending(opts?: {
       delivered++;
     } catch (error) {
       const attempts = row.attempts + 1;
-      const dead = attempts >= maxAttempts();
+      const dead = error instanceof NonRetryableError || attempts >= maxAttempts();
       db.update(outboxDeliveries)
         .set({
           attempts,

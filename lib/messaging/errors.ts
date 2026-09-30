@@ -44,6 +44,6 @@ export function runStep<T>(step: string, fn: () => T): T {
 export class NonRetryableError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
-    throw new Error("VortexNotImplemented");
+    this.name = "NonRetryableError";
   }
 }
