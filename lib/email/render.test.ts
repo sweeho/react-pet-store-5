@@ -14,7 +14,16 @@ function order(overrides: Partial<EmailOrder> = {}): EmailOrder {
   return {
     orderId: "ORDER-1",
     locale: "en_US",
-    lines: [{ itemId: "ITEM-1", name: "Widget", quantity: 1, unitPrice: 1234.5 }],
+    decision: "APPROVED",
+    lines: [
+      {
+        categoryId: "FISH",
+        productId: "FI-SW-01",
+        itemId: "ITEM-1",
+        quantity: 1,
+        unitPrice: 1234.5,
+      },
+    ],
     ...overrides,
   };
 }
@@ -49,7 +58,15 @@ describe("renderCustomerEmail", () => {
       "completed",
       order({
         locale: "ja_JP",
-        lines: [{ itemId: "ITEM-1", name: "Widget", quantity: 1, unitPrice: 2000 }],
+        lines: [
+          {
+            categoryId: "FISH",
+            productId: "FI-SW-01",
+            itemId: "ITEM-1",
+            quantity: 1,
+            unitPrice: 2000,
+          },
+        ],
       }),
     );
     expect(email.body).toContain("￥2,000");

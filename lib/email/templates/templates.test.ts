@@ -90,7 +90,7 @@ describe("customer e-mail templates", () => {
 
   it("subjects are English in every locale", () => {
     for (const locale of ["en_US", "ja_JP", "zh_CN"]) {
-      const o = order({ locale });
+      const o = order({ locale, decision: "APPROVED" });
       expect(renderCustomerEmail("approval", o).subject).toBe("Java Pet Store Order Status: 1001");
       expect(renderCustomerEmail("shipment", o).subject).toBe("Java Pet Store Order Shipped: 1001");
       expect(renderCustomerEmail("completed", o).subject).toBe(

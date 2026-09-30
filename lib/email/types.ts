@@ -4,9 +4,11 @@ export type CustomerEmailKind = "approval" | "shipment" | "completed";
 export type EmailTemplateVariant = "default" | "en_US" | "ja_JP" | "zh_CN";
 
 export interface EmailOrderLine {
+  categoryId: string;
+  productId: string;
   itemId: string;
-  name: string;
   quantity: number;
+  /** Decimal amount in the order's currency. */
   unitPrice: number;
 }
 
@@ -14,7 +16,8 @@ export interface EmailOrder {
   orderId: string;
   locale: string;
   lines: EmailOrderLine[];
-  [k: string]: unknown;
+  /** Required for the approval e-mail. */
+  decision?: "APPROVED" | "DENIED";
 }
 
 export interface RenderedEmail {
