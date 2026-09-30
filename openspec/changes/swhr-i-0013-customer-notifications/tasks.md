@@ -29,7 +29,7 @@
 
 ## 5. Tests
 
-- [ ] 5.1 Unit-test the mail request validator and each template (both approval outcomes, shipment table, completed list, each locale) (SWHR-T-0162)
-- [ ] 5.2 Integration-test the producers for subjects, recipients, switch gating and the double email on a completing invoice (SWHR-T-0162)
-- [ ] 5.3 Integration-test the outbox worker for success, malformed rows and SMTP failure with no retry (SWHR-T-0162)
-- [ ] 5.4 Test that start-up fails on a missing or invalid notification switch (SWHR-T-0162)
+- [x] 5.1 Unit-test the mail request validator and each template (both approval outcomes, shipment table, completed list, each locale) (SWHR-T-0162)
+- [x] 5.2 Integration-test the producers for subjects, recipients, switch gating and the double email on a completing invoice (SWHR-T-0162)
+- [x] 5.3 Integration-test the outbox worker for success, malformed rows and SMTP failure with no retry (SWHR-T-0162)
+- [x] 5.4 Test that start-up fails on a missing or invalid notification switch (SWHR-T-0162)
