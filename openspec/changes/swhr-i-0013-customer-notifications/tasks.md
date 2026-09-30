@@ -1,9 +1,9 @@
 ## 1. Data model and configuration
 
-- [ ] 1.1 Add the mail outbox Drizzle table (recipient, subject, html_body, status, error, created_at, sent_at) in `db/` (SWHR-T-0158)
-- [ ] 1.2 Generate and commit the migration in `drizzle/` (SWHR-T-0158)
-- [ ] 1.3 Add server configuration for the three notification switches, SMTP host/account and sender address (default `customerservice@javapetstoredemo.com`) (SWHR-T-0158)
-- [ ] 1.4 Validate the switches at server start and fail start-up on a missing or non-boolean value (SWHR-T-0158)
+- [x] 1.1 Add the mail outbox Drizzle table (recipient, subject, html_body, status, error, created_at, sent_at) in `db/` (SWHR-T-0158)
+- [x] 1.2 Generate and commit the migration in `drizzle/` (SWHR-T-0158)
+- [x] 1.3 Add server configuration for the three notification switches, SMTP host/account and sender address (default `customerservice@javapetstoredemo.com`) (SWHR-T-0158)
+- [x] 1.4 Validate the switches at server start and fail start-up on a missing or non-boolean value (SWHR-T-0158)
 
 ## 2. Mail request and sender
 
