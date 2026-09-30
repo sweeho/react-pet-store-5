@@ -1,26 +1,38 @@
-import { formatEmailPrice } from "../price";
+import { emailDocument, escapeHtml, linesTable, orderIdChip, statusBox } from "../html";
 import type { EmailOrder, EmailTemplateVariant, RenderedEmail } from "../types";
 
-const SUBJECT: Record<EmailTemplateVariant, string> = {
-  default: "Your order is complete",
-  en_US: "Your order is complete",
-  ja_JP: "ご注文が完了しました",
-  zh_CN: "您的订单已完成",
-};
-
-function renderLine(variant: EmailTemplateVariant, order: EmailOrder): string {
-  return order.lines
-    .map((line) => `${line.name} x${line.quantity} @ ${formatEmailPrice(line.unitPrice, variant)}`)
-    .join("\n");
+interface CompletedCopy {
+  headline: (orderId: string) => string;
+  detail: string;
 }
+
+const COPY: Record<Exclude<EmailTemplateVariant, "default">, CompletedCopy> = {
+  en_US: {
+    headline: (id) => `Your entire order ${id} has shipped.`,
+    detail: "Your order is complete. It contained the following:",
+  },
+  ja_JP: {
+    headline: (id) => `ご注文 ${id} のすべての商品を発送しました。`,
+    detail: "ご注文は完了しました。ご注文内容は次のとおりです:",
+  },
+  zh_CN: {
+    headline: (id) => `您的整个订单 ${id} 已发货。`,
+    detail: "您的订单已完成。订单包含以下商品:",
+  },
+};
 
 export function renderCompletedEmail(
   variant: EmailTemplateVariant,
   order: EmailOrder,
 ): RenderedEmail {
+  const copy = COPY[variant === "default" ? "en_US" : variant];
+  const content =
+    statusBox("ok", copy.headline(orderIdChip(order.orderId, 15)), escapeHtml(copy.detail)) +
+    linesTable(variant, order.lines);
+
   return {
     templateId: `completed_${variant}`,
-    subject: SUBJECT[variant],
-    body: `Order ${order.orderId}\n${renderLine(variant, order)}`,
+    subject: `Java Pet Store Order COMPLETED: ${order.orderId}`,
+    body: emailDocument(variant, content),
   };
 }
