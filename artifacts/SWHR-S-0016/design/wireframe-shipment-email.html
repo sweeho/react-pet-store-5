@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f4f4f5;color:#27272a;font-size:13px;padding:24px}
+.note{font-size:11px;color:#71717a;margin-bottom:8px}
+.env{max-width:640px;margin:0 auto;background:#fff;border:1px solid #d4d4d8;border-radius:8px;overflow:hidden}
+.hdr{background:#fafafa;border-bottom:1px solid #d4d4d8;padding:12px 16px;display:grid;grid-template-columns:64px 1fr;row-gap:4px}
+.hdr b{color:#71717a;font-weight:500}
+.body{padding:24px;display:flex;flex-direction:column;gap:14px}
+.bar{height:10px;background:#e4e4e7;border-radius:3px}
+.h{height:16px;background:#a1a1aa;width:45%;border-radius:3px}
+.id{border:1px dashed #a1a1aa;padding:8px 12px;display:inline-block;font-family:ui-monospace,monospace}
+.lbl{font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.05em}
+.stmt{border:2px solid #52525b;padding:10px 12px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #d4d4d8;padding:8px 10px;text-align:left}
+th{background:#f4f4f5;font-size:12px;color:#52525b}
+td.n{text-align:right;font-family:ui-monospace,monospace}
+</style></head><body>
+<p class="note">Sent once per shipment (invoice), whether or not it completes the order. Lists only the lines in this shipment. Price formatted as currency for the order's locale.</p>
+<div class="env">
+ <div class="hdr"><b>From</b><span>customerservice@javapetstoredemo.com (configurable)</span><b>To</b><span>e-mail on the order</span><b>Subject</b><span>Java Pet Store Order Shipped: 1001</span><b>Sent</b><span>time of sending</span></div>
+ <div class="body">
+  <div class="lbl">Thank you</div>
+  <div class="h"></div>
+  <div><span class="lbl">Order id</span><br><span class="id">1001</span></div>
+  <div class="stmt">This part of your order has shipped.</div>
+  <table>
+   <tr><th>Category</th><th>Product #</th><th style="text-align:right">Quantity</th><th style="text-align:right">Unit Price</th></tr>
+   <tr><td>FISH</td><td>FI-SW-01</td><td class="n">2</td><td class="n">$16.50</td></tr>
+   <tr><td>DOGS</td><td>K9-BD-01</td><td class="n">1</td><td class="n">$18.50</td></tr>
+  </table>
+  <div class="bar" style="width:55%"></div>
+ </div>
+</div>
+</body></html>

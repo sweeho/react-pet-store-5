@@ -27,6 +27,7 @@ describe("resolveChannel", () => {
 
   it("defaults to the outbox's channels, including opc.completed-order", () => {
     expect(resolveChannel("opc.completed-order")).toBe("opc.completed-order");
+    expect(resolveChannel("mail.request")).toBe("mail.request");
     expect(() => resolveChannel("opc.nope")).toThrow(DependencyResolutionError);
   });
 });
