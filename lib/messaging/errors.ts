@@ -36,3 +36,14 @@ export function runStep<T>(step: string, fn: () => T): T {
     throw new WorkflowStepError(step, e);
   }
 }
+
+/**
+ * A handler failure that retrying cannot fix. `dispatchPending` marks the
+ * delivery `dead` on its first attempt instead of rescheduling it.
+ */
+export class NonRetryableError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    throw new Error("VortexNotImplemented");
+  }
+}
