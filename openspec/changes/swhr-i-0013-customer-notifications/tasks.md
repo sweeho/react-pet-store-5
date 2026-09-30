@@ -7,11 +7,11 @@
 
 ## 2. Mail request and sender
 
-- [ ] 2.1 Define the mail request type (recipient, subject, body) and its validator (SWHR-T-0160)
-- [ ] 2.2 Implement the enqueue function used by notification producers (SWHR-T-0160)
-- [ ] 2.3 Implement the SMTP send helper (To, subject, UTF-8 HTML body, sent date, configured From) (SWHR-T-0160)
-- [ ] 2.4 Implement the Nitro outbox worker that drains pending rows and sends one email per row (SWHR-T-0160)
-- [ ] 2.5 Mark malformed rows failed without sending, and mark send failures failed with a logged error and no retry (SWHR-T-0160)
+- [x] 2.1 Define the mail request type (recipient, subject, body) and its validator (SWHR-T-0160)
+- [x] 2.2 Implement the enqueue function used by notification producers (SWHR-T-0160)
+- [x] 2.3 Implement the SMTP send helper (To, subject, UTF-8 HTML body, sent date, configured From) (SWHR-T-0160)
+- [x] 2.4 Implement the Nitro outbox worker that drains pending rows and sends one email per row (SWHR-T-0160)
+- [x] 2.5 Mark malformed rows failed without sending, and mark send failures failed with a logged error and no retry (SWHR-T-0160)
 
 ## 3. Email templates
 
