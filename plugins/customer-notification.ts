@@ -1,6 +1,8 @@
 import { definePlugin } from "nitro";
 
-/** Validates the notification switches at server start. */
+import { loadNotificationSwitches } from "../lib/notifications/config";
+
+/** Validates the notification switches at server start; a bad file stops the server. */
 export default definePlugin(() => {
-  throw new Error("VortexNotImplemented");
+  loadNotificationSwitches();
 });
