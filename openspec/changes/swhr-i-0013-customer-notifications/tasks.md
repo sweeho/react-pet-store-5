@@ -15,10 +15,10 @@
 
 ## 3. Email templates
 
-- [ ] 3.1 Implement the approval decision template (approved and denied wording) for en_US, ja_JP and zh_CN (SWHR-T-0159)
-- [ ] 3.2 Implement the shipment template with the Category / Product # / Quantity / Unit Price table for each locale (SWHR-T-0159)
-- [ ] 3.3 Implement the completed-order template listing every order line for each locale (SWHR-T-0159)
-- [ ] 3.4 Implement per-locale currency formatting for unit prices (SWHR-T-0159)
+- [x] 3.1 Implement the approval decision template (approved and denied wording) for en_US, ja_JP and zh_CN (SWHR-T-0159)
+- [x] 3.2 Implement the shipment template with the Category / Product # / Quantity / Unit Price table for each locale (SWHR-T-0159)
+- [x] 3.3 Implement the completed-order template listing every order line for each locale (SWHR-T-0159)
+- [x] 3.4 Implement per-locale currency formatting for unit prices (SWHR-T-0159)
 
 ## 4. Notification producers
 
